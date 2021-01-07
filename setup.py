@@ -9,7 +9,7 @@ setuptools.setup(
     maintainer="Dave Mellert",
     maintainer_email="Dave.Mellert@jax.org",
     description=("A suite of convenience functions for working"
-                 " with OMERO. Written and maintained by the"
+                 " with OMERO. Written and maintained by the "
                  "Research IT team at The Jackson Laboratory."),
     long_description=long_description,
     long_description_content_type="text/markdown",
