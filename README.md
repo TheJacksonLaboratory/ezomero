@@ -73,10 +73,6 @@ Update an existing map annotation with new values (kv pairs).
 
 Filter list of image ids by originalFile name. Returns a `list` of `int` image IDs that match.
 
-### `image_has_imported_filename(conn, im_id, imported_filename)`
-
-DEPRECATED. Ask whether an image is associated with a particular image file. Returns a boolean.
-
 ## Linking functions
 
 ### `link_images_to_dataset(conn, image_ids, dataset_id)`

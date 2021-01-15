@@ -1,6 +1,6 @@
 import pytest
 import numpy as np
-from jax_omeroutils import ezomero
+import ezomero
 
 
 def test_omero_connection(conn, omero_params):

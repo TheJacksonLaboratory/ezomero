@@ -7,9 +7,26 @@ from omero.rtypes import rlong, rstring
 from omero.sys import Parameters
 
 #expose functions for import
-__all__ = ["post_dataset","post_image","post_map_annotation","post_project","get_image","get_image_ids","get_map_annotation_ids","get_map_annotation",
-           "get_group_id","get_user_id","get_original_filepaths","put_map_annotation","filter_by_filename","image_has_imported_filename",
-           "link_images_to_dataset","link_datasets_to_project","print_map_annotation","print_groups","print_projects","print_datasets","set_group"]
+__all__ = ["post_dataset",
+           "post_image",
+           "post_map_annotation",
+           "post_project",
+           "get_image",
+           "get_image_ids",
+           "get_map_annotation_ids",
+           "get_map_annotation",
+           "get_group_id",
+           "get_user_id",
+           "get_original_filepaths",
+           "put_map_annotation",
+           "filter_by_filename",
+           "link_images_to_dataset",
+           "link_datasets_to_project",
+           "print_map_annotation",
+           "print_groups",
+           "print_projects",
+           "print_datasets",
+           "set_group"]
 
 # posts
 def post_dataset(conn, dataset_name, project_id=None, description=None):
@@ -76,7 +93,7 @@ def post_image(conn, image, image_name, description=None, dataset_id=None,
         array.ndim must equal 5. The function assumes this ``ndarray`` uses
         XYZCT ordering.
     image_name : str
-        New of the new image to be created.
+        Name of the new image to be created.
     description : str, optional
         Description for the new image.
     dataset_id : str, optional
@@ -161,6 +178,10 @@ def post_map_annotation(conn, object_type, object_ids, kv_dict, ns):
         key-value pairs that will be included in the MapAnnotation
     ns : str
         Namespace for the MapAnnotation
+
+    Notes
+    -----
+    All keys and values are converted to strings before saving in OMERO.
 
     Returns
     -------
@@ -342,8 +363,8 @@ def get_image(conn, image_id, no_pixels=False, start_coords=None,
         pixels = np.zeros(reordered_sizes, dtype=pixels_dtype)
 
         # check here if you need to trim the axis_lengths, trim if necessary
-        overhangs = [(l + sc) - osz
-                     for l, sc, osz
+        overhangs = [(al + sc) - osz
+                     for al, sc, osz
                      in zip(axis_lengths,
                             start_coords,
                             orig_sizes)]
@@ -352,7 +373,7 @@ def get_image(conn, image_id, no_pixels=False, start_coords=None,
             raise IndexError('Attempting to access out-of-bounds pixel. '
                              'Either adjust axis_lengths or use pad=True')
 
-        axis_lengths = [l - o for l, o in zip(axis_lengths, overhangs)]
+        axis_lengths = [al - oh for al, oh in zip(axis_lengths, overhangs)]
 
         # get pixels
         zct_list = []
@@ -389,7 +410,9 @@ def get_image(conn, image_id, no_pixels=False, start_coords=None,
 
 
 def get_image_ids(conn, dataset=None, well=None):
-    """return a list of image ids based on project and dataset
+    """Return a list of image ids based on image container
+
+    If neither dataset nor well is specified, function will return orphans.
 
     Parameters
     ----------
@@ -495,7 +518,7 @@ def get_map_annotation_ids(conn, object_type, object_id, ns=None):
     >>> map_ann_ids = get_map_annotation_ids(conn, 'Image', 42)
 
     Return IDs of map annotations with namespace "test" linked to a Dataset:
-    >>> map_ann_ids = get_map_annotation_ids(conn, 'Datset', 16, ns='test')
+    >>> map_ann_ids = get_map_annotation_ids(conn, 'Dataset', 16, ns='test')
     """
 
     target_object = conn.getObject(object_type, object_id)
@@ -527,11 +550,7 @@ def get_map_annotation(conn, map_ann_id):
     >>> print(ma_dict)
     {'testkey': 'testvalue', 'testkey2': 'testvalue2'}
     """
-    kv_pairs = conn.getObject('MapAnnotation', map_ann_id).getValue()
-    kv_dict = {}
-    for k, v in kv_pairs:
-        kv_dict[k] = v
-    return kv_dict
+    return dict(conn.getObject('MapAnnotation', map_ann_id).getValue())
 
 
 def get_group_id(conn, group_name):
@@ -683,6 +702,10 @@ def put_map_annotation(conn, map_ann_id, kv_dict, ns=None):
         New namespace for the MapAnnotation. If left as None, the old
         namespace will be used.
 
+    Notes
+    -----
+    All keys and values are converted to strings before saving in OMERO.
+
     Returns
     -------
     Returns None.
@@ -767,70 +790,20 @@ def filter_by_filename(conn, im_ids, imported_filename):
     return list(set(im_ids) & set(im_id_matches))
 
 
-def image_has_imported_filename(conn, im_id, imported_filename):
-    """Ask whether an image is associated with a particular image file.
+# linking functions
+def link_images_to_dataset(conn, image_ids, dataset_id):
+    """Link images to the specified dataset.
 
-    THIS FUNCTION IS DEPRECATED AND WILL BE REMOVED
-
-    Sometimes we know the filename of an image that has been imported into
-    OMERO but not necessarily the image ID. This is frequently the case when
-    we want to annotate a recently imported image. This funciton will help
-    to filter a list of image IDs to only those associated with a particular
-    filename in ImportedImageFiles.
+    Nothing is returned by this function.
 
     Parameters
     ----------
     conn : ``omero.gateway.BlitzGateway`` object
         OMERO connection.
-    im_id : int
-        ID of OMERO image.
-    imported_filename : str
-        The full filename (with extension) of the file whose OMERO image
-        we are looking for. NOT the path of the image.
-
-    Returns
-    -------
-    answer : boolean
-        Answer to the question of whether the given image has an associated
-        ImportedImageFile of the given name.
-
-    Notes
-    -----
-    This function should be used as a filter on an image list that has been
-    already narrowed down as much as possible. Note that many different images
-    in OMERO may share the same filename (e.g., image.tif).
-
-    Examples
-    --------
-    >>> im_ids = get_image_ids(conn, dataset=303)
-    >>> im_ids = [im_id for im_id in im_ids
-    ...           if image_has_imported_filename(conn, im_id, "feb_2020.tif")]
-    """
-
-    q = conn.getQueryService()
-    params = Parameters()
-    params.map = {"imid": rlong(im_id)}
-    results = q.projection(
-        "SELECT o.name FROM Image i"
-        " JOIN i.fileset fs"
-        " JOIN fs.usedFiles u"
-        " JOIN u.originalFile o"
-        " WHERE i.id=:imid",
-        params,
-        conn.SERVICE_OPTS
-        )
-    imp_filenames = [r[0].val for r in results]
-
-    if imported_filename in imp_filenames:
-        return True
-    else:
-        return False
-
-
-# linking functions
-def link_images_to_dataset(conn, image_ids, dataset_id):
-    """
-    TODO: WRITE THIS DOCSTRING
+    im_ids : list of int
+        List of OMERO image IDs.
+    dataset_id : int
+        Id of dataset to which images will be linked.
     """
     user_id = _get_current_user(conn)
     for im_id in image_ids:
@@ -842,8 +815,18 @@ def link_images_to_dataset(conn, image_ids, dataset_id):
 
 
 def link_datasets_to_project(conn, dataset_ids, project_id):
-    """
-    TODO: WRITE THIS DOCSTRING
+    """Link datasets to the specified project.
+
+    Nothing is returned by this function.
+
+    Parameters
+    ----------
+    conn : ``omero.gateway.BlitzGateway`` object
+        OMERO connection.
+    im_ids : list of int
+        List of OMERO Dataset Ids.
+    dataset_id : int
+        Id of Project to which Datasets will be linked.
     """
     user_id = _get_current_user(conn)
     for did in dataset_ids:
@@ -927,7 +910,7 @@ def print_datasets(conn, project=None):
         print(f'Datasets in Project \"{p.getName()}\":')
     else:
         datasets = conn.listOrphans("Dataset")
-        print(f'Orphaned Datsets:')
+        print('Orphaned Datsets:')
 
     for d in datasets:
         print(f"\t{d.getName()}:\t{d.getId()}")
