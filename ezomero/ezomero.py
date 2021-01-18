@@ -66,17 +66,28 @@ def post_dataset(conn, dataset_name, project_id=None, description=None):
     if type(description) is not str and description is not None:
         raise TypeError('Dataset description must be a string')
 
+    project = None
+    current_group = conn.SERVICE_OPTS.getOmeroGroup()
+    if project_id is not None:
+        if type(project_id) is not int:
+            raise TypeError('Project ID must be integer')
+        conn.SERVICE_OPTS.setOmeroGroup('-1')
+        project = conn.getObject('Project', project_id)
+        if project is not None:
+            conn.SERVICE_OPTS.setOmeroGroup(project.getDetails().group.id.val)
+        else:
+            conn.SERVICE_OPTS.setOmeroGroup(current_group)
+
     dataset = DatasetWrapper(conn, DatasetI())
     dataset.setName(dataset_name)
     if description is not None:
         dataset.setDescription(description)
     dataset.save()
 
-    if project_id is not None:
-        if type(project_id) is not int:
-            raise TypeError('Project ID must be integer')
+    if project is not None:
         link_datasets_to_project(conn, [dataset.getId()], project_id)
 
+    conn.SERVICE_OPTS.setOmeroGroup(current_group)
     return dataset.getId()
 
 
