@@ -1,11 +1,16 @@
 import logging
 import numpy as np
-from omero.gateway import MapAnnotationWrapper, DatasetWrapper, ProjectWrapper, RoiWrapper
+from omero.gateway import MapAnnotationWrapper, DatasetWrapper, ProjectWrapper
 from omero.model import MapAnnotationI, DatasetI, ProjectI, ProjectDatasetLinkI
 from omero.model import DatasetImageLinkI, ImageI, ExperimenterI
-from omero.model import RoiI, PointI, LengthI, enums
+from omero.model import RoiI, PointI, LineI, RectangleI, EllipseI, PolygonI, LengthI, enums
 from omero.rtypes import rlong, rstring, rint, rdouble
 from omero.sys import Parameters
+from abc import ABC
+from dataclasses import field
+from typing import List, Tuple
+from pydantic.dataclasses import dataclass
+from pydantic.color import Color
 
 #expose functions for import
 __all__ = ["post_dataset",
@@ -28,6 +33,114 @@ __all__ = ["post_dataset",
            "print_projects",
            "print_datasets",
            "set_group"]
+
+
+# classes
+@dataclass(frozen=True)
+class Shape(ABC):
+    z: int = field(default=None)
+    c: int = field(default=None)
+    t: int = field(default=None)
+    name: str = field(default=None)
+    fill_color: Color = field(default=Color((10, 10, 10, 0.1)))
+    stroke_color: Color = field(default=Color((255, 255, 255, 1.0)))
+    stroke_width: int = field(default=1)
+    label: str = field(default=None)
+
+    def configure_shape(self):
+        if self.z is not None:
+            self._omero_shape.theZ = rint(self.z)
+        if self.c is not None:
+            self._omero_shape.theC = rint(self.c)
+        if self.t is not None:
+            self._omero_shape.theT = rint(self.t)
+        if self.name is not None:
+            self._omero_shape.setTextValue(rstring(self.name))
+        self._omero_shape.setFillColor(rint(_rgba_to_int(self.fill_color)))
+        self._omero_shape.setStrokeColor(rint(_rgba_to_int(self.stroke_color)))
+        self._omero_shape.setStrokeWidth(LengthI(self.stroke_width, enums.UnitsLength.PIXEL))
+
+
+@dataclass(frozen=True)
+class Point(Shape):
+    x: float = field(default=None, metadata={'units': 'PIXELS'})
+    y: float = field(default=None, metadata={'units': 'PIXELS'})
+    _omero_shape = PointI()
+
+    def __post_init_post_parse__(self):
+        if None in [self.x, self.y]:
+            raise ValueError('Not all necessary arguments are provided')
+        self._omero_shape.x = rdouble(self.x)
+        self._omero_shape.y = rdouble(self.y)
+        self.configure_shape()
+
+
+@dataclass(frozen=True)
+class Line(Shape):
+    x1: float = field(default=None, metadata={'units': 'PIXELS'})
+    y1: float = field(default=None, metadata={'units': 'PIXELS'})
+    x2: float = field(default=None, metadata={'units': 'PIXELS'})
+    y2: float = field(default=None, metadata={'units': 'PIXELS'})
+    _omero_shape = LineI()
+
+    def __post_init_post_parse__(self):
+        if None in [self.x1, self.x2, self.y1, self.y2]:
+            raise ValueError('Not all necessary arguments are provided')
+        self._omero_shape.x1 = rdouble(self.x1)
+        self._omero_shape.x2 = rdouble(self.x2)
+        self._omero_shape.y1 = rdouble(self.y1)
+        self._omero_shape.y2 = rdouble(self.y2)
+        self.configure_shape()
+
+
+@dataclass(frozen=True)
+class Rectangle(Shape):
+    x: float = field(default=None, metadata={'units': 'PIXELS'})
+    y: float = field(default=None, metadata={'units': 'PIXELS'})
+    width: float = field(default=None, metadata={'units': 'PIXELS'})
+    height: float = field(default=None, metadata={'units': 'PIXELS'})
+    _omero_shape = RectangleI()
+
+    def __post_init_post_parse__(self):
+        if None in [self.x, self.y, self.width, self.height]:
+            raise ValueError('Not all necessary arguments are provided')
+        self._omero_shape.x = rdouble(self.x)
+        self._omero_shape.y = rdouble(self.y)
+        self._omero_shape.width = rdouble(self.width)
+        self._omero_shape.height = rdouble(self.height)
+        self.configure_shape()
+
+
+@dataclass(frozen=True)
+class Ellipse(Shape):
+    x: float = field(default=None, metadata={'units': 'PIXELS'})
+    y: float = field(default=None, metadata={'units': 'PIXELS'})
+    x_rad: float = field(default=None, metadata={'units': 'PIXELS'})
+    y_rad: float = field(default=None, metadata={'units': 'PIXELS'})
+    _omero_shape = EllipseI()
+
+    def __post_init_post_parse__(self):
+        if None in [self.x, self.y, self.x_rad, self.y_rad]:
+            raise ValueError('Not all necessary arguments are provided')
+        self._omero_shape.x = rdouble(self.x)
+        self._omero_shape.y = rdouble(self.y)
+        self._omero_shape.radiusX = rdouble(self.x_rad)
+        self._omero_shape.radiusY = rdouble(self.y_rad)
+        self.configure_shape()
+
+
+@dataclass(frozen=True)
+class Polygon(Shape):
+    points: List[Tuple[float, float]] = field(default=None, metadata={'units': 'PIXELS'})
+    _omero_shape = PolygonI()
+
+    def __post_init_post_parse__(self):
+        if self.points is None:
+            raise ValueError('Not all necessary arguments are provided')
+        points_str = "".join("".join([str(x), ',', str(y), ', ']) for x, y in self.points)[:-2]
+        self._omero_shape.points = rstring(points_str)
+        self.configure_shape()
+
 
 # posts
 def post_dataset(conn, dataset_name, project_id=None, description=None):
@@ -290,175 +403,46 @@ def post_roi(conn, image_id, shapes, name=None, description=None):
 
     Examples
     --------
-    >>> shapes = []
-    >>> point = create_shape_point(x_pos=30.6, y_pos=80.4, name='The place')
+    >>> shapes = list()
+    >>> point = Point(x=30.6, y=80.4, name='The place')
     >>> shapes.append(point)
-    >>> rectangle = create_shape_rectangle(x_pos=50,
-                                           y_pos=51,
-                                           width=90,
-                                           height=40,
-                                           z_pos=3,
-                                           fill_color=(255, 10, 10, 10),
-                                           stroke_color=(255, 20, 20, 255),
-                                           stroke_width=2)
+    >>> rectangle = Rectangle(x=50.0,
+                              y=51.3,
+                              width=90,
+                              height=40,
+                              z=3,
+                              fill_color=(255, 10, 10, 0.1),
+                              stroke_color='red',
+                              stroke_width=2)
     >>> shapes.append(rectangle)
     >>> post_roi(conn, 23, shapes, name='My Cell', description='Very important')
     234
     """
-    roi = RoiI()  # TODO: work with wrappers
-    # use the omero.model.ImageI that underlies the 'image' wrapper
+    roi = RoiI()
     if name is not None:
         roi.setName(rstring(name))
     if description is not None:
         roi.setDescription(rstring(description))
     for shape in shapes:
-        roi.addShape(shape)
+        roi.addShape(shape._omero_shape)
     image = conn.getObject('Image', image_id)
     roi.setImage(image._obj)
     roi = conn.getUpdateService().saveAndReturnObject(roi)
     return roi.getId()
 
 
-def _rgba_to_int(red, green, blue, alpha=255):
+def _rgba_to_int(color: Color):
     """ Helper function returning the color as an Integer in RGBA encoding """
-    r = red << 24
-    g = green << 16
-    b = blue << 8
-    a = alpha
+    (r, g, b, a) = color.as_rgb_tuple(alpha=True)
+    r = r << 24
+    g = g << 16
+    b = b << 8
+    a = int(a * 255)
     rgba_int = sum([r, g, b, a])
     if rgba_int > (2**31-1):  # convert to signed 32-bit int
         rgba_int = rgba_int - 2**32
 
     return rgba_int
-
-
-def _set_shape_properties(shape, name, fill_color, stroke_color, stroke_width):
-    """ Helper function to apply settings to a shape"""
-    if name:
-        shape.setTextValue(rstring(name))
-    if fill_color:
-        shape.setFillColor(rint(_rgba_to_int(*fill_color)))
-    else:
-        shape.setFillColor(rint(_rgba_to_int(10, 10, 10, 10)))
-    if stroke_color:
-        shape.setStrokeColor(rint(_rgba_to_int(*stroke_color)))
-    else:
-        shape.setStrokeColor(rint(_rgba_to_int(255, 255, 255, 255)))
-    if stroke_width:
-        shape.setStrokeWidth(LengthI(stroke_width, enums.UnitsLength.PIXEL))
-    else:
-        shape.setStrokeWidth(LengthI(1, enums.UnitsLength.PIXEL))
-
-
-def create_shape_point(x_pos, y_pos, z_pos=None, c_pos=None, t_pos=None, name=None,
-                       stroke_color=None):
-    point = PointI()
-    point.x = rdouble(x_pos)
-    point.y = rdouble(y_pos)
-    if z_pos is not None:
-        point.theZ = rint(z_pos)
-    if c_pos is not None:
-        point.theC = rint(c_pos)
-    if t_pos is not None:
-        point.theT = rint(t_pos)
-    _set_shape_properties(shape=point,
-                          name=name,
-                          stroke_color=stroke_color,
-                          fill_color=None,
-                          stroke_width=None)
-    return point
-
-
-def create_shape_line(x1_pos, y1_pos, x2_pos, y2_pos, c_pos=None, z_pos=None, t_pos=None,
-                      name=None, stroke_color=(255, 255, 255, 255), stroke_width=1):
-    line = model.LineI()
-    line.x1 = rtypes.rdouble(x1_pos)
-    line.x2 = rtypes.rdouble(x2_pos)
-    line.y1 = rtypes.rdouble(y1_pos)
-    line.y2 = rtypes.rdouble(y2_pos)
-    line.theZ = rtypes.rint(z_pos)
-    line.theT = rtypes.rint(t_pos)
-    if c_pos is not None:
-        line.theC = rtypes.rint(c_pos)
-    _set_shape_properties(line, name=name,
-                          stroke_color=stroke_color,
-                          stroke_width=stroke_width)
-    return line
-
-
-def create_shape_rectangle(x_pos, y_pos, width, height, z_pos, t_pos,
-                           rectangle_name=None,
-                           fill_color=(10, 10, 10, 255),
-                           stroke_color=(255, 255, 255, 255),
-                           stroke_width=1):
-    rect = model.RectangleI()
-    rect.x = rtypes.rdouble(x_pos)
-    rect.y = rtypes.rdouble(y_pos)
-    rect.width = rtypes.rdouble(width)
-    rect.height = rtypes.rdouble(height)
-    rect.theZ = rtypes.rint(z_pos)
-    rect.theT = rtypes.rint(t_pos)
-    _set_shape_properties(shape=rect, name=rectangle_name,
-                          fill_color=fill_color,
-                          stroke_color=stroke_color,
-                          stroke_width=stroke_width)
-    return rect
-
-
-def create_shape_ellipse(x_pos, y_pos, x_radius, y_radius, z_pos, t_pos,
-                         ellipse_name=None,
-                         fill_color=(10, 10, 10, 255),
-                         stroke_color=(255, 255, 255, 255),
-                         stroke_width=1):
-    ellipse = model.EllipseI()
-    ellipse.setX(rtypes.rdouble(x_pos))
-    ellipse.setY(rtypes.rdouble(y_pos))  # TODO: setters and getters everywhere
-    ellipse.radiusX = rtypes.rdouble(x_radius)
-    ellipse.radiusY = rtypes.rdouble(y_radius)
-    ellipse.theZ = rtypes.rint(z_pos)
-    ellipse.theT = rtypes.rint(t_pos)
-    _set_shape_properties(ellipse, name=ellipse_name,
-                          fill_color=fill_color,
-                          stroke_color=stroke_color,
-                          stroke_width=stroke_width)
-    return ellipse
-
-
-def create_shape_polygon(points_list, z_pos, t_pos,
-                         polygon_name=None,
-                         fill_color=(10, 10, 10, 255),
-                         stroke_color=(255, 255, 255, 255),
-                         stroke_width=1):
-    polygon = model.PolygonI()
-    points_str = "".join(["".join([str(x), ',', str(y), ', ']) for x, y in points_list])[:-2]
-    polygon.points = rtypes.rstring(points_str)
-    polygon.theZ = rtypes.rint(z_pos)
-    polygon.theT = rtypes.rint(t_pos)
-    _set_shape_properties(polygon, name=polygon_name,
-                          fill_color=fill_color,
-                          stroke_color=stroke_color,
-                          stroke_width=stroke_width)
-    return polygon
-
-
-def create_shape_mask(mask_array, x_pos, y_pos, z_pos, t_pos,
-                      mask_name=None,
-                      fill_color=(10, 10, 10, 255)):
-    mask = model.MaskI()
-    mask.setX(rtypes.rdouble(x_pos))
-    mask.setY(rtypes.rdouble(y_pos))
-    mask.setTheZ(rtypes.rint(z_pos))
-    mask.setTheT(rtypes.rint(t_pos))
-    mask.setWidth(rtypes.rdouble(mask_array.shape[0]))
-    mask.setHeight(rtypes.rdouble(mask_array.shape[1]))
-    mask.setFillColor(rtypes.rint(_rgba_to_int(*fill_color)))
-    if mask_name:
-        mask.setTextValue(rtypes.rstring(mask_name))
-    mask_packed = np.packbits(mask_array)  # TODO: raise error when not boolean array
-    mask.setBytes(mask_packed.tobytes())
-
-    return mask
-
 
 
 # gets
