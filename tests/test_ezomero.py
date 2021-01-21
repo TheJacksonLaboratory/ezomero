@@ -26,6 +26,12 @@ def test_post_dataset(conn, project_structure, timestamp):
     conn.deleteObjects("Dataset", [did, did2], deleteAnns=True,
                        deleteChildren=True, wait=True)
 
+    # Dataset in non-existing project ID
+    ds_test_name3 = 'test_post_dataset3_' + timestamp
+    pid = 99999999
+    did3 = ezomero.post_dataset(conn, ds_test_name3, project_id=pid)
+    assert did3 == None
+
 
 def test_post_image(conn, project_structure, timestamp, image_fixture):
     # Post image in dataset
