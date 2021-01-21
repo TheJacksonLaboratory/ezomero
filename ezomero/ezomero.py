@@ -74,9 +74,14 @@ def post_dataset(conn, dataset_name, project_id=None, description=None):
         conn.SERVICE_OPTS.setOmeroGroup('-1')
         project = conn.getObject('Project', project_id)
         if project is not None:
-            set_group(conn, project.getDetails().group.id.val)
+            ret = set_group(conn, project.getDetails().group.id.val)
+            if ret is False:
+                return None
+
         else:
             set_group(conn, current_group)
+            logging.warning(f'Project {project_id} could not be found')
+            return None
 
     dataset = DatasetWrapper(conn, DatasetI())
     dataset.setName(dataset_name)
