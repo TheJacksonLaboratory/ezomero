@@ -212,3 +212,18 @@ def project_structure(conn, timestamp, image_fixture):
             'plate': plate_id,
             'well': well_id,
             'im1': im_id1})
+
+
+@pytest.fixture(scope='session')
+def roi_fixture():
+    point = ezomero.Point(x=90, y=100)
+    red_point = ezomero.Point(x=110.4, y=100, z=10, t=0, stroke_color='red')
+    line = ezomero.Line(x1=80, y1=80, x2=120, y2=120)
+    green_line = ezomero.Line(x1=70, y1=70, x2=130, y2=130, stroke_color=(0, 255, 0))
+    rectangle = ezomero.Rectangle(x=50, y=50, width=100, height=100)
+    blue_rectangle = ezomero.Rectangle(x=70, y=70, width=60, height=60, stroke_color=(0, 0, 255), fill_color=(0, 0, 0, 0.1))
+
+    shapes = [point, red_point, line, green_line, rectangle, blue_rectangle]
+
+    return shapes
+

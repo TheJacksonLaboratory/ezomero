@@ -13,10 +13,16 @@ from pydantic.dataclasses import dataclass
 from pydantic.color import Color
 
 #expose functions for import
-__all__ = ["post_dataset",
+__all__ = ["Point",
+           "Line",
+           "Rectangle",
+           "Ellipse",
+           "Polygon",
+           "post_dataset",
            "post_image",
            "post_map_annotation",
            "post_project",
+           "post_roi",
            "get_image",
            "get_image_ids",
            "get_map_annotation_ids",
@@ -428,7 +434,7 @@ def post_roi(conn, image_id, shapes, name=None, description=None):
     image = conn.getObject('Image', image_id)
     roi.setImage(image._obj)
     roi = conn.getUpdateService().saveAndReturnObject(roi)
-    return roi.getId()
+    return roi.getId().getValue()
 
 
 def _rgba_to_int(color: Color):

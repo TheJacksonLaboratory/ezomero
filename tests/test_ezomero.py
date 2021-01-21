@@ -10,7 +10,7 @@ def test_omero_connection(conn, omero_params):
 # Test posts
 ############
 def test_post_dataset(conn, project_structure, timestamp):
-    # Orphaned dataset, with descripion
+    # Orphaned dataset, with description
     ds_test_name = 'test_post_dataset_' + timestamp
     did = ezomero.post_dataset(conn, ds_test_name, description='New test')
     assert conn.getObject("Dataset", did).getName() == ds_test_name
@@ -75,6 +75,14 @@ def test_post_project_type(conn):
         _ = ezomero.post_project(conn, 123)
     with pytest.raises(TypeError):
         _ = ezomero.post_project(conn, '123', description=1245)
+
+
+def test_post_roi(conn, project_structure, roi_fixture):
+    im_id = project_structure['im']
+    roi_id = ezomero.post_roi(conn, im_id, roi_fixture)
+    roi_in_omero = conn.getObject('Roi', roi_id)
+    conn.deleteObjects("Roi", [roi_in_omero], deleteAnns=True,
+                       deleteChildren=True, wait=True)
 
 
 # Test gets
