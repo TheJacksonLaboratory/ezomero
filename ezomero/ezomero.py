@@ -8,16 +8,13 @@ from omero.rtypes import rlong, rstring, rint, rdouble
 from omero.sys import Parameters
 from abc import ABC
 from dataclasses import field
-from typing import List, Tuple
+from typing import List, Tuple, Any
 from pydantic.dataclasses import dataclass
 from pydantic.color import Color
+from pydantic import BaseModel, PrivateAttr, Field
 
 #expose functions for import
 __all__ = ["Point",
-           "Line",
-           "Rectangle",
-           "Ellipse",
-           "Polygon",
            "post_dataset",
            "post_image",
            "post_map_annotation",
@@ -42,17 +39,7 @@ __all__ = ["Point",
 
 
 # classes
-@dataclass(frozen=True)
 class Shape(ABC):
-    z: int = field(default=None)
-    c: int = field(default=None)
-    t: int = field(default=None)
-    name: str = field(default=None)
-    fill_color: Color = field(default=Color((10, 10, 10, 0.1)))
-    stroke_color: Color = field(default=Color((255, 255, 255, 1.0)))
-    stroke_width: int = field(default=1)
-    label: str = field(default=None)
-
     def configure_shape(self):
         if self.z is not None:
             self._omero_shape.theZ = rint(self.z)
@@ -60,8 +47,8 @@ class Shape(ABC):
             self._omero_shape.theC = rint(self.c)
         if self.t is not None:
             self._omero_shape.theT = rint(self.t)
-        if self.name is not None:
-            self._omero_shape.setTextValue(rstring(self.name))
+        if self.label is not None:
+            self._omero_shape.setTextValue(rstring(self.label))
         self._omero_shape.setFillColor(rint(_rgba_to_int(self.fill_color)))
         self._omero_shape.setStrokeColor(rint(_rgba_to_int(self.stroke_color)))
         self._omero_shape.setStrokeWidth(LengthI(self.stroke_width, enums.UnitsLength.PIXEL))
@@ -69,13 +56,18 @@ class Shape(ABC):
 
 @dataclass(frozen=True)
 class Point(Shape):
-    x: float = field(default=None, metadata={'units': 'PIXELS'})
-    y: float = field(default=None, metadata={'units': 'PIXELS'})
-    _omero_shape = PointI()
+    x: float = field(metadata={'units': 'PIXELS'})
+    y: float = field(metadata={'units': 'PIXELS'})
+    z: int = field(default=None)
+    c: int = field(default=None)
+    t: int = field(default=None)
+    fill_color: Color = field(default=Color((10, 10, 10, 0.1)))
+    stroke_color: Color = field(default=Color((255, 255, 255, 1.0)))
+    stroke_width: int = field(default=1)
+    label: str = field(default=None)
 
     def __post_init_post_parse__(self):
-        if None in [self.x, self.y]:
-            raise ValueError('Not all necessary arguments are provided')
+        super().__setattr__('_omero_shape', PointI())
         self._omero_shape.x = rdouble(self.x)
         self._omero_shape.y = rdouble(self.y)
         self.configure_shape()
@@ -83,15 +75,20 @@ class Point(Shape):
 
 @dataclass(frozen=True)
 class Line(Shape):
-    x1: float = field(default=None, metadata={'units': 'PIXELS'})
-    y1: float = field(default=None, metadata={'units': 'PIXELS'})
-    x2: float = field(default=None, metadata={'units': 'PIXELS'})
-    y2: float = field(default=None, metadata={'units': 'PIXELS'})
-    _omero_shape = LineI()
+    x1: float = field(metadata={'units': 'PIXELS'})
+    y1: float = field(metadata={'units': 'PIXELS'})
+    x2: float = field(metadata={'units': 'PIXELS'})
+    y2: float = field(metadata={'units': 'PIXELS'})
+    z: int = field(default=None)
+    c: int = field(default=None)
+    t: int = field(default=None)
+    fill_color: Color = field(default=Color((10, 10, 10, 0.1)))
+    stroke_color: Color = field(default=Color((255, 255, 255, 1.0)))
+    stroke_width: int = field(default=1)
+    label: str = field(default=None)
 
     def __post_init_post_parse__(self):
-        if None in [self.x1, self.x2, self.y1, self.y2]:
-            raise ValueError('Not all necessary arguments are provided')
+        super().__setattr__('_omero_shape', LineI())
         self._omero_shape.x1 = rdouble(self.x1)
         self._omero_shape.x2 = rdouble(self.x2)
         self._omero_shape.y1 = rdouble(self.y1)
@@ -101,15 +98,20 @@ class Line(Shape):
 
 @dataclass(frozen=True)
 class Rectangle(Shape):
-    x: float = field(default=None, metadata={'units': 'PIXELS'})
-    y: float = field(default=None, metadata={'units': 'PIXELS'})
-    width: float = field(default=None, metadata={'units': 'PIXELS'})
-    height: float = field(default=None, metadata={'units': 'PIXELS'})
-    _omero_shape = RectangleI()
+    x: float = field(metadata={'units': 'PIXELS'})
+    y: float = field(metadata={'units': 'PIXELS'})
+    width: float = field(metadata={'units': 'PIXELS'})
+    height: float = field(metadata={'units': 'PIXELS'})
+    z: int = field(default=None)
+    c: int = field(default=None)
+    t: int = field(default=None)
+    fill_color: Color = field(default=Color((10, 10, 10, 0.1)))
+    stroke_color: Color = field(default=Color((255, 255, 255, 1.0)))
+    stroke_width: int = field(default=1)
+    label: str = field(default=None)
 
     def __post_init_post_parse__(self):
-        if None in [self.x, self.y, self.width, self.height]:
-            raise ValueError('Not all necessary arguments are provided')
+        super().__setattr__('_omero_shape', RectangleI())
         self._omero_shape.x = rdouble(self.x)
         self._omero_shape.y = rdouble(self.y)
         self._omero_shape.width = rdouble(self.width)
@@ -119,15 +121,20 @@ class Rectangle(Shape):
 
 @dataclass(frozen=True)
 class Ellipse(Shape):
-    x: float = field(default=None, metadata={'units': 'PIXELS'})
-    y: float = field(default=None, metadata={'units': 'PIXELS'})
-    x_rad: float = field(default=None, metadata={'units': 'PIXELS'})
-    y_rad: float = field(default=None, metadata={'units': 'PIXELS'})
-    _omero_shape = EllipseI()
+    x: float = field(metadata={'units': 'PIXELS'})
+    y: float = field(metadata={'units': 'PIXELS'})
+    x_rad: float = field(metadata={'units': 'PIXELS'})
+    y_rad: float = field(metadata={'units': 'PIXELS'})
+    z: int = field(default=None)
+    c: int = field(default=None)
+    t: int = field(default=None)
+    fill_color: Color = field(default=Color((10, 10, 10, 0.1)))
+    stroke_color: Color = field(default=Color((255, 255, 255, 1.0)))
+    stroke_width: int = field(default=1)
+    label: str = field(default=None)
 
     def __post_init_post_parse__(self):
-        if None in [self.x, self.y, self.x_rad, self.y_rad]:
-            raise ValueError('Not all necessary arguments are provided')
+        super().__setattr__('_omero_shape', EllipseI())
         self._omero_shape.x = rdouble(self.x)
         self._omero_shape.y = rdouble(self.y)
         self._omero_shape.radiusX = rdouble(self.x_rad)
@@ -137,12 +144,17 @@ class Ellipse(Shape):
 
 @dataclass(frozen=True)
 class Polygon(Shape):
-    points: List[Tuple[float, float]] = field(default=None, metadata={'units': 'PIXELS'})
-    _omero_shape = PolygonI()
+    points: List[Tuple[float, float]] = field(metadata={'units': 'PIXELS'})
+    z: int = field(default=None)
+    c: int = field(default=None)
+    t: int = field(default=None)
+    fill_color: Color = field(default=Color((10, 10, 10, 0.1)))
+    stroke_color: Color = field(default=Color((255, 255, 255, 1.0)))
+    stroke_width: int = field(default=1)
+    label: str = field(default=None)
 
     def __post_init_post_parse__(self):
-        if self.points is None:
-            raise ValueError('Not all necessary arguments are provided')
+        super().__setattr__('_omero_shape', PolygonI())
         points_str = "".join("".join([str(x), ',', str(y), ', ']) for x, y in self.points)[:-2]
         self._omero_shape.points = rstring(points_str)
         self.configure_shape()
