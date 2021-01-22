@@ -39,6 +39,17 @@ __all__ = ["Point",
 
 # classes
 class Shape(ABC):
+    """
+    An abstract base class used to process data related to shapes.
+    This class should not be instantiated. Shapes should inherit from it
+
+    ...
+
+    Methods
+    ----------
+    configure_shape()
+    Does the configuration of extra arguments on the omero shape
+    """
     def configure_shape(self):
         if self.z is not None:
             self._omero_shape.theZ = rint(self.z)
@@ -55,6 +66,40 @@ class Shape(ABC):
 
 @dataclass(frozen=True)
 class Point(Shape):
+    """
+    A dataclass used to represent a Point shape and create an OMERO equivalent.
+    This dataclass is frozen and should not be modified after instantiation
+
+    ...
+
+    Attributes
+    ----------
+    x: float
+        the x axis position of the point shape in pixels
+    y: float
+        the y axis position of the point shape in pixels
+    z: int, optional
+        the z position of the point in pixels (default is None)
+        Note this is the z plane to which the shape is linked and not the sub-voxel resolution position of your shape
+        If None (the default) is provided, it will not be linked to any z plane
+    c: int, optional
+        the channel index to which the shape is linked (default is None)
+        If None (the default) is provided, it will not be linked to any channel
+    t: int, optional
+        the time frame to which the shape is linked (default is None)
+        If None (the default) is provided, it will not be linked to any time frame
+    fill_color: pydantic Color type, optional
+        the color fill of the shape (default is (10, 10, 10, 0.1))
+        Colors can be specified as a name, a hexadecimal value, RGB/RGBA tuples, RGB/RGBA strings or HSL strings
+        https://pydantic-docs.helpmanual.io/usage/types/#color-type
+    stroke_color: Color, optional
+        the color of the shape edge (default is (255, 255, 255, 1.0))
+    stroke_width: int, optional
+        the width of the shape stroke (default is 1)
+    label: str, optional
+        the label of the shape (default is None)
+    """
+
     x: float = field(metadata={'units': 'PIXELS'})
     y: float = field(metadata={'units': 'PIXELS'})
     z: int = field(default=None)
@@ -74,6 +119,44 @@ class Point(Shape):
 
 @dataclass(frozen=True)
 class Line(Shape):
+    """
+    A dataclass used to represent a Line shape and create an OMERO equivalent.
+    This dataclass is frozen and should not be modified after instantiation
+
+    ...
+
+    Attributes
+    ----------
+    x1: float
+        the x axis position of the start point of the line shape in pixels
+    y1: float
+        the y axis position of the start point of the line shape in pixels
+    x2: float
+        the x axis position of the end point of the line shape in pixels
+    y2: float
+        the y axis position of the end point of the line shape in pixels
+    z: int, optional
+        the z position of the point in pixels (default is None)
+        Note this is the z plane to which the shape is linked and not the sub-voxel resolution position of your shape
+        If None (the default) is provided, it will not be linked to any z plane
+    c: int, optional
+        the channel index to which the shape is linked (default is None)
+        If None (the default) is provided, it will not be linked to any channel
+    t: int, optional
+        the time frame to which the shape is linked (default is None)
+        If None (the default) is provided, it will not be linked to any time frame
+    fill_color: pydantic Color type, optional
+        the color fill of the shape (default is (10, 10, 10, 0.1))
+        Colors can be specified as a name, a hexadecimal value, RGB/RGBA tuples, RGB/RGBA strings or HSL strings
+        https://pydantic-docs.helpmanual.io/usage/types/#color-type
+    stroke_color: Color, optional
+        the color of the shape edge (default is (255, 255, 255, 1.0))
+    stroke_width: int, optional
+        the width of the shape stroke (default is 1)
+    label: str, optional
+        the label of the shape (default is None)
+    """
+
     x1: float = field(metadata={'units': 'PIXELS'})
     y1: float = field(metadata={'units': 'PIXELS'})
     x2: float = field(metadata={'units': 'PIXELS'})
@@ -97,6 +180,44 @@ class Line(Shape):
 
 @dataclass(frozen=True)
 class Rectangle(Shape):
+    """
+    A dataclass used to represent a Rectangle shape and create an OMERO equivalent.
+    This dataclass is frozen and should not be modified after instantiation
+
+    ...
+
+    Attributes
+    ----------
+    x: float
+        the x axis position of the rectangle shape in pixels
+    y: float
+        the y axis position of the rectangle shape in pixels
+    width: float
+        the width (x axis) of the rectangle shape in pixels
+    height: float
+        the height (y axis) of the rectangle shape in pixels
+    z: int, optional
+        the z position of the point in pixels (default is None)
+        Note this is the z plane to which the shape is linked and not the sub-voxel resolution position of your shape
+        If None (the default) is provided, it will not be linked to any z plane
+    c: int, optional
+        the channel index to which the shape is linked (default is None)
+        If None (the default) is provided, it will not be linked to any channel
+    t: int, optional
+        the time frame to which the shape is linked (default is None)
+        If None (the default) is provided, it will not be linked to any time frame
+    fill_color: pydantic Color type, optional
+        the color fill of the shape (default is (10, 10, 10, 0.1))
+        Colors can be specified as a name, a hexadecimal value, RGB/RGBA tuples, RGB/RGBA strings or HSL strings
+        https://pydantic-docs.helpmanual.io/usage/types/#color-type
+    stroke_color: Color, optional
+        the color of the shape edge (default is (255, 255, 255, 1.0))
+    stroke_width: int, optional
+        the width of the shape stroke (default is 1)
+    label: str, optional
+        the label of the shape (default is None)
+    """
+
     x: float = field(metadata={'units': 'PIXELS'})
     y: float = field(metadata={'units': 'PIXELS'})
     width: float = field(metadata={'units': 'PIXELS'})
@@ -120,6 +241,44 @@ class Rectangle(Shape):
 
 @dataclass(frozen=True)
 class Ellipse(Shape):
+    """
+    A dataclass used to represent an Ellipse shape and create an OMERO equivalent.
+    This dataclass is frozen and should not be modified after instantiation
+
+    ...
+
+    Attributes
+    ----------
+    x: float
+        the x axis position of the ellipse shape in pixels
+    y: float
+        the y axis position of the ellipse shape in pixels
+    x-rad: float
+        the x radius of the ellipse shape in pixels
+    y-rad: float
+        the y radius of the ellipse shape in pixels
+    z: int, optional
+        the z position of the point in pixels (default is None)
+        Note this is the z plane to which the shape is linked and not the sub-voxel resolution position of your shape
+        If None (the default) is provided, it will not be linked to any z plane
+    c: int, optional
+        the channel index to which the shape is linked (default is None)
+        If None (the default) is provided, it will not be linked to any channel
+    t: int, optional
+        the time frame to which the shape is linked (default is None)
+        If None (the default) is provided, it will not be linked to any time frame
+    fill_color: pydantic Color type, optional
+        the color fill of the shape (default is (10, 10, 10, 0.1))
+        Colors can be specified as a name, a hexadecimal value, RGB/RGBA tuples, RGB/RGBA strings or HSL strings
+        https://pydantic-docs.helpmanual.io/usage/types/#color-type
+    stroke_color: Color, optional
+        the color of the shape edge (default is (255, 255, 255, 1.0))
+    stroke_width: int, optional
+        the width of the shape stroke (default is 1)
+    label: str, optional
+        the label of the shape (default is None)
+    """
+
     x: float = field(metadata={'units': 'PIXELS'})
     y: float = field(metadata={'units': 'PIXELS'})
     x_rad: float = field(metadata={'units': 'PIXELS'})
@@ -143,6 +302,38 @@ class Ellipse(Shape):
 
 @dataclass(frozen=True)
 class Polygon(Shape):
+    """
+    A dataclass used to represent a Polygon shape and create an OMERO equivalent.
+    This dataclass is frozen and should not be modified after instantiation
+
+    ...
+
+    Attributes
+    ----------
+    points: list of tuples of 2 floats
+        a list of 2 element tuples corresponding to the (x, y) coordinates of each vertex of the polygon
+    z: int, optional
+        the z position of the point in pixels (default is None)
+        Note this is the z plane to which the shape is linked and not the sub-voxel resolution position of your shape
+        If None (the default) is provided, it will not be linked to any z plane
+    c: int, optional
+        the channel index to which the shape is linked (default is None)
+        If None (the default) is provided, it will not be linked to any channel
+    t: int, optional
+        the time frame to which the shape is linked (default is None)
+        If None (the default) is provided, it will not be linked to any time frame
+    fill_color: pydantic Color type, optional
+        the color fill of the shape (default is (10, 10, 10, 0.1))
+        Colors can be specified as a name, a hexadecimal value, RGB/RGBA tuples, RGB/RGBA strings or HSL strings
+        https://pydantic-docs.helpmanual.io/usage/types/#color-type
+    stroke_color: Color, optional
+        the color of the shape edge (default is (255, 255, 255, 1.0))
+    stroke_width: int, optional
+        the width of the shape stroke (default is 1)
+    label: str, optional
+        the label of the shape (default is None)
+    """
+
     points: List[Tuple[float, float]] = field(metadata={'units': 'PIXELS'})
     z: int = field(default=None)
     c: int = field(default=None)
