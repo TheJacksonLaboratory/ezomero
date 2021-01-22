@@ -14,6 +14,10 @@ from pydantic.color import Color
 
 #expose functions for import
 __all__ = ["Point",
+           "Line",
+           "Rectangle",
+           "Ellipse",
+           "Polygon",
            "post_dataset",
            "post_image",
            "post_map_annotation",
