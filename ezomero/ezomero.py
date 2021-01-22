@@ -1,10 +1,14 @@
 import logging
+import os
 import numpy as np
+import yaml
+from getpass import getpass
 from omero.gateway import MapAnnotationWrapper, DatasetWrapper, ProjectWrapper
 from omero.model import MapAnnotationI, DatasetI, ProjectI, ProjectDatasetLinkI
 from omero.model import DatasetImageLinkI, ImageI, ExperimenterI
 from omero.rtypes import rlong, rstring
 from omero.sys import Parameters
+from pathlib import Path
 
 #expose functions for import
 __all__ = ["post_dataset",
@@ -928,6 +932,112 @@ def print_datasets(conn, project=None):
 
 
 # functions for managing connection context and service options.
+
+def ezconnect(user=None, password=None, group=None, host=None, port=None,
+              secure=None, config_path=None):
+    """Create an OMERO connection
+
+    This function will create an OMERO connection by populating certain
+    parameters for ``omero.gateway.BlitzGateway`` initialization by the
+    procedure described in the notes below.
+
+    Parameters
+    ----------
+    user : str
+
+    password : str
+
+    group : str
+
+    host : str
+
+    port : int
+
+    secure : boolean
+
+    config_path : str
+
+    Returns
+    -------
+    conn : ``omero.gateway.BlitzGateway`` object
+        OMERO connection.
+
+    Notes
+    -----
+    The procedure for choosing parameters for ``omero.gateway.BlitzGateway``
+    initialization is as follows:
+
+    1) Any parameters given to `ezconnect` will be used to initialize
+       ``omero.gateway.BlitzGateway`` 
+
+    2) If a parameter is not given to `ezconnect`, populate from variables
+       in ``os.environ``:
+        OMERO_USER
+        OMERO_PASS
+        OMERO_GROUP
+        OMERO_HOST
+        OMERO_PORT
+        OMERO_SECURE
+
+    3) If environment variables are not set, try to load from a config file.
+       This file should be called '.ezomero'. By default, this function will
+       look in the home directory, but ``config_path`` can be used to specify
+       a directory in which to look for '.ezomero'.
+
+       The function ``ezomero.store_connection_params`` can be used to create
+       the '.ezomero' file.
+
+       Note that passwords can not be loaded from the '.ezomero' file. This is
+       to discourage storing credentials in a file as cleartext.
+
+    4) If any remaining parameters have not been set by the above steps, the
+       user is prompted to enter a value for each unset parameter.
+    """
+    # load from .ezomero config file if it exists
+    if config_path is None:
+        config_fp = Path.home() / '.ezomero'
+    elif type(config_path) is str:
+        config_fp = Path(config_path) / '.ezomero'
+    else:
+        raise TypeError('config_path must be a string')
+
+    if config_fp.exists():
+        with config_fp.open() as fp:
+            config_dict = yaml.load(fp)
+    else:
+        config_dict = {}
+    
+    # Set user
+    if user is None:
+        user = config_dict.get("OMERO_USER", user)
+        user = os.environ.get("OMERO_USER", user)
+    if user is None:
+        user = input('Enter username: ')
+    
+    # Set password
+    if password is None:
+        password = os.environ.get("OMERO_PASS", None)
+    if password is None:
+        password = getpass('Enter password: ')
+
+    group = config_dict.get("OMERO_GROUP", group) 
+    host = config_dict.get("OMERO_HOST", host)
+    port = config_dict.get("OMERO_HOST", port)
+    secure = config_dict.get("OMERO_SECURE", secure) 
+
+        
+
+
+    
+    group = os.environ.get("OMERO_GROUP", None)
+    host = os.environ.get("OMERO_HOST", None)
+    port = os.environ.get("OMERO_PORT", None)
+    secure = os.environ.get("OMERO_SECURE", None)
+
+
+    if 
+
+
 
 def set_group(conn, group_id):
     """Safely switch OMERO group.
