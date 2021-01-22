@@ -81,6 +81,7 @@ def test_post_roi(conn, project_structure, roi_fixture):
     im_id = project_structure['im']
     roi_id = ezomero.post_roi(conn, im_id, roi_fixture)
     roi_in_omero = conn.getObject('Roi', roi_id)
+    assert roi_in_omero.sizeOfShapes == len(roi_fixture)
     conn.deleteObjects("Roi", [roi_in_omero], deleteAnns=True,
                        deleteChildren=True, wait=True)
 
