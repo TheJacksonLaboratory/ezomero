@@ -3,6 +3,7 @@ import os
 import numpy as np
 import yaml
 from getpass import getpass
+from omero.gateway import BlitzGateway
 from omero.gateway import MapAnnotationWrapper, DatasetWrapper, ProjectWrapper
 from omero.model import MapAnnotationI, DatasetI, ProjectI, ProjectDatasetLinkI
 from omero.model import DatasetImageLinkI, ImageI, ExperimenterI
@@ -940,28 +941,39 @@ def ezconnect(user=None, password=None, group=None, host=None, port=None,
 
     This function will create an OMERO connection by populating certain
     parameters for ``omero.gateway.BlitzGateway`` initialization by the
-    procedure described in the notes below.
+    procedure described in the notes below. Note that this function may
+    ask for user input, so be cautious if using in the context of a script.
 
     Parameters
     ----------
     user : str
+        OMERO username.
 
     password : str
+        OMERO password.
 
     group : str
+        OMERO group.
 
     host : str
+        OMERO.server host.
 
     port : int
+        OMERO port.
 
     secure : boolean
+        Whether to create a secure session.
 
     config_path : str
+        Path to directory containing '.ezomero' file that stores connection
+        information. Defaults to the home directory as determined by Python's
+        ``pathlib``.
 
     Returns
     -------
-    conn : ``omero.gateway.BlitzGateway`` object
-        OMERO connection.
+    conn : ``omero.gateway.BlitzGateway`` object or None
+        OMERO connection, if successful. Otherwise an error is logged and
+        returns None.
 
     Notes
     -----
@@ -1026,7 +1038,9 @@ def ezconnect(user=None, password=None, group=None, host=None, port=None,
         group = config_dict.get("OMERO_GROUP", group)
         group = os.environ.get("OMERO_GROUP", group)
     if group is None:
-        group = input('Enter group name: ')
+        group = input('Enter group name (or leave blank for default group): ')
+        if group == "":
+            group = None
 
     # set host
     if host is None:
@@ -1055,6 +1069,71 @@ def ezconnect(user=None, password=None, group=None, host=None, port=None,
         else:
             raise ValueError('secure must be set to either True or False')
 
+    # create connection
+    conn = BlitzGateway(user, password, group=group, host=host, port=port,
+                        secure=secure)
+    if conn.connect():
+        return conn
+    else:
+        logging.error('Could not connect, check your connection information')
+        return None
+
+
+def store_connection_params(user=None, group=None, host=None, port=None,
+                            secure=None, config_path=None):
+    """Save OMERO connection parameters in a file.
+
+    This function creates a yaml-formatted text file ('.ezomero') in which
+    certain OMERO parameters are stored, to make it easier to create
+    ``omero.gateway.BlitzGateway`` objects.
+
+    Parameters
+    ----------
+    user : str
+        OMERO username.
+
+    group : str
+        OMERO group.
+
+    host : str
+        OMERO.server host.
+
+    port : int
+        OMERO port.
+
+    secure : boolean
+        Whether to create a secure session.
+
+    config_path : str
+        Path to directory that will contain the '.ezomero' file. Defaults to
+        the home directory as determined by Python's ``pathlib``.
+    """
+    if not config_path.is_dir():
+        raise ValueError('config_path must be a valid directory')
+    ezo_file = Path(config_path) / '.ezomero'
+    if ezo_file.exists():
+        resp = input(f'{ezo_file} already exists. Overwrite? (Y/N)')
+        if resp.lower() not in ['yes', 'y']:
+            return
+
+    if user is None:
+        user = input('Enter username: ')
+    if group is None:
+        group = input('Enter group name (or leave blank for default group): ')
+        if group == "":
+            group = None
+    if host is None:
+        host = input('Enter host: ') 
+    if port is None:
+        port = int(input('Enter port: '))
+    if secure is None:
+        secure_str = input('Secure session (True or False): ')
+        if secure_str.lower() in ["true", "t"]:
+            secure = True
+        elif secure_str.lower() in ["false", "f"]:
+            secure = False
+        else:
+            raise ValueError('secure must be set to either True or False')    
 
 def set_group(conn, group_id):
     """Safely switch OMERO group.
