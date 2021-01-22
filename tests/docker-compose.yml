@@ -24,8 +24,8 @@ services:
     networks:
       - omero
     ports:
-      - "4063:4063"
-      - "4064:4064"
+      - "6063:4063"
+      - "6064:4064"
     volumes:
       - "omero:/OMERO"
 
