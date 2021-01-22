@@ -10,7 +10,7 @@ from omero.rtypes import rlong, rstring
 from omero.sys import Parameters
 from pathlib import Path
 
-#expose functions for import
+# expose functions for import
 __all__ = ["post_dataset",
            "post_image",
            "post_map_annotation",
@@ -31,6 +31,7 @@ __all__ = ["post_dataset",
            "print_projects",
            "print_datasets",
            "set_group"]
+
 
 # posts
 def post_dataset(conn, dataset_name, project_id=None, description=None):
@@ -968,7 +969,7 @@ def ezconnect(user=None, password=None, group=None, host=None, port=None,
     initialization is as follows:
 
     1) Any parameters given to `ezconnect` will be used to initialize
-       ``omero.gateway.BlitzGateway`` 
+       ``omero.gateway.BlitzGateway``
 
     2) If a parameter is not given to `ezconnect`, populate from variables
        in ``os.environ``:
@@ -1006,37 +1007,53 @@ def ezconnect(user=None, password=None, group=None, host=None, port=None,
             config_dict = yaml.load(fp)
     else:
         config_dict = {}
-    
-    # Set user
+
+    # set user
     if user is None:
         user = config_dict.get("OMERO_USER", user)
         user = os.environ.get("OMERO_USER", user)
     if user is None:
         user = input('Enter username: ')
-    
-    # Set password
+
+    # set password
     if password is None:
-        password = os.environ.get("OMERO_PASS", None)
+        password = os.environ.get("OMERO_PASS", password)
     if password is None:
         password = getpass('Enter password: ')
 
-    group = config_dict.get("OMERO_GROUP", group) 
-    host = config_dict.get("OMERO_HOST", host)
-    port = config_dict.get("OMERO_HOST", port)
-    secure = config_dict.get("OMERO_SECURE", secure) 
+    # set group
+    if group is None:
+        group = config_dict.get("OMERO_GROUP", group)
+        group = os.environ.get("OMERO_GROUP", group)
+    if group is None:
+        group = input('Enter group name: ')
 
-        
+    # set host
+    if host is None:
+        host = config_dict.get("OMERO_HOST", host)
+        host = os.environ.get("OMERO_HOST", host)
+    if host is None:
+        host = input('Enter host: ')
 
+    # set port
+    if port is None:
+        port = config_dict.get("OMERO_HOST", port)
+        port = os.environ.get("OMERO_PORT", port)
+    if port is None:
+        port = int(input('Enter port: '))
 
-    
-    group = os.environ.get("OMERO_GROUP", None)
-    host = os.environ.get("OMERO_HOST", None)
-    port = os.environ.get("OMERO_PORT", None)
-    secure = os.environ.get("OMERO_SECURE", None)
-
-
-    if 
-
+    # set session security
+    if secure is None:
+        secure = config_dict.get("OMERO_SECURE", secure)
+        secure = os.environ.get("OMERO_SECURE", secure)
+    if secure is None:
+        secure_str = input('Secure session (True or False): ')
+        if secure_str.lower() in ["true", "t"]:
+            secure = True
+        elif secure_str.lower() in ["false", "f"]:
+            secure = False
+        else:
+            raise ValueError('secure must be set to either True or False')
 
 
 def set_group(conn, group_id):
