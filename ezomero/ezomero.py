@@ -8,10 +8,9 @@ from omero.rtypes import rlong, rstring, rint, rdouble
 from omero.sys import Parameters
 from abc import ABC
 from dataclasses import field
-from typing import List, Tuple, Any
+from typing import List, Tuple
 from pydantic.dataclasses import dataclass
 from pydantic.color import Color
-from pydantic import BaseModel, PrivateAttr, Field
 
 #expose functions for import
 __all__ = ["Point",
