@@ -616,13 +616,14 @@ def post_roi(conn, image_id, shapes, name=None, description=None):
     Examples
     --------
     >>> shapes = list()
-    >>> point = Point(x=30.6, y=80.4, name='The place')
+    >>> point = Point(x=30.6, y=80.4)
     >>> shapes.append(point)
     >>> rectangle = Rectangle(x=50.0,
                               y=51.3,
                               width=90,
                               height=40,
                               z=3,
+                              label='The place',
                               fill_color=(255, 10, 10, 0.1),
                               stroke_color='red',
                               stroke_width=2)
