@@ -31,6 +31,8 @@ __all__ = ["post_dataset",
            "print_groups",
            "print_projects",
            "print_datasets",
+           "connect",
+           "store_connection_params",
            "set_group"]
 
 
@@ -935,7 +937,7 @@ def print_datasets(conn, project=None):
 
 # functions for managing connection context and service options.
 
-def ezconnect(user=None, password=None, group=None, host=None, port=None,
+def connect(user=None, password=None, group=None, host=None, port=None,
               secure=None, config_path=None):
     """Create an OMERO connection
 
@@ -1043,8 +1045,8 @@ def ezconnect(user=None, password=None, group=None, host=None, port=None,
         group = os.environ.get("OMERO_GROUP", group)
     if group is None:
         group = input('Enter group name (or leave blank for default group): ')
-        if group == "":
-            group = None
+    if group == "":
+        group = None
 
     # set host
     if host is None:
@@ -1055,24 +1057,24 @@ def ezconnect(user=None, password=None, group=None, host=None, port=None,
 
     # set port
     if port is None:
-        port = config_dict.getint("OMERO_HOST", port)
-        port = int(os.environ.get("OMERO_PORT", port))
+        port = config_dict.get("OMERO_PORT", port)
+        port = os.environ.get("OMERO_PORT", port)
     if port is None:
-        port = int(input('Enter port: '))
+        port = input('Enter port: ')
+    port = int(port)
 
     # set session security
     if secure is None:
-        secure = config_dict.getboolean("OMERO_SECURE", secure)
+        secure = config_dict.get("OMERO_SECURE", secure)
         secure = os.environ.get("OMERO_SECURE", secure)
     if secure is None:
         secure = input('Secure session (True or False): ')
-    if type(secure) is str:
-        if secure.lower() in ["true", "t"]:
-            secure = True
-        elif secure.lower() in ["false", "f"]:
-            secure = False
-        else:
-            raise ValueError('secure must be set to either True or False')
+    if secure.lower() in ["true", "t"]:
+        secure = True
+    elif secure.lower() in ["false", "f"]:
+        secure = False
+    else:
+        raise ValueError('secure must be set to either True or False')
 
     # create connection
     conn = BlitzGateway(user, password, group=group, host=host, port=port,
@@ -1080,7 +1082,7 @@ def ezconnect(user=None, password=None, group=None, host=None, port=None,
     if conn.connect():
         return conn
     else:
-        logging.error('Could not connect, check your connection information')
+        logging.error('Could not connect, check your settings')
         return None
 
 
@@ -1133,8 +1135,8 @@ def store_connection_params(user=None, group=None, host=None, port=None,
         user = input('Enter username: ')
     if group is None:
         group = input('Enter group name (or leave blank for default group): ')
-        if group == "":
-            group = None
+#        if group == "":
+#            group = "None"
     if host is None:
         host = input('Enter host: ')
     if port is None:
@@ -1158,7 +1160,7 @@ def store_connection_params(user=None, group=None, host=None, port=None,
                          'OMERO_SECURE': secure}
     with ezo_file.open('w') as configfile:
         config.write(configfile)
-        print(f'Connection settings saved to {configfile}')
+        print(f'Connection settings saved to {ezo_file}')
 
 
 def set_group(conn, group_id):
