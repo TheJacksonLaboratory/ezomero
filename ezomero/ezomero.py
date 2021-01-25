@@ -938,7 +938,7 @@ def print_datasets(conn, project=None):
 # functions for managing connection context and service options.
 
 def connect(user=None, password=None, group=None, host=None, port=None,
-              secure=None, config_path=None):
+            secure=None, config_path=None):
     """Create an OMERO connection
 
     This function will create an OMERO connection by populating certain
@@ -1090,7 +1090,7 @@ def store_connection_params(user=None, group=None, host=None, port=None,
                             secure=None, config_path=None):
     """Save OMERO connection parameters in a file.
 
-    This function creates a yaml-formatted text file ('.ezomero') in which
+    This function creates a config file ('.ezomero') in which
     certain OMERO parameters are stored, to make it easier to create
     ``omero.gateway.BlitzGateway`` objects.
 
