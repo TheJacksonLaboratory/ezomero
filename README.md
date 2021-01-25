@@ -17,7 +17,7 @@ In general, you will need to create a `BlitzGateway` object using `omero-py`, su
 
 ### `post_dataset(conn, dataset_name, project_id, description)`
 
-Creates a new dataset. Returns a (new) dataset ID.
+Creates a new dataset. Returns a (new) dataset ID. `project_id` does not need to be in the same group as the user's default group.
 
 ### `post_image(conn, image, image_name, description=None, dataset_id=None, source_image_id=None, channel_list=None)`
 
