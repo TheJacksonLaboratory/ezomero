@@ -5,6 +5,7 @@ from omero.model import MapAnnotationI, DatasetI, ProjectI, ProjectDatasetLinkI
 from omero.model import DatasetImageLinkI, ImageI, ExperimenterI
 from omero.rtypes import rlong, rstring
 from omero.sys import Parameters
+import inspect
 
 #expose functions for import
 __all__ = ["post_dataset",
@@ -28,8 +29,37 @@ __all__ = ["post_dataset",
            "print_datasets",
            "set_group"]
 
+
+def get_default_args(func):
+    signature = inspect.signature(func)
+    return {
+        k: v.default
+        for k, v in signature.parameters.items()
+        if v.default is not inspect.Parameter.empty
+    }
+
+
+def do_across_groups(f):
+    def wrapper(*args, **kwargs):
+        defaults = get_default_args(f)
+        if defaults['across_groups'] or kwargs['across_groups']:
+            current_group = args[0].getGroupFromContext().getId()
+            args[0].SERVICE_OPTS.setOmeroGroup('-1')
+            res = f(*args, **kwargs)
+            set_group(args[0], current_group)
+        else:
+            res = f(*args, **kwargs)
+        return res
+    return wrapper
+
+
+
+
+
 # posts
-def post_dataset(conn, dataset_name, project_id=None, description=None):
+
+@do_across_groups
+def post_dataset(conn, dataset_name, project_id=None, description=None, across_groups=True):
     """Create a new dataset.
 
     Parameters
@@ -67,21 +97,21 @@ def post_dataset(conn, dataset_name, project_id=None, description=None):
         raise TypeError('Dataset description must be a string')
 
     project = None
-    current_group = conn.getGroupFromContext().getId()
     if project_id is not None:
         if type(project_id) is not int:
             raise TypeError('Project ID must be integer')
-        conn.SERVICE_OPTS.setOmeroGroup('-1')
         project = conn.getObject('Project', project_id)
         if project is not None:
             ret = set_group(conn, project.getDetails().group.id.val)
             if ret is False:
                 return None
         else:
-            set_group(conn, current_group)
             logging.warning(f'Project {project_id} could not be found (check if you have permissions to it)')
             return None
-            
+    else:
+        default_group = conn.getDefaultGroup(conn.getUser().getId()).getId()  
+        set_group(conn, default_group)    
+
     dataset = DatasetWrapper(conn, DatasetI())
     dataset.setName(dataset_name)
     if description is not None:
@@ -90,8 +120,6 @@ def post_dataset(conn, dataset_name, project_id=None, description=None):
 
     if project is not None:
         link_datasets_to_project(conn, [dataset.getId()], project_id)
-
-    conn.SERVICE_OPTS.setOmeroGroup(current_group)
     return dataset.getId()
 
 

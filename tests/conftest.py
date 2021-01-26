@@ -11,7 +11,7 @@ from omero.model import ScreenPlateLinkI
 from omero.plugins.sessions import SessionsControl
 from omero.plugins.user import UserControl
 from omero.plugins.group import GroupControl
-from omero.rtypes import rint
+from omero.rtypes import rint, rstring
 
 # Settings for OMERO
 DEFAULT_OMERO_USER = "root"
@@ -42,6 +42,7 @@ USERS_TO_CREATE = [
                     []
                    ]
                   ]
+
 
 
 def pytest_addoption(parser):

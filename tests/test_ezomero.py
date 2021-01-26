@@ -16,21 +16,23 @@ def test_post_dataset(conn, project_structure, timestamp):
     assert conn.getObject("Dataset", did).getName() == ds_test_name
     assert conn.getObject("Dataset", did).getDescription() == "New test"
 
-    # Dataset in project, no description
+    # Dataset in default project, no description
     ds_test_name2 = 'test_post_dataset2_' + timestamp
     pid = project_structure['proj']
     did2 = ezomero.post_dataset(conn, ds_test_name2, project_id=pid)
     ds = conn.getObjects("Dataset", opts={'project': pid})
     ds_names = [d.getName() for d in ds]
     assert ds_test_name2 in ds_names
-    conn.deleteObjects("Dataset", [did, did2], deleteAnns=True,
-                       deleteChildren=True, wait=True)
 
+    conn.deleteObjects("Dataset", [did, did2], deleteAnns=True,
+                        deleteChildren=True, wait=True)
+    
     # Dataset in non-existing project ID
     ds_test_name3 = 'test_post_dataset3_' + timestamp
     pid = 99999999
     did3 = ezomero.post_dataset(conn, ds_test_name3, project_id=pid)
     assert did3 == None
+
 
 
 def test_post_image(conn, project_structure, timestamp, image_fixture):
