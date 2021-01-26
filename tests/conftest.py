@@ -46,69 +46,6 @@ USERS_TO_CREATE = [
 # Project->Dataset->Image fixture based on the following
 # Be very careful when changing -- you could break the tests!
 # Note: 'TMSP' is replaced with a timestamp (from fixture)
-# [[group, [projects]], ...] per user
-PROJECT_FIX = [
-               ['default_user',
-                [
-                 ['default_group', ['proj0_TMSP']]
-                 ]
-                ],
-               ['test_user1',
-                [
-                 ['test_group_1', ['proj1_TMSP', 'proj2_TMSP']],
-                 ['test_group_2', ['proj3_TMSP']]
-                 ]
-                ],
-               ['test_user2',
-                [
-                 ['test_group_1', ['proj4_TMSP', 'proj5_TMSP']],
-                 ['test_group_2', ['proj6_TMSP']]
-                 ]
-                ]
-              ]
-
-# [[project, [datasets]], ...] per user
-DATASET_FIX = [
-               ['default_user',
-                [
-                 ['proj0_TMSP', ['ds0_TMSP']]
-                 ]
-                ],
-               ['test_user1',
-                [
-                 ['proj1_TMSP', ['ds1_TMSP']],
-                 ['proj3_TMSP', ['ds2_TMSP', 'ds3_TMSP']]
-                 ]
-                ],
-               ['test_user2',
-                [
-                 ['proj4_TMSP', ['ds4_TMSP']],
-                 ['proj6_TMSP', ['ds5_TMSP', 'ds6_TMSP']]
-                 ]
-                ]
-               ]
-
-# [[dataset, [images]], ...] per user
-IMAGE_FIX = [
-               ['default_user',
-                [
-                 ['ds0_TMSP', ['im0_TMSP']]
-                 ]
-                ],
-               ['test_user1',
-                [
-                 ['ds1_TMSP', ['im1_TMSP']],
-                 ['ds3_TMSP', ['im2_TMSP', 'im3_TMSP']]
-                 ]
-                ],
-               ['test_user2',
-                [
-                 ['ds4_TMSP', ['im4_TMSP']],
-                 ['ds6_TMSP', ['im5_TMSP', 'im6_TMSP']]
-                 ]
-                ]
-               ]
-
 
 
 def pytest_addoption(parser):
@@ -216,34 +153,91 @@ def timestamp():
 
 @pytest.fixture(scope='session')
 def project_structure(conn, timestamp, image_fixture, users_groups):
-    """
-    See PROJECT_FIX, DATASET_FIX, and IMAGE_FIX above for layout of test
-    omero objects
+    # [[group, [projects]], ...] per user
+    project_str = [
+                   ['default_user',
+                    [
+                     ['default_group', ['proj0_TMSP']]
+                     ]
+                    ],
+                   ['test_user1',
+                    [
+                     ['test_group_1', ['proj1_TMSP', 'proj2_TMSP']],
+                     ['test_group_2', ['proj3_TMSP']]
+                     ]
+                    ],
+                   ['test_user2',
+                    [
+                     ['test_group_1', ['proj4_TMSP', 'proj5_TMSP']],
+                     ['test_group_2', ['proj6_TMSP']]
+                     ]
+                    ]
+                  ]
 
-    Screen        Plate         Well          Image
-    ------        -----         ----          -----
-    screen ---->  plate ---->   well   ----->  im1
-    """
-    
-    # REPLACE_PROJEC
-    for group, projects in PROJECT_FIX:
-        if group != 'default':
+    # [[project, [datasets]], ...] per user
+    dataset_str = [
+                   ['default_user',
+                    [
+                     ['proj0_TMSP', ['ds0_TMSP']]
+                     ]
+                    ],
+                   ['test_user1',
+                    [
+                     ['proj1_TMSP', ['ds1_TMSP']],
+                     ['proj3_TMSP', ['ds2_TMSP', 'ds3_TMSP']]
+                     ]
+                    ],
+                   ['test_user2',
+                    [
+                     ['proj4_TMSP', ['ds4_TMSP']],
+                     ['proj6_TMSP', ['ds5_TMSP', 'ds6_TMSP']]
+                     ]
+                    ]
+                   ]
 
-    proj_name = "proj_" + timestamp
+    # [[dataset, [images]], ...] per user
+    image_struc = [
+                   ['default_user',
+                    [
+                     ['ds0_TMSP', ['im0_TMSP']]
+                     ]
+                    ],
+                   ['test_user1',
+                    [
+                     ['ds1_TMSP', ['im1_TMSP']],
+                     ['ds3_TMSP', ['im2_TMSP', 'im3_TMSP']]
+                     ]
+                    ],
+                   ['test_user2',
+                    [
+                     ['ds4_TMSP', ['im4_TMSP']],
+                     ['ds6_TMSP', ['im5_TMSP', 'im6_TMSP']]
+                     ]
+                    ]
+                   ]
+
+    # project info
+    for user, group_proj in project_str:
+        #switch user if necessary
+        for group, projects in project_str:
+            if group != 'default':
+        #switch back to original connection
+
+
     proj_id = ezomero.post_project(conn, proj_name)
 
     # REPLACE_DATASET
-    ds_name = "ds_" + timestamp
+
     ds_id = ezomero.post_dataset(conn, ds_name,
                                  project_id=proj_id)
 
     # REPLACE_IMAGES
-    im_name = 'im_' + timestamp
+
     im_id = ezomero.post_image(conn, image_fixture, im_name,
                                dataset_id=ds_id)
 
+    # screen info
     update_service = conn.getUpdateService()
-
     # Create Screen
     screen_name = "screen_" + timestamp
     screen = ScreenWrapper(conn, ScreenI())
