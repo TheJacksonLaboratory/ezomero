@@ -20,11 +20,11 @@ DEFAULT_OMERO_HOST = "localhost"
 DEFAULT_OMERO_PORT = 6064
 DEFAULT_OMERO_SECURE = 1
 
-# [group, permissions]
+# [[group, permissions], ...]
 GROUPS_TO_CREATE = [['test_group_1', 'read-only'],
                     ['test_group_2', 'read-only']]
 
-# [user, [groups to be added to], [groups to own]]
+# [[user, [groups to be added to], [groups to own]], ...]
 USERS_TO_CREATE = [
                    [
                     'test_user1',
@@ -42,6 +42,73 @@ USERS_TO_CREATE = [
                     []
                    ]
                   ]
+
+# Project->Dataset->Image fixture based on the following
+# Be very careful when changing -- you could break the tests!
+# Note: 'TMSP' is replaced with a timestamp (from fixture)
+# [[group, [projects]], ...] per user
+PROJECT_FIX = [
+               ['default_user',
+                [
+                 ['default_group', ['proj0_TMSP']]
+                 ]
+                ],
+               ['test_user1',
+                [
+                 ['test_group_1', ['proj1_TMSP', 'proj2_TMSP']],
+                 ['test_group_2', ['proj3_TMSP']]
+                 ]
+                ],
+               ['test_user2',
+                [
+                 ['test_group_1', ['proj4_TMSP', 'proj5_TMSP']],
+                 ['test_group_2', ['proj6_TMSP']]
+                 ]
+                ]
+              ]
+
+# [[project, [datasets]], ...] per user
+DATASET_FIX = [
+               ['default_user',
+                [
+                 ['proj0_TMSP', ['ds0_TMSP']]
+                 ]
+                ],
+               ['test_user1',
+                [
+                 ['proj1_TMSP', ['ds1_TMSP']],
+                 ['proj3_TMSP', ['ds2_TMSP', 'ds3_TMSP']]
+                 ]
+                ],
+               ['test_user2',
+                [
+                 ['proj4_TMSP', ['ds4_TMSP']],
+                 ['proj6_TMSP', ['ds5_TMSP', 'ds6_TMSP']]
+                 ]
+                ]
+               ]
+
+# [[dataset, [images]], ...] per user
+IMAGE_FIX = [
+               ['default_user',
+                [
+                 ['ds0_TMSP', ['im0_TMSP']]
+                 ]
+                ],
+               ['test_user1',
+                [
+                 ['ds1_TMSP', ['im1_TMSP']],
+                 ['ds3_TMSP', ['im2_TMSP', 'im3_TMSP']]
+                 ]
+                ],
+               ['test_user2',
+                [
+                 ['ds4_TMSP', ['im4_TMSP']],
+                 ['ds6_TMSP', ['im5_TMSP', 'im6_TMSP']]
+                 ]
+                ]
+               ]
+
 
 
 def pytest_addoption(parser):
@@ -148,24 +215,29 @@ def timestamp():
 
 
 @pytest.fixture(scope='session')
-def project_structure(conn, timestamp, image_fixture):
+def project_structure(conn, timestamp, image_fixture, users_groups):
     """
-    Project              Dataset           Image
-    -------              -------           -----
-    proj   ---->    ds    ---->            im0
+    See PROJECT_FIX, DATASET_FIX, and IMAGE_FIX above for layout of test
+    omero objects
 
     Screen        Plate         Well          Image
     ------        -----         ----          -----
     screen ---->  plate ---->   well   ----->  im1
     """
+    
+    # REPLACE_PROJEC
+    for group, projects in PROJECT_FIX:
+        if group != 'default':
 
     proj_name = "proj_" + timestamp
     proj_id = ezomero.post_project(conn, proj_name)
 
+    # REPLACE_DATASET
     ds_name = "ds_" + timestamp
     ds_id = ezomero.post_dataset(conn, ds_name,
                                  project_id=proj_id)
 
+    # REPLACE_IMAGES
     im_name = 'im_' + timestamp
     im_id = ezomero.post_image(conn, image_fixture, im_name,
                                dataset_id=ds_id)
@@ -205,10 +277,13 @@ def project_structure(conn, timestamp, image_fixture):
     well_obj = update_service.saveAndReturnObject(well)
     well_id = well_obj.getId().getValue()
 
-    return({'proj': proj_id,
-            'ds': ds_id,
-            'im': im_id,
-            'screen': screen_id,
-            'plate': plate_id,
-            'well': well_id,
-            'im1': im_id1})
+    screen_info = [plate_id, well_id, im_id1]
+
+    return [project_info, dataset_info, image_info, screen_info]
+    # return({'proj': proj_id,
+    #         'ds': ds_id,
+    #         'im': im_id,
+    #         'screen': screen_id,
+    #         'plate': plate_id,
+    #         'well': well_id,
+    #         'im1': im_id1})
