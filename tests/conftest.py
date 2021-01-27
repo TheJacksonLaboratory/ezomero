@@ -82,23 +82,23 @@ def omero_params(request):
 @pytest.fixture(scope='session')
 def users_groups(conn, omero_params):
     session_uuid = conn.getSession().getUuid().val
+    user = omero_params[0]
     host = omero_params[2]
-    port = omero_params[3]
+    port = str(omero_params[3])
     cli = CLI()
-    cli.register('sessions', SessionsControl, 'TEST')
+    cli.register('sessions', SessionsControl, 'test')
     cli.register('user', UserControl, 'test')
     cli.register('group', GroupControl, 'test')
-
-    cli.invoke(['sessions', 'login',
-                '-k', session_uuid,
-                '-s', host,
-                '-p', str(port)])
 
     group_info = []
     for gname, gperms in GROUPS_TO_CREATE:
         cli.invoke(['group', 'add',
                     gname,
-                    '--type', gperms])
+                    '--type', gperms,
+                    '-k', session_uuid,
+                    '-u', user,
+                    '-s', host,
+                    '-p', port])
         gid = ezomero.get_group_id(conn, gname)
         group_info.append([gname, gid])
 
@@ -111,14 +111,22 @@ def users_groups(conn, omero_params):
                     'tester',
                     '--group-name', groups_add[0],
                     '-e', 'useremail@jax.org',
-                    '-P', 'abc123'])
+                    '-P', 'abc123',
+                    '-k', session_uuid,
+                    '-u', user,
+                    '-s', host,
+                    '-p', port])
 
         # add user to rest of groups
         if len(groups_add) > 1:
             for group in groups_add[1:]:
                 cli.invoke(['group', 'adduser',
                             '--user-name', user,
-                            '--name', group])
+                            '--name', group,
+                            '-k', session_uuid,
+                            '-u', user,
+                            '-s', host,
+                            '-p', port])
 
         # make user owner of listed groups
         if len(groups_own) > 0:
@@ -126,11 +134,13 @@ def users_groups(conn, omero_params):
                 cli.invoke(['group', 'adduser',
                             '--user-name', user,
                             '--name', group,
-                            '--as-owner'])
+                            '--as-owner',
+                            '-k', session_uuid,
+                            '-u', user,
+                            '-s', host,
+                            '-p', port])
         uid = ezomero.get_user_id(conn, user)
         user_info.append([user, uid])
-
-    cli.invoke(['sessions', 'logout'])
 
     return (group_info, user_info)
 
@@ -161,6 +171,7 @@ def timestamp():
 @pytest.fixture(scope='session')
 def project_structure(conn, timestamp, image_fixture, users_groups,
                       omero_params):
+    group_info, user_info = users_groups
     # Don't change anything for default_user!
     # If you change anything about users/groups, make sure they exist
     # [[group, [projects]], ...] per user
@@ -338,6 +349,7 @@ def project_structure(conn, timestamp, image_fixture, users_groups,
     for pname, pid in project_info:
         conn.deleteObjects("Project", [pid], deleteAnns=True,
                            deleteChildren=True, wait=True)
+
 
 @pytest.fixture(scope='session')
 def screen_structure(conn, timestamp, image_fixture):
