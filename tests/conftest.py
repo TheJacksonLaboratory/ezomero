@@ -290,68 +290,30 @@ def project_structure(conn, timestamp, image_fixture, users_groups):
                         }
                     ]
                   }
+    project_info = []
+    dataset_info = []
+    image_info = []
+    for user in project_str['users']:
+        username = user['name']
+        for group in user['groups']:
+            groupname = group['name']
+            # spin connection here if not default:
+            for project in group['projects']:
+                projname = project['name']
+                # post project and add projname and id to list
+                for dataset in project['datasets']:
+                    dsname = dataset['name']
+                    # post dataset and add dsname and id to list
+                    for imname in dataset['images']:
+                        # post image and add im id to list
+                        print()
+            # close connection here if not default
 
-    # [[project, [datasets]], ...] per user
-    dataset_str = [
-                   ['default_user',
-                    [
-                     ['proj0_TMSP', ['ds0_TMSP']]
-                     ]
-                    ],
-                   ['test_user1',
-                    [
-                     ['proj1_TMSP', ['ds1_TMSP']],
-                     ['proj3_TMSP', ['ds2_TMSP', 'ds3_TMSP']]
-                     ]
-                    ],
-                   ['test_user2',
-                    [
-                     ['proj4_TMSP', ['ds4_TMSP']],
-                     ['proj6_TMSP', ['ds5_TMSP', 'ds6_TMSP']]
-                     ]
-                    ]
-                   ]
-
-    # [[dataset, [images]], ...] per user
-    image_struc = [
-                   ['default_user',
-                    [
-                     ['ds0_TMSP', ['im0_TMSP']]
-                     ]
-                    ],
-                   ['test_user1',
-                    [
-                     ['ds1_TMSP', ['im1_TMSP']],
-                     ['ds3_TMSP', ['im2_TMSP', 'im3_TMSP']]
-                     ]
-                    ],
-                   ['test_user2',
-                    [
-                     ['ds4_TMSP', ['im4_TMSP']],
-                     ['ds6_TMSP', ['im5_TMSP', 'im6_TMSP']]
-                     ]
-                    ]
-                   ]
-
-    # project info
-    for user, group_proj in project_str:
-        #switch user if necessary
-        for group, projects in project_str:
-            if group != 'default':
-        #switch back to original connection
-
-
-    proj_id = ezomero.post_project(conn, proj_name)
-
-    # REPLACE_DATASET
-
-    ds_id = ezomero.post_dataset(conn, ds_name,
-                                 project_id=proj_id)
-
-    # REPLACE_IMAGES
-
-    im_id = ezomero.post_image(conn, image_fixture, im_name,
-                               dataset_id=ds_id)
+    # proj_id = ezomero.post_project(conn, proj_name)
+    # ds_id = ezomero.post_dataset(conn, ds_name,
+    #                              project_id=proj_id)
+    # im_id = ezomero.post_image(conn, image_fixture, im_name,
+    #                            dataset_id=ds_id)
 
     # screen info
     update_service = conn.getUpdateService()
