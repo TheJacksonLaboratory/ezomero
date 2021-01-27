@@ -161,6 +161,8 @@ def timestamp():
 @pytest.fixture(scope='session')
 def project_structure(conn, timestamp, image_fixture, users_groups,
                       omero_params):
+    # Don't change anything for default_user!
+    # If you change anything about users/groups, make sure they exist
     # [[group, [projects]], ...] per user
     project_str = {
                     'users': [
