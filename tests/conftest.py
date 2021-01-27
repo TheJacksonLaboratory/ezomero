@@ -43,22 +43,29 @@ USERS_TO_CREATE = [
                    ]
                   ]
 
-# Project->Dataset->Image fixture based on the following
-# Be very careful when changing -- you could break the tests!
-# Note: 'TMSP' is replaced with a timestamp (from fixture)
-
 
 def pytest_addoption(parser):
-    parser.addoption("--omero-user", action="store",
-        default=os.environ.get("OMERO_USER", DEFAULT_OMERO_USER))
-    parser.addoption("--omero-pass", action="store",
-        default=os.environ.get("OMERO_PASS", DEFAULT_OMERO_PASS))
-    parser.addoption("--omero-host", action="store",
-        default=os.environ.get("OMERO_HOST", DEFAULT_OMERO_HOST))
-    parser.addoption("--omero-port", action="store", type=int,
-        default=int(os.environ.get("OMERO_PORT", DEFAULT_OMERO_PORT)))
-    parser.addoption("--omero-secure", action="store",
-        default=bool(os.environ.get("OMERO_SECURE", DEFAULT_OMERO_SECURE)))
+    parser.addoption("--omero-user",
+                     action="store",
+                     default=os.environ.get("OMERO_USER",
+                                            DEFAULT_OMERO_USER))
+    parser.addoption("--omero-pass",
+                     action="store",
+                     default=os.environ.get("OMERO_PASS",
+                                            DEFAULT_OMERO_PASS))
+    parser.addoption("--omero-host",
+                     action="store",
+                     default=os.environ.get("OMERO_HOST",
+                                            DEFAULT_OMERO_HOST))
+    parser.addoption("--omero-port",
+                     action="store",
+                     type=int,
+                     default=int(os.environ.get("OMERO_PORT",
+                                                DEFAULT_OMERO_PORT)))
+    parser.addoption("--omero-secure",
+                     action="store",
+                     default=bool(os.environ.get("OMERO_SECURE",
+                                                 DEFAULT_OMERO_SECURE)))
 
 
 # we can change this later
@@ -154,25 +161,135 @@ def timestamp():
 @pytest.fixture(scope='session')
 def project_structure(conn, timestamp, image_fixture, users_groups):
     # [[group, [projects]], ...] per user
-    project_str = [
-                   ['default_user',
-                    [
-                     ['default_group', ['proj0_TMSP']]
-                     ]
-                    ],
-                   ['test_user1',
-                    [
-                     ['test_group_1', ['proj1_TMSP', 'proj2_TMSP']],
-                     ['test_group_2', ['proj3_TMSP']]
-                     ]
-                    ],
-                   ['test_user2',
-                    [
-                     ['test_group_1', ['proj4_TMSP', 'proj5_TMSP']],
-                     ['test_group_2', ['proj6_TMSP']]
-                     ]
+    project_str = {
+                    'users': [
+                        {
+                            'name': 'default_user',
+                            'groups': [
+                                {
+                                    'name': 'default_group',
+                                    'projects': [
+                                        {
+                                            'name': f'proj0_{timestamp}',
+                                            'datasets': [
+                                                {
+                                                    'name': f'ds0_{timestamp}',
+                                                    'images': [
+                                                        f'im0_{timestamp}'
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            'name': 'test_user1',
+                            'groups': [
+                                {
+                                    'name': 'test_group1',
+                                    'projects': [
+                                        {
+                                            'name': f'proj1_{timestamp}',
+                                            'datasets': [
+                                                {
+                                                    'name': f'ds1_{timestamp}',
+                                                    'images': [
+                                                        f'im1_{timestamp}'
+                                                    ]
+                                                }
+                                            ]
+                                        },
+                                        {
+                                            'name': f'proj2_{timestamp}',
+                                            'datasets': [
+                                                {
+                                                    'name': '',
+                                                    'images': [
+
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                },
+                                {
+                                    'name': 'test_group2',
+                                    'projects': [
+                                        {
+                                            'name': f'proj3_{timestamp}',
+                                            'datasets': [
+                                                {
+                                                    'name': f'ds2_{timestamp}',
+                                                    'images': [
+
+                                                    ]
+                                                },
+                                                {
+                                                    'name': f'ds3_{timestamp}',
+                                                    'images': [
+                                                        f'im2_{timestamp}',
+                                                        f'im3_{timestamp}'
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            'name': 'test_user2',
+                            'groups': [
+                                {
+                                    'name': 'test_group1',
+                                    'projects': [
+                                        {
+                                            'name': f'proj4_{timestamp}',
+                                            'datasets': [
+                                                {
+                                                    'name': f'ds4_{timestamp}',
+                                                    'images': [
+                                                        f'im4_{timestamp}'
+                                                    ]
+                                                }
+                                            ]
+                                        },
+                                        {
+                                            'name': f'proj5_{timestamp}',
+                                            'datasets': [
+                                                {
+                                                    'name': f'ds5_{timestamp}',
+                                                    'images': [
+
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                },
+                                {
+                                    'name': 'test_group2',
+                                    'projects': [
+                                        {
+                                            'name': f'proj6_{timestamp}',
+                                            'datasets': [
+                                                {
+                                                    'name': f'ds6_{timestamp}',
+                                                    'images': [
+                                                        f'im5_{timestamp}',
+                                                        f'im6_{timestamp}'
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
                     ]
-                  ]
+                  }
 
     # [[project, [datasets]], ...] per user
     dataset_str = [
