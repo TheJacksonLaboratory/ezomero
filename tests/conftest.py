@@ -20,11 +20,11 @@ DEFAULT_OMERO_HOST = "localhost"
 DEFAULT_OMERO_PORT = 6064
 DEFAULT_OMERO_SECURE = 1
 
-# [group, permissions]
+# [[group, permissions], ...]
 GROUPS_TO_CREATE = [['test_group_1', 'read-only'],
                     ['test_group_2', 'read-only']]
 
-# [user, [groups to be added to], [groups to own]]
+# [[user, [groups to be added to], [groups to own]], ...]
 USERS_TO_CREATE = [
                    [
                     'test_user1',
@@ -45,16 +45,27 @@ USERS_TO_CREATE = [
 
 
 def pytest_addoption(parser):
-    parser.addoption("--omero-user", action="store",
-        default=os.environ.get("OMERO_USER", DEFAULT_OMERO_USER))
-    parser.addoption("--omero-pass", action="store",
-        default=os.environ.get("OMERO_PASS", DEFAULT_OMERO_PASS))
-    parser.addoption("--omero-host", action="store",
-        default=os.environ.get("OMERO_HOST", DEFAULT_OMERO_HOST))
-    parser.addoption("--omero-port", action="store", type=int,
-        default=int(os.environ.get("OMERO_PORT", DEFAULT_OMERO_PORT)))
-    parser.addoption("--omero-secure", action="store",
-        default=bool(os.environ.get("OMERO_SECURE", DEFAULT_OMERO_SECURE)))
+    parser.addoption("--omero-user",
+                     action="store",
+                     default=os.environ.get("OMERO_USER",
+                                            DEFAULT_OMERO_USER))
+    parser.addoption("--omero-pass",
+                     action="store",
+                     default=os.environ.get("OMERO_PASS",
+                                            DEFAULT_OMERO_PASS))
+    parser.addoption("--omero-host",
+                     action="store",
+                     default=os.environ.get("OMERO_HOST",
+                                            DEFAULT_OMERO_HOST))
+    parser.addoption("--omero-port",
+                     action="store",
+                     type=int,
+                     default=int(os.environ.get("OMERO_PORT",
+                                                DEFAULT_OMERO_PORT)))
+    parser.addoption("--omero-secure",
+                     action="store",
+                     default=bool(os.environ.get("OMERO_SECURE",
+                                                 DEFAULT_OMERO_SECURE)))
 
 
 # we can change this later
@@ -71,23 +82,23 @@ def omero_params(request):
 @pytest.fixture(scope='session')
 def users_groups(conn, omero_params):
     session_uuid = conn.getSession().getUuid().val
+    user = omero_params[0]
     host = omero_params[2]
-    port = omero_params[3]
+    port = str(omero_params[3])
     cli = CLI()
-    cli.register('sessions', SessionsControl, 'TEST')
+    cli.register('sessions', SessionsControl, 'test')
     cli.register('user', UserControl, 'test')
     cli.register('group', GroupControl, 'test')
-
-    cli.invoke(['sessions', 'login',
-                '-k', session_uuid,
-                '-s', host,
-                '-p', str(port)])
 
     group_info = []
     for gname, gperms in GROUPS_TO_CREATE:
         cli.invoke(['group', 'add',
                     gname,
-                    '--type', gperms])
+                    '--type', gperms,
+                    '-k', session_uuid,
+                    '-u', user,
+                    '-s', host,
+                    '-p', port])
         gid = ezomero.get_group_id(conn, gname)
         group_info.append([gname, gid])
 
@@ -100,14 +111,22 @@ def users_groups(conn, omero_params):
                     'tester',
                     '--group-name', groups_add[0],
                     '-e', 'useremail@jax.org',
-                    '-P', 'abc123'])
+                    '-P', 'abc123',
+                    '-k', session_uuid,
+                    '-u', user,
+                    '-s', host,
+                    '-p', port])
 
         # add user to rest of groups
         if len(groups_add) > 1:
             for group in groups_add[1:]:
                 cli.invoke(['group', 'adduser',
                             '--user-name', user,
-                            '--name', group])
+                            '--name', group,
+                            '-k', session_uuid,
+                            '-u', user,
+                            '-s', host,
+                            '-p', port])
 
         # make user owner of listed groups
         if len(groups_own) > 0:
@@ -115,11 +134,13 @@ def users_groups(conn, omero_params):
                 cli.invoke(['group', 'adduser',
                             '--user-name', user,
                             '--name', group,
-                            '--as-owner'])
+                            '--as-owner',
+                            '-k', session_uuid,
+                            '-u', user,
+                            '-s', host,
+                            '-p', port])
         uid = ezomero.get_user_id(conn, user)
         user_info.append([user, uid])
-
-    cli.invoke(['sessions', 'logout'])
 
     return (group_info, user_info)
 
@@ -148,30 +169,192 @@ def timestamp():
 
 
 @pytest.fixture(scope='session')
-def project_structure(conn, timestamp, image_fixture):
-    """
-    Project              Dataset           Image
-    -------              -------           -----
-    proj   ---->    ds    ---->            im0
+def project_structure(conn, timestamp, image_fixture, users_groups,
+                      omero_params):
+    group_info, user_info = users_groups
+    # Don't change anything for default_user!
+    # If you change anything about users/groups, make sure they exist
+    # [[group, [projects]], ...] per user
+    project_str = {
+                    'users': [
+                        {
+                            'name': 'default_user',
+                            'groups': [
+                                {
+                                    'name': 'default_group',
+                                    'projects': [
+                                        {
+                                            'name': f'proj0_{timestamp}',
+                                            'datasets': [
+                                                {
+                                                    'name': f'ds0_{timestamp}',
+                                                    'images': [
+                                                        f'im0_{timestamp}'
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            'name': 'test_user1',
+                            'groups': [
+                                {
+                                    'name': 'test_group_1',
+                                    'projects': [
+                                        {
+                                            'name': f'proj1_{timestamp}',
+                                            'datasets': [
+                                                {
+                                                    'name': f'ds1_{timestamp}',
+                                                    'images': [
+                                                        f'im1_{timestamp}'
+                                                    ]
+                                                }
+                                            ]
+                                        },
+                                        {
+                                            'name': f'proj2_{timestamp}',
+                                            'datasets': [
+                                                {
+                                                    'name': '',
+                                                    'images': [
 
-    Screen        Plate         Well          Image
-    ------        -----         ----          -----
-    screen ---->  plate ---->   well   ----->  im1
-    """
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                },
+                                {
+                                    'name': 'test_group_2',
+                                    'projects': [
+                                        {
+                                            'name': f'proj3_{timestamp}',
+                                            'datasets': [
+                                                {
+                                                    'name': f'ds2_{timestamp}',
+                                                    'images': [
 
-    proj_name = "proj_" + timestamp
-    proj_id = ezomero.post_project(conn, proj_name)
+                                                    ]
+                                                },
+                                                {
+                                                    'name': f'ds3_{timestamp}',
+                                                    'images': [
+                                                        f'im2_{timestamp}',
+                                                        f'im3_{timestamp}'
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            'name': 'test_user2',
+                            'groups': [
+                                {
+                                    'name': 'test_group_1',
+                                    'projects': [
+                                        {
+                                            'name': f'proj4_{timestamp}',
+                                            'datasets': [
+                                                {
+                                                    'name': f'ds4_{timestamp}',
+                                                    'images': [
+                                                        f'im4_{timestamp}'
+                                                    ]
+                                                }
+                                            ]
+                                        },
+                                        {
+                                            'name': f'proj5_{timestamp}',
+                                            'datasets': [
+                                                {
+                                                    'name': f'ds5_{timestamp}',
+                                                    'images': [
 
-    ds_name = "ds_" + timestamp
-    ds_id = ezomero.post_dataset(conn, ds_name,
-                                 project_id=proj_id)
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                },
+                                {
+                                    'name': 'test_group_2',
+                                    'projects': [
+                                        {
+                                            'name': f'proj6_{timestamp}',
+                                            'datasets': [
+                                                {
+                                                    'name': f'ds6_{timestamp}',
+                                                    'images': [
+                                                        f'im5_{timestamp}',
+                                                        f'im6_{timestamp}'
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                  }
+    project_info = []
+    dataset_info = []
+    image_info = []
+    for user in project_str['users']:
+        username = user['name']
+        for group in user['groups']:
+            groupname = group['name']
+            current_conn = conn
 
-    im_name = 'im_' + timestamp
-    im_id = ezomero.post_image(conn, image_fixture, im_name,
-                               dataset_id=ds_id)
+            # New connection if user and group need to be specified
+            if username != 'default_user':
+                current_conn = conn.suConn(username, groupname)
 
+            # Loop to post projects, datasets, and images
+            for project in group['projects']:
+                projname = project['name']
+                proj_id = ezomero.post_project(current_conn,
+                                               projname,
+                                               'test project')
+                project_info.append([projname, proj_id])
+
+                for dataset in project['datasets']:
+                    dsname = dataset['name']
+                    ds_id = ezomero.post_dataset(current_conn,
+                                                 dsname,
+                                                 proj_id,
+                                                 'test dataset')
+                    dataset_info.append([dsname, ds_id])
+
+                    for imname in dataset['images']:
+                        im_id = ezomero.post_image(current_conn,
+                                                   image_fixture,
+                                                   imname,
+                                                   dataset_id=ds_id)
+                        image_info.append([imname, im_id])
+
+            # Close temporary connection if it was created
+            if username != 'default_user':
+                current_conn.close()
+
+    yield [project_info, dataset_info, image_info]
+    conn.SERVICE_OPTS.setOmeroGroup(-1)
+    for pname, pid in project_info:
+        conn.deleteObjects("Project", [pid], deleteAnns=True,
+                           deleteChildren=True, wait=True)
+
+
+@pytest.fixture(scope='session')
+def screen_structure(conn, timestamp, image_fixture):
+    # screen info
     update_service = conn.getUpdateService()
-
     # Create Screen
     screen_name = "screen_" + timestamp
     screen = ScreenWrapper(conn, ScreenI())
@@ -205,10 +388,7 @@ def project_structure(conn, timestamp, image_fixture):
     well_obj = update_service.saveAndReturnObject(well)
     well_id = well_obj.getId().getValue()
 
-    return({'proj': proj_id,
-            'ds': ds_id,
-            'im': im_id,
-            'screen': screen_id,
-            'plate': plate_id,
-            'well': well_id,
-            'im1': im_id1})
+    yield [plate_id, well_id, im_id1, screen_id]
+    conn.SERVICE_OPTS.setOmeroGroup(-1)
+    conn.deleteObjects("Screen", [screen_id], deleteAnns=True,
+                       deleteChildren=True, wait=True)
