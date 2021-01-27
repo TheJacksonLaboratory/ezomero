@@ -270,7 +270,7 @@ def post_map_annotation(conn, object_type, object_ids, kv_dict, ns, across_group
     map_ann = MapAnnotationWrapper(conn)
     map_ann.setNs(str(ns))
     map_ann.setValue(kv_pairs)
-    map_ann.save()
+    
     objs = conn.getObjects(object_type, object_ids)
     if objs is not None:
         for o in objs:
@@ -278,6 +278,7 @@ def post_map_annotation(conn, object_type, object_ids, kv_dict, ns, across_group
             if ret is False:
                 logging.warning(f'Cannot change into group where object {o.getDetails().id.val} is. Skipping.')
                 continue
+            map_ann.save()
             o.linkAnnotation(map_ann)
     else:
         logging.warning(f'Objects {object_ids} could not be found (check if you have permissions to them)')
