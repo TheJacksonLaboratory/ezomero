@@ -10,6 +10,7 @@ def test_omero_connection(conn, omero_params):
 # Test posts
 ############
 def test_post_dataset(conn, project_structure, timestamp):
+
     # Orphaned dataset, with descripion
     ds_test_name = 'test_post_dataset_' + timestamp
     did = ezomero.post_dataset(conn, ds_test_name, description='New test')
@@ -18,7 +19,8 @@ def test_post_dataset(conn, project_structure, timestamp):
 
     # Dataset in default project, no description
     ds_test_name2 = 'test_post_dataset2_' + timestamp
-    pid = project_structure['proj']
+    project_info = project_structure[0]
+    pid = project_info[0][1]
     did2 = ezomero.post_dataset(conn, ds_test_name2, project_id=pid)
     ds = conn.getObjects("Dataset", opts={'project': pid})
     ds_names = [d.getName() for d in ds]
@@ -36,11 +38,13 @@ def test_post_dataset(conn, project_structure, timestamp):
 
 
 def test_post_image(conn, project_structure, timestamp, image_fixture):
+    dataset_info = project_structure[1]
+    did = dataset_info[0][1]
     # Post image in dataset
     image_name = 'test_post_image_' + timestamp
     im_id = ezomero.post_image(conn, image_fixture, image_name,
                                description='This is an image',
-                               dataset_id=project_structure["ds"])
+                               dataset_id=did)
     assert conn.getObject("Image", im_id).getName() == image_name
 
     # Post orphaned image
@@ -51,11 +55,12 @@ def test_post_image(conn, project_structure, timestamp, image_fixture):
 
 
 def test_post_get_map_annotation(conn, project_structure):
+    image_info = project_structure[2]
+    im_id = image_info[0][1]
     # This test both ezomero.post_map_annotation and ezomero.get_map_annotation
     kv = {"key1": "value1",
           "key2": "value2"}
     ns = "jax.org/omeroutils/tests/v0"
-    im_id = project_structure['im']
     map_ann_id = ezomero.post_map_annotation(conn, "Image", im_id, kv, ns)
     kv_pairs = ezomero.get_map_annotation(conn, map_ann_id)
     assert kv_pairs["key2"] == "value2"
@@ -89,7 +94,8 @@ def test_post_project_type(conn):
 ###########
 
 def test_get_image(conn, project_structure):
-    im_id = project_structure['im']
+    image_info = project_structure[2]
+    im_id = image_info[0][1]
     # test default
     im, im_arr = ezomero.get_image(conn, im_id)
     assert im.getId() == im_id
@@ -126,17 +132,19 @@ def test_get_image(conn, project_structure):
                                        pad=False)
 
 
-def test_get_image_ids(conn, project_structure):
+def test_get_image_ids(conn, project_structure, screen_structure):
+    dataset_info = project_structure[1]
+    main_ds_id = dataset_info[0][1]
+    image_info = project_structure[2]
+    im_id = image_info[0][1]
     # Based on dataset ID
-    main_ds_id = project_structure['ds']
-    im_id = project_structure['im']
     im_ids = ezomero.get_image_ids(conn, dataset=main_ds_id)
     assert im_ids[0] == im_id
     assert len(im_ids) == 1
 
     # Based on well ID
-    well_id = project_structure['well']
-    im_id1 = project_structure['im1']
+    well_id = screen_structure[1]
+    im_id1 = screen_structure[2]
     im_ids = ezomero.get_image_ids(conn, well=well_id)
     assert im_ids[0] == im_id1
     assert len(im_ids) == 1
@@ -152,7 +160,8 @@ def test_get_map_annotation_ids(conn, project_structure):
     kv = {"key1": "value1",
           "key2": "value2"}
     ns = "jax.org/omeroutils/tests/v0"
-    im_id = project_structure['im']
+    image_info = project_structure[2]
+    im_id = image_info[0][1]
     map_ann_id = ezomero.post_map_annotation(conn, "Image", im_id, kv, ns)
     map_ann_id2 = ezomero.post_map_annotation(conn, "Image", im_id, kv, ns)
     map_ann_id3 = ezomero.post_map_annotation(conn, "Image", im_id, kv, ns)
@@ -186,7 +195,8 @@ def test_put_map_annotation(conn, project_structure):
     kv = {"key1": "value1",
           "key2": "value2"}
     ns = "jax.org/omeroutils/tests/v0"
-    im_id = project_structure['im']
+    image_info = project_structure[2]
+    im_id = image_info[0][1]
     map_ann_id = ezomero.post_map_annotation(conn, "Image", im_id, kv, ns)
     kv = {"key1": "changed1",
           "key2": "value2"}
