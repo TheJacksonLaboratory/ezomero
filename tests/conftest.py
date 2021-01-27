@@ -159,7 +159,8 @@ def timestamp():
 
 
 @pytest.fixture(scope='session')
-def project_structure(conn, timestamp, image_fixture, users_groups):
+def project_structure(conn, timestamp, image_fixture, users_groups,
+                      omero_params):
     # [[group, [projects]], ...] per user
     project_str = {
                     'users': [
@@ -188,7 +189,7 @@ def project_structure(conn, timestamp, image_fixture, users_groups):
                             'name': 'test_user1',
                             'groups': [
                                 {
-                                    'name': 'test_group1',
+                                    'name': 'test_group_1',
                                     'projects': [
                                         {
                                             'name': f'proj1_{timestamp}',
@@ -215,7 +216,7 @@ def project_structure(conn, timestamp, image_fixture, users_groups):
                                     ]
                                 },
                                 {
-                                    'name': 'test_group2',
+                                    'name': 'test_group_2',
                                     'projects': [
                                         {
                                             'name': f'proj3_{timestamp}',
@@ -243,7 +244,7 @@ def project_structure(conn, timestamp, image_fixture, users_groups):
                             'name': 'test_user2',
                             'groups': [
                                 {
-                                    'name': 'test_group1',
+                                    'name': 'test_group_1',
                                     'projects': [
                                         {
                                             'name': f'proj4_{timestamp}',
@@ -270,7 +271,7 @@ def project_structure(conn, timestamp, image_fixture, users_groups):
                                     ]
                                 },
                                 {
-                                    'name': 'test_group2',
+                                    'name': 'test_group_2',
                                     'projects': [
                                         {
                                             'name': f'proj6_{timestamp}',
@@ -301,7 +302,7 @@ def project_structure(conn, timestamp, image_fixture, users_groups):
 
             # New connection if user and group need to be specified
             if username != 'default_user':
-                current_conn = conn.suConn(username=username, group=groupname)
+                current_conn = conn.suConn(username, groupname)
 
             # Loop to post projects, datasets, and images
             for project in group['projects']:
@@ -323,7 +324,7 @@ def project_structure(conn, timestamp, image_fixture, users_groups):
                         im_id = ezomero.post_image(current_conn,
                                                    image_fixture,
                                                    imname,
-                                                   ds_id)
+                                                   dataset_id=ds_id)
                         image_info.append([imname, im_id])
 
             # Close temporary connection if it was created

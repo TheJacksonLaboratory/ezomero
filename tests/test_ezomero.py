@@ -10,6 +10,7 @@ def test_omero_connection(conn, omero_params):
 # Test posts
 ############
 def test_post_dataset(conn, project_structure, timestamp):
+
     # Orphaned dataset, with descripion
     ds_test_name = 'test_post_dataset_' + timestamp
     did = ezomero.post_dataset(conn, ds_test_name, description='New test')
@@ -18,7 +19,8 @@ def test_post_dataset(conn, project_structure, timestamp):
 
     # Dataset in project, no description
     ds_test_name2 = 'test_post_dataset2_' + timestamp
-    pid = project_structure['proj']
+    project_info = project_structure[0]
+    pid = project_info[0][1]
     did2 = ezomero.post_dataset(conn, ds_test_name2, project_id=pid)
     ds = conn.getObjects("Dataset", opts={'project': pid})
     ds_names = [d.getName() for d in ds]
