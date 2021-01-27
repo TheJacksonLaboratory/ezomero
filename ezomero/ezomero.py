@@ -122,9 +122,9 @@ def post_dataset(conn, dataset_name, project_id=None, description=None, across_g
         link_datasets_to_project(conn, [dataset.getId()], project_id)
     return dataset.getId()
 
-
+@do_across_groups
 def post_image(conn, image, image_name, description=None, dataset_id=None,
-               source_image_id=None, channel_list=None):
+               source_image_id=None, channel_list=None, across_groups=True):
     """Create a new OMERO image from numpy array.
 
     Parameters
@@ -178,7 +178,16 @@ def post_image(conn, image, image_name, description=None, dataset_id=None,
         if type(dataset_id) is not int:
             raise ValueError("Dataset ID must be an integer")
         dataset = conn.getObject("Dataset", dataset_id)
+        if dataset is not None:
+            ret = set_group(conn, dataset.getDetails().group.id.val)
+            if ret is False:
+                return None
+        else:
+            logging.warning(f'Dataset {dataset_id} could not be found (check if you have permissions to it)')
+            return None
     else:
+        default_group = conn.getDefaultGroup(conn.getUser().getId()).getId()  
+        set_group(conn, default_group)
         dataset = None
 
     image_sizez = image.shape[2]
@@ -205,8 +214,8 @@ def post_image(conn, image, image_name, description=None, dataset_id=None,
                                           channel_list)
     return new_im.getId()
 
-
-def post_map_annotation(conn, object_type, object_ids, kv_dict, ns):
+@do_across_groups
+def post_map_annotation(conn, object_type, object_ids, kv_dict, ns, across_groups=True):
     """Create new MapAnnotation and link to images.
 
     Parameters
@@ -262,10 +271,19 @@ def post_map_annotation(conn, object_type, object_ids, kv_dict, ns):
     map_ann.setNs(str(ns))
     map_ann.setValue(kv_pairs)
     map_ann.save()
-    for o in conn.getObjects(object_type, object_ids):
-        o.linkAnnotation(map_ann)
+    objs = conn.getObjects(object_type, object_ids)
+    if objs is not None:
+        for o in objs:
+            ret = set_group(conn, o.getDetails().group.id.val)
+            if ret is False:
+                logging.warning(f'Cannot change into group where object {o.getDetails().id.val} is. Skipping.')
+                continue
+            o.linkAnnotation(map_ann)
+    else:
+        logging.warning(f'Objects {object_ids} could not be found (check if you have permissions to them)')
+        return None
+    
     return map_ann.getId()
-
 
 def post_project(conn, project_name, description=None):
     """Create a new project.
