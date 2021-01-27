@@ -333,8 +333,11 @@ def project_structure(conn, timestamp, image_fixture, users_groups,
             if username != 'default_user':
                 current_conn.close()
 
-    return [project_info, dataset_info, image_info]
-
+    yield [project_info, dataset_info, image_info]
+    conn.SERVICE_OPTS.setOmeroGroup(-1)
+    for pname, pid in project_info:
+        conn.deleteObjects("Project", [pid], deleteAnns=True,
+                           deleteChildren=True, wait=True)
 
 @pytest.fixture(scope='session')
 def screen_structure(conn, timestamp, image_fixture):
@@ -373,4 +376,7 @@ def screen_structure(conn, timestamp, image_fixture):
     well_obj = update_service.saveAndReturnObject(well)
     well_id = well_obj.getId().getValue()
 
-    return [plate_id, well_id, im_id1]
+    yield [plate_id, well_id, im_id1, screen_id]
+    conn.SERVICE_OPTS.setOmeroGroup(-1)
+    conn.deleteObjects("Screen", [screen_id], deleteAnns=True,
+                       deleteChildren=True, wait=True)
