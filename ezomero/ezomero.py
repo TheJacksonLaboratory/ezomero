@@ -951,28 +951,28 @@ def connect(user=None, password=None, group=None, host=None, port=None,
 
     Parameters
     ----------
-    user : str
+    user : str, optional
         OMERO username.
 
-    password : str
+    password : str, optional
         OMERO password.
 
-    group : str
+    group : str, optional
         OMERO group.
 
-    host : str
+    host : str, optional
         OMERO.server host.
 
-    port : int
+    port : int, optional
         OMERO port.
 
-    secure : boolean
+    secure : boolean, optional
         Whether to create a secure session.
 
-    config_path : str
+    config_path : str, optional
         Path to directory containing '.ezomero' file that stores connection
-        information. Defaults to the home directory as determined by Python's
-        ``pathlib``.
+        information. If left as ``None``, defaults to the home directory as
+        determined by Python's ``pathlib``.
 
     Returns
     -------
@@ -1096,24 +1096,25 @@ def store_connection_params(user=None, group=None, host=None, port=None,
 
     Parameters
     ----------
-    user : str
+    user : str, optional
         OMERO username.
 
-    group : str
+    group : str, optional
         OMERO group.
 
-    host : str
+    host : str, optional
         OMERO.server host.
 
-    port : int
+    port : int, optional
         OMERO port.
 
-    secure : boolean
+    secure : boolean, optional
         Whether to create a secure session.
 
-    config_path : str
-        Path to directory that will contain the '.ezomero' file. Defaults to
-        the home directory as determined by Python's ``pathlib``.
+    config_path : str, optional
+        Path to directory that will contain the '.ezomero' file. If left as
+        ``None``, defaults to the home directory as determined by Python's
+        ``pathlib``.
     """
     if config_path is None:
         config_path = Path.home()
@@ -1135,8 +1136,6 @@ def store_connection_params(user=None, group=None, host=None, port=None,
         user = input('Enter username: ')
     if group is None:
         group = input('Enter group name (or leave blank for default group): ')
-#        if group == "":
-#            group = "None"
     if host is None:
         host = input('Enter host: ')
     if port is None:
