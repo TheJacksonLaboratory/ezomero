@@ -297,24 +297,44 @@ def project_structure(conn, timestamp, image_fixture, users_groups):
         username = user['name']
         for group in user['groups']:
             groupname = group['name']
-            # spin connection here if not default:
+            current_conn = conn
+
+            # New connection if user and group need to be specified
+            if username != 'default_user':
+                current_conn = conn.suConn(username=username, group=groupname)
+
+            # Loop to post projects, datasets, and images
             for project in group['projects']:
                 projname = project['name']
-                # post project and add projname and id to list
+                proj_id = ezomero.post_project(current_conn,
+                                               projname,
+                                               'test project')
+                project_info.append([projname, proj_id])
+
                 for dataset in project['datasets']:
                     dsname = dataset['name']
-                    # post dataset and add dsname and id to list
+                    ds_id = ezomero.post_dataset(current_conn,
+                                                 dsname,
+                                                 proj_id,
+                                                 'test dataset')
+                    dataset_info.append([dsname, ds_id])
+
                     for imname in dataset['images']:
-                        # post image and add im id to list
-                        print()
-            # close connection here if not default
+                        im_id = ezomero.post_image(current_conn,
+                                                   image_fixture,
+                                                   imname,
+                                                   ds_id)
+                        image_info.append([imname, im_id])
 
-    # proj_id = ezomero.post_project(conn, proj_name)
-    # ds_id = ezomero.post_dataset(conn, ds_name,
-    #                              project_id=proj_id)
-    # im_id = ezomero.post_image(conn, image_fixture, im_name,
-    #                            dataset_id=ds_id)
+            # Close temporary connection if it was created
+            if username != 'default_user':
+                current_conn.close()
 
+    return [project_info, dataset_info, image_info]
+
+
+@pytest.fixture(scope='session')
+def screen_structure(conn, timestamp, image_fixture):
     # screen info
     update_service = conn.getUpdateService()
     # Create Screen
@@ -350,13 +370,4 @@ def project_structure(conn, timestamp, image_fixture, users_groups):
     well_obj = update_service.saveAndReturnObject(well)
     well_id = well_obj.getId().getValue()
 
-    screen_info = [plate_id, well_id, im_id1]
-
-    return [project_info, dataset_info, image_info, screen_info]
-    # return({'proj': proj_id,
-    #         'ds': ds_id,
-    #         'im': im_id,
-    #         'screen': screen_id,
-    #         'plate': plate_id,
-    #         'well': well_id,
-    #         'im1': im_id1})
+    return [plate_id, well_id, im_id1]
