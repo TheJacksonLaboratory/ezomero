@@ -215,7 +215,7 @@ def post_image(conn, image, image_name, description=None, dataset_id=None,
     return new_im.getId()
 
 @do_across_groups
-def post_map_annotation(conn, object_type, object_ids, kv_dict, ns, across_groups=True):
+def post_map_annotation(conn, object_type, object_id, kv_dict, ns, across_groups=True):
     """Create new MapAnnotation and link to images.
 
     Parameters
@@ -224,8 +224,8 @@ def post_map_annotation(conn, object_type, object_ids, kv_dict, ns, across_group
         OMERO connection.
     object_type : str
        OMERO object type, passed to ``BlitzGateway.getObjects``
-    object_ids : int or list of ints
-        IDs of objects to which the new MapAnnotation will be linked.
+    object_ids : int 
+        ID of object to which the new MapAnnotation will be linked.
     kv_dict : dict
         key-value pairs that will be included in the MapAnnotation
     ns : str
@@ -250,14 +250,7 @@ def post_map_annotation(conn, object_type, object_ids, kv_dict, ns, across_group
     >>> post_map_annotation(conn, "Image", [23,56,78], d, ns)
     234
     """
-    if type(object_ids) not in [list, int]:
-        raise TypeError('object_ids must be list or integer')
-    if type(object_ids) is not list:
-        object_ids = [object_ids]
-
-    if len(object_ids) == 0:
-        raise ValueError('object_ids must contain one or more items')
-
+    
     if type(kv_dict) is not dict:
         raise TypeError('kv_dict must be of type `dict`')
 
@@ -267,23 +260,34 @@ def post_map_annotation(conn, object_type, object_ids, kv_dict, ns, across_group
         v = str(v)
         kv_pairs.append([k, v])
 
+    obj = None
+    if object_id is not None:
+        if type(object_id) is not int:
+            raise TypeError('object_ids must be integer')
+        obj = conn.getObject(object_type, object_id)
+        if obj is not None:
+            ret = set_group(conn, obj.getDetails().group.id.val)
+            if ret is False:
+                logging.warning(f'Cannot change into group where object {object_id} is. ')
+                return None
+        else:
+            logging.warning(f'Object {object_id} could not be found (check if you have permissions to it)')
+            return None
+    else:
+        raise TypeError('Object ID cannot be empty')
+    
+    objs = conn.getObject(object_type, object_id)
+    
     map_ann = MapAnnotationWrapper(conn)
     map_ann.setNs(str(ns))
     map_ann.setValue(kv_pairs)
-    
-    objs = conn.getObjects(object_type, object_ids)
-    if objs is not None:
-        for o in objs:
-            ret = set_group(conn, o.getDetails().group.id.val)
-            if ret is False:
-                logging.warning(f'Cannot change into group where object {o.getDetails().id.val} is. Skipping.')
-                continue
-            map_ann.save()
-            o.linkAnnotation(map_ann)
-    else:
-        logging.warning(f'Objects {object_ids} could not be found (check if you have permissions to them)')
+    map_ann.save()
+    try:
+        obj.linkAnnotation(map_ann)
+    except:
+        logging.warning(f'Cannot link to object {object_id} - check if you have permissions to do so')
         return None
-    
+        
     return map_ann.getId()
 
 def post_project(conn, project_name, description=None):
@@ -590,8 +594,8 @@ def get_map_annotation_ids(conn, object_type, object_id, ns=None):
             map_ann_ids.append(ann.getId())
     return map_ann_ids
 
-
-def get_map_annotation(conn, map_ann_id):
+@do_across_groups
+def get_map_annotation(conn, map_ann_id, across_groups=True):
     """Get the value of a map annotation object
 
     Parameters

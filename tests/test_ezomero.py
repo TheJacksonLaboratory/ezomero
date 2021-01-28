@@ -1,4 +1,3 @@
-from ezomero.ezomero import set_group
 import pytest
 import numpy as np
 import ezomero
@@ -27,15 +26,11 @@ def test_post_dataset(conn, project_structure, users_groups, timestamp):
     ds_names = [d.getName() for d in ds]
     assert ds_test_name2 in ds_names
 
-    
-    
     # Dataset in non-existing project ID
     ds_test_name3 = 'test_post_dataset3_' + timestamp
     pid = 99999999
     did3 = ezomero.post_dataset(conn, ds_test_name3, project_id=pid)
     assert did3 == None
-
-    #cross-group tests: 
 
     # Dataset in cross-group project, valid permissions
     username = users_groups[1][0][0] #test_user1
@@ -82,39 +77,46 @@ def test_post_image(conn, project_structure, users_groups, timestamp, image_fixt
     im_id2 = ezomero.post_image(conn, image_fixture, image_name)
     assert conn.getObject("Image", im_id2).getName() == image_name
     
+    # Post image to non-existent dataset
+    did3 = 999999999
+    im_id3 = ezomero.post_image(conn, image_fixture, image_name,
+                               description='This is an image',
+                               dataset_id=did3)
+    assert im_id3 == None
 
     # Post image cross-group, valid permissions
     username = users_groups[1][0][0] #test_user1
     groupname = users_groups[0][0][0] #test_group_1
     current_conn = conn.suConn(username, groupname)
     dataset_info = project_structure[1]
-    did3 = dataset_info[3][1] #ds2 (in test_group_2)
+    did4 = dataset_info[3][1] #ds2 (in test_group_2)
     image_name = 'test_post_image_' + timestamp
-    im_id3 = ezomero.post_image(current_conn, image_fixture, image_name,
+    im_id4 = ezomero.post_image(current_conn, image_fixture, image_name,
                                description='This is an image',
-                               dataset_id=did3)
+                               dataset_id=did4)
     current_conn.SERVICE_OPTS.setOmeroGroup('-1')
-    assert current_conn.getObject("Image", im_id3).getName() == image_name
+    assert current_conn.getObject("Image", im_id4).getName() == image_name
     current_conn.close()
-
 
     # Post image cross-group, ivvalid permissions
     username = users_groups[1][2][0] #test_user3
     groupname = users_groups[0][1][0] #test_group_2
     current_conn = conn.suConn(username, groupname)
     dataset_info = project_structure[1]
-    did4 = dataset_info[1][1] #ds1 (in test_group_1)
+    did5 = dataset_info[1][1] #ds1 (in test_group_1)
     image_name = 'test_post_image_' + timestamp
-    im_id4 = ezomero.post_image(current_conn, image_fixture, image_name,
+    im_id5 = ezomero.post_image(current_conn, image_fixture, image_name,
                                description='This is an image',
-                               dataset_id=did4)
+                               dataset_id=did5)
     current_conn.close()
-    assert im_id4 == None
+    assert im_id5 == None
 
-    conn.deleteObjects("Image", [im_id, im_id2, im_id3], deleteAnns=True,
+    conn.deleteObjects("Image", [im_id, im_id2, im_id4], deleteAnns=True,
                        deleteChildren=True, wait=True)
 
-def test_post_get_map_annotation(conn, project_structure):
+def test_post_get_map_annotation(conn, project_structure, users_groups):
+    print(project_structure)
+    print(users_groups)
     image_info = project_structure[2]
     im_id = image_info[0][1]
     # This test both ezomero.post_map_annotation and ezomero.get_map_annotation
@@ -124,7 +126,31 @@ def test_post_get_map_annotation(conn, project_structure):
     map_ann_id = ezomero.post_map_annotation(conn, "Image", im_id, kv, ns)
     kv_pairs = ezomero.get_map_annotation(conn, map_ann_id)
     assert kv_pairs["key2"] == "value2"
-    conn.deleteObjects("Annotation", [map_ann_id], deleteAnns=True,
+
+    # Test posting to non-existing object
+    im_id2 = 999999999
+    map_ann_id2 = ezomero.post_map_annotation(conn, "Image", im_id2, kv, ns)
+    assert map_ann_id2 == None
+    
+    # Test posting cross-group
+    username = users_groups[1][0][0] #test_user1
+    groupname = users_groups[0][0][0] #test_group_1
+    current_conn = conn.suConn(username, groupname)
+    im_id3 = image_info[2][1] #im2, in test_group_2
+    map_ann_id3 = ezomero.post_map_annotation(current_conn, "Image", im_id3, kv, ns)
+    kv_pairs3 = ezomero.get_map_annotation(current_conn, map_ann_id3)
+    assert kv_pairs3["key2"] == "value2"
+    current_conn.close()
+
+    # Test posting to an invalid cross-group 
+    username = users_groups[1][2][0] #test_user3
+    groupname = users_groups[0][1][0] #test_group_2
+    current_conn = conn.suConn(username, groupname)
+    im_id4 = image_info[1][1] #im1(in test_group_1)
+    map_ann_id4 = ezomero.post_map_annotation(current_conn, "Image", im_id4, kv, ns)
+    assert map_ann_id4 == None
+    current_conn.close()
+    conn.deleteObjects("Annotation", [map_ann_id, map_ann_id3], deleteAnns=True,
                        deleteChildren=True, wait=True)
 
 
