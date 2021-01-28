@@ -115,8 +115,6 @@ def test_post_image(conn, project_structure, users_groups, timestamp, image_fixt
                        deleteChildren=True, wait=True)
 
 def test_post_get_map_annotation(conn, project_structure, users_groups):
-    print(project_structure)
-    print(users_groups)
     image_info = project_structure[2]
     im_id = image_info[0][1]
     # This test both ezomero.post_map_annotation and ezomero.get_map_annotation
@@ -196,6 +194,13 @@ def test_get_image(conn, project_structure):
     im, im_arr = ezomero.get_image(conn, im_id, no_pixels=True)
     assert im_arr is None
 
+    # test that IndexError comes up when pad=False
+    with pytest.raises(IndexError):
+        im, im_arr = ezomero.get_image(conn, im_id,
+                                       start_coords=(195, 195, 18, 0, 0),
+                                       axis_lengths=(10, 10, 3, 4, 3),
+                                       pad=False)
+
     # test crop
     im, im_arr = ezomero.get_image(conn, im_id,
                                    start_coords=(101, 101, 10, 0, 0),
@@ -210,15 +215,11 @@ def test_get_image(conn, project_structure):
                                    pad=True)
     assert im_arr.shape == (3, 3, 11, 10, 4)
 
-    # test that IndexError comes up when pad=False
-    with pytest.raises(IndexError):
-        im, im_arr = ezomero.get_image(conn, im_id,
-                                       start_coords=(195, 195, 18, 0, 0),
-                                       axis_lengths=(10, 10, 3, 4, 3),
-                                       pad=False)
+
 
 
 def test_get_image_ids(conn, project_structure, screen_structure):
+    
     dataset_info = project_structure[1]
     main_ds_id = dataset_info[0][1]
     image_info = project_structure[2]

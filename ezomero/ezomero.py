@@ -333,8 +333,9 @@ def post_project(conn, project_name, description=None):
 
 
 # gets
+@do_across_groups
 def get_image(conn, image_id, no_pixels=False, start_coords=None,
-              axis_lengths=None, xyzct=False, pad=False):
+              axis_lengths=None, xyzct=False, pad=False, across_groups=True):
     """Get omero image object along with pixels as a numpy array.
 
     Parameters
@@ -475,7 +476,8 @@ def get_image(conn, image_id, no_pixels=False, start_coords=None,
     return (image, pixel_view)
 
 
-def get_image_ids(conn, dataset=None, well=None):
+@do_across_groups
+def get_image_ids(conn, dataset=None, well=None, across_groups=True):
     """Return a list of image ids based on image container
 
     If neither dataset nor well is specified, function will return orphans.
@@ -559,8 +561,8 @@ def get_image_ids(conn, dataset=None, well=None):
 
     return [r[0].val for r in results]
 
-
-def get_map_annotation_ids(conn, object_type, object_id, ns=None):
+@do_across_groups
+def get_map_annotation_ids(conn, object_type, object_id, ns=None, across_groups=True):
     """Get IDs of map annotations associated with an object
 
     Parameters
@@ -649,8 +651,8 @@ def get_group_id(conn, group_name):
             return g.getId()
     return None
 
-
-def get_user_id(conn, user_name):
+@do_across_groups
+def get_user_id(conn, user_name, across_groups=True):
     """Get ID of a user based on user name.
 
     Must be an exact match. Case sensitive.
@@ -680,8 +682,8 @@ def get_user_id(conn, user_name):
             return u.getId()
     return None
 
-
-def get_original_filepaths(conn, image_id, fpath='repo'):
+@do_across_groups
+def get_original_filepaths(conn, image_id, fpath='repo', across_groups=True):
     """Get paths to original files for specified image.
 
     Parameters
