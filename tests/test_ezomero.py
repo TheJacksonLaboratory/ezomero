@@ -1,3 +1,4 @@
+from ezomero.ezomero import set_group
 import pytest
 import numpy as np
 import ezomero
@@ -9,7 +10,7 @@ def test_omero_connection(conn, omero_params):
 
 # Test posts
 ############
-def test_post_dataset(conn, project_structure, timestamp):
+def test_post_dataset(conn, project_structure, users_groups, timestamp):
 
     # Orphaned dataset, with descripion
     ds_test_name = 'test_post_dataset_' + timestamp
@@ -26,8 +27,7 @@ def test_post_dataset(conn, project_structure, timestamp):
     ds_names = [d.getName() for d in ds]
     assert ds_test_name2 in ds_names
 
-    conn.deleteObjects("Dataset", [did, did2], deleteAnns=True,
-                        deleteChildren=True, wait=True)
+    
     
     # Dataset in non-existing project ID
     ds_test_name3 = 'test_post_dataset3_' + timestamp
@@ -35,9 +35,40 @@ def test_post_dataset(conn, project_structure, timestamp):
     did3 = ezomero.post_dataset(conn, ds_test_name3, project_id=pid)
     assert did3 == None
 
+    #cross-group tests: 
+
+    # Dataset in cross-group project, valid permissions
+    username = users_groups[1][0][0] #test_user1
+    groupname = users_groups[0][0][0]  #test_group_1
+    gid = users_groups[0][0][1]
+    current_conn = conn.suConn(username, groupname)
+    ds_test_name4 = 'test_post_dataset4_' + timestamp
+    project_info = project_structure[0]
+    pid = project_info[3][1] #proj3 (in test_group_2)
+    did4 = ezomero.post_dataset(current_conn, ds_test_name4, project_id=pid)
+    current_conn.SERVICE_OPTS.setOmeroGroup('-1')
+    ds = current_conn.getObjects("Dataset", opts={'project': pid})
+    ds_names = [d.getName() for d in ds]
+    current_conn.close()
+    assert ds_test_name4 in ds_names
+
+    # Dataset in cross-group project, invalid permissions
+    username = users_groups[1][2][0] #test_user3
+    groupname = users_groups[0][1][0] #test_group_2
+    current_conn = conn.suConn(username, groupname)
+    ds_test_name5 = 'test_post_dataset5_' + timestamp
+    project_info = project_structure[0]
+    pid = project_info[1][1] #proj1 (in test_group_1)
+    did5 = ezomero.post_dataset(current_conn, ds_test_name5, project_id=pid)
+    current_conn.close()
+    assert did5 == None
+
+    conn.deleteObjects("Dataset", [did, did2, did4], deleteAnns=True,
+                        deleteChildren=True, wait=True)
+    
 
 
-def test_post_image(conn, project_structure, timestamp, image_fixture):
+def test_post_image(conn, project_structure, users_groups, timestamp, image_fixture):
     dataset_info = project_structure[1]
     did = dataset_info[0][1]
     # Post image in dataset
@@ -50,9 +81,38 @@ def test_post_image(conn, project_structure, timestamp, image_fixture):
     # Post orphaned image
     im_id2 = ezomero.post_image(conn, image_fixture, image_name)
     assert conn.getObject("Image", im_id2).getName() == image_name
-    conn.deleteObjects("Image", [im_id, im_id2], deleteAnns=True,
-                       deleteChildren=True, wait=True)
+    
 
+    # Post image cross-group, valid permissions
+    username = users_groups[1][0][0] #test_user1
+    groupname = users_groups[0][0][0] #test_group_1
+    current_conn = conn.suConn(username, groupname)
+    dataset_info = project_structure[1]
+    did3 = dataset_info[3][1] #ds2 (in test_group_2)
+    image_name = 'test_post_image_' + timestamp
+    im_id3 = ezomero.post_image(current_conn, image_fixture, image_name,
+                               description='This is an image',
+                               dataset_id=did3)
+    current_conn.SERVICE_OPTS.setOmeroGroup('-1')
+    assert current_conn.getObject("Image", im_id3).getName() == image_name
+    current_conn.close()
+
+
+    # Post image cross-group, ivvalid permissions
+    username = users_groups[1][2][0] #test_user3
+    groupname = users_groups[0][1][0] #test_group_2
+    current_conn = conn.suConn(username, groupname)
+    dataset_info = project_structure[1]
+    did4 = dataset_info[1][1] #ds1 (in test_group_1)
+    image_name = 'test_post_image_' + timestamp
+    im_id4 = ezomero.post_image(current_conn, image_fixture, image_name,
+                               description='This is an image',
+                               dataset_id=did4)
+    current_conn.close()
+    assert im_id4 == None
+
+    conn.deleteObjects("Image", [im_id, im_id2, im_id3], deleteAnns=True,
+                       deleteChildren=True, wait=True)
 
 def test_post_get_map_annotation(conn, project_structure):
     image_info = project_structure[2]
