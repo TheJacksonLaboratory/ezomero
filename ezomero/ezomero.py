@@ -1,12 +1,17 @@
+import configparser
 import logging
+import os
 import numpy as np
+from getpass import getpass
+from omero.gateway import BlitzGateway
 from omero.gateway import MapAnnotationWrapper, DatasetWrapper, ProjectWrapper
 from omero.model import MapAnnotationI, DatasetI, ProjectI, ProjectDatasetLinkI
 from omero.model import DatasetImageLinkI, ImageI, ExperimenterI
 from omero.rtypes import rlong, rstring
 from omero.sys import Parameters
+from pathlib import Path
 
-#expose functions for import
+# expose functions for import
 __all__ = ["post_dataset",
            "post_image",
            "post_map_annotation",
@@ -26,7 +31,10 @@ __all__ = ["post_dataset",
            "print_groups",
            "print_projects",
            "print_datasets",
+           "connect",
+           "store_connection_params",
            "set_group"]
+
 
 # posts
 def post_dataset(conn, dataset_name, project_id=None, description=None):
@@ -928,6 +936,232 @@ def print_datasets(conn, project=None):
 
 
 # functions for managing connection context and service options.
+
+def connect(user=None, password=None, group=None, host=None, port=None,
+            secure=None, config_path=None):
+    """Create an OMERO connection
+
+    This function will create an OMERO connection by populating certain
+    parameters for ``omero.gateway.BlitzGateway`` initialization by the
+    procedure described in the notes below. Note that this function may
+    ask for user input, so be cautious if using in the context of a script.
+
+    Finally, don't forget to close the connection ``conn.close()`` when it
+    is no longer needed!
+
+    Parameters
+    ----------
+    user : str, optional
+        OMERO username.
+
+    password : str, optional
+        OMERO password.
+
+    group : str, optional
+        OMERO group.
+
+    host : str, optional
+        OMERO.server host.
+
+    port : int, optional
+        OMERO port.
+
+    secure : boolean, optional
+        Whether to create a secure session.
+
+    config_path : str, optional
+        Path to directory containing '.ezomero' file that stores connection
+        information. If left as ``None``, defaults to the home directory as
+        determined by Python's ``pathlib``.
+
+    Returns
+    -------
+    conn : ``omero.gateway.BlitzGateway`` object or None
+        OMERO connection, if successful. Otherwise an error is logged and
+        returns None.
+
+    Notes
+    -----
+    The procedure for choosing parameters for ``omero.gateway.BlitzGateway``
+    initialization is as follows:
+
+    1) Any parameters given to `ezconnect` will be used to initialize
+       ``omero.gateway.BlitzGateway``
+
+    2) If a parameter is not given to `ezconnect`, populate from variables
+       in ``os.environ``:
+        OMERO_USER
+        OMERO_PASS
+        OMERO_GROUP
+        OMERO_HOST
+        OMERO_PORT
+        OMERO_SECURE
+
+    3) If environment variables are not set, try to load from a config file.
+       This file should be called '.ezomero'. By default, this function will
+       look in the home directory, but ``config_path`` can be used to specify
+       a directory in which to look for '.ezomero'.
+
+       The function ``ezomero.store_connection_params`` can be used to create
+       the '.ezomero' file.
+
+       Note that passwords can not be loaded from the '.ezomero' file. This is
+       to discourage storing credentials in a file as cleartext.
+
+    4) If any remaining parameters have not been set by the above steps, the
+       user is prompted to enter a value for each unset parameter.
+    """
+    # load from .ezomero config file if it exists
+    if config_path is None:
+        config_fp = Path.home() / '.ezomero'
+    elif type(config_path) is str:
+        config_fp = Path(config_path) / '.ezomero'
+    else:
+        raise TypeError('config_path must be a string')
+
+    config_dict = {}
+    if config_fp.exists():
+        config = configparser.ConfigParser()
+        with config_fp.open() as fp:
+            config.read_file(fp)
+        config_dict = config["DEFAULT"]
+
+    # set user
+    if user is None:
+        user = config_dict.get("OMERO_USER", user)
+        user = os.environ.get("OMERO_USER", user)
+    if user is None:
+        user = input('Enter username: ')
+
+    # set password
+    if password is None:
+        password = os.environ.get("OMERO_PASS", password)
+    if password is None:
+        password = getpass('Enter password: ')
+
+    # set group
+    if group is None:
+        group = config_dict.get("OMERO_GROUP", group)
+        group = os.environ.get("OMERO_GROUP", group)
+    if group is None:
+        group = input('Enter group name (or leave blank for default group): ')
+    if group == "":
+        group = None
+
+    # set host
+    if host is None:
+        host = config_dict.get("OMERO_HOST", host)
+        host = os.environ.get("OMERO_HOST", host)
+    if host is None:
+        host = input('Enter host: ')
+
+    # set port
+    if port is None:
+        port = config_dict.get("OMERO_PORT", port)
+        port = os.environ.get("OMERO_PORT", port)
+    if port is None:
+        port = input('Enter port: ')
+    port = int(port)
+
+    # set session security
+    if secure is None:
+        secure = config_dict.get("OMERO_SECURE", secure)
+        secure = os.environ.get("OMERO_SECURE", secure)
+    if secure is None:
+        secure = input('Secure session (True or False): ')
+    if type(secure) is str:
+        if secure.lower() in ["true", "t"]:
+            secure = True
+        elif secure.lower() in ["false", "f"]:
+            secure = False
+        else:
+            raise ValueError('secure must be set to either True or False')
+
+    # create connection
+    conn = BlitzGateway(user, password, group=group, host=host, port=port,
+                        secure=secure)
+    if conn.connect():
+        return conn
+    else:
+        logging.error('Could not connect, check your settings')
+        return None
+
+
+def store_connection_params(user=None, group=None, host=None, port=None,
+                            secure=None, config_path=None):
+    """Save OMERO connection parameters in a file.
+
+    This function creates a config file ('.ezomero') in which
+    certain OMERO parameters are stored, to make it easier to create
+    ``omero.gateway.BlitzGateway`` objects.
+
+    Parameters
+    ----------
+    user : str, optional
+        OMERO username.
+
+    group : str, optional
+        OMERO group.
+
+    host : str, optional
+        OMERO.server host.
+
+    port : int, optional
+        OMERO port.
+
+    secure : boolean, optional
+        Whether to create a secure session.
+
+    config_path : str, optional
+        Path to directory that will contain the '.ezomero' file. If left as
+        ``None``, defaults to the home directory as determined by Python's
+        ``pathlib``.
+    """
+    if config_path is None:
+        config_path = Path.home()
+    elif type(config_path) is str:
+        config_path = Path(config_path)
+    else:
+        raise ValueError('config_path must be a string')
+
+    if not config_path.is_dir():
+        raise ValueError('config_path must point to a valid directory')
+    ezo_file = config_path / '.ezomero'
+    if ezo_file.exists():
+        resp = input(f'{ezo_file} already exists. Overwrite? (Y/N)')
+        if resp.lower() not in ['yes', 'y']:
+            return
+
+    # get parameters
+    if user is None:
+        user = input('Enter username: ')
+    if group is None:
+        group = input('Enter group name (or leave blank for default group): ')
+    if host is None:
+        host = input('Enter host: ')
+    if port is None:
+        port = input('Enter port: ')
+    if secure is None:
+        secure_str = input('Secure session (True or False): ')
+        if secure_str.lower() in ["true", "t"]:
+            secure = "True"
+        elif secure_str.lower() in ["false", "f"]:
+            secure = "False"
+        else:
+            raise ValueError('secure must be set to either True or False')
+
+    # make parameter dictionary and save as configfile
+    # just use 'DEFAULT' for right now, we can possibly add alt configs later
+    config = configparser.ConfigParser()
+    config['DEFAULT'] = {'OMERO_USER': user,
+                         'OMERO_GROUP': group,
+                         'OMERO_HOST': host,
+                         'OMERO_PORT': port,
+                         'OMERO_SECURE': secure}
+    with ezo_file.open('w') as configfile:
+        config.write(configfile)
+        print(f'Connection settings saved to {ezo_file}')
+
 
 def set_group(conn, group_id):
     """Safely switch OMERO group.
