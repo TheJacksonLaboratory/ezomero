@@ -1069,12 +1069,13 @@ def connect(user=None, password=None, group=None, host=None, port=None,
         secure = os.environ.get("OMERO_SECURE", secure)
     if secure is None:
         secure = input('Secure session (True or False): ')
-    if secure.lower() in ["true", "t"]:
-        secure = True
-    elif secure.lower() in ["false", "f"]:
-        secure = False
-    else:
-        raise ValueError('secure must be set to either True or False')
+    if type(secure) is str:
+        if secure.lower() in ["true", "t"]:
+            secure = True
+        elif secure.lower() in ["false", "f"]:
+            secure = False
+        else:
+            raise ValueError('secure must be set to either True or False')
 
     # create connection
     conn = BlitzGateway(user, password, group=group, host=host, port=port,
