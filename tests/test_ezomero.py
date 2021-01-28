@@ -186,6 +186,10 @@ def test_get_image(conn, project_structure):
     assert im_arr.shape == (1, 20, 201, 200, 3)
     assert im.getPixelsType() == im_arr.dtype
 
+    # test cross-group
+
+    # test non-existent id
+
     # test xyzct
     im, im_arr = ezomero.get_image(conn, im_id, xyzct=True)
     assert im_arr.shape == (200, 201, 20, 3, 1)
@@ -236,7 +240,9 @@ def test_get_image_ids(conn, project_structure, screen_structure):
     assert im_ids[0] == im_id1
     assert len(im_ids) == 1
 
-    # Need to add test for orphans
+    # test for orphans
+
+    # test cross-group
 
     # Return nothing on bad input
     im_ids2 = ezomero.get_image_ids(conn, dataset=999999)
@@ -274,6 +280,8 @@ def test_get_group_id(conn):
     gid = ezomero.get_group_id(conn, 'guest')
     assert gid == 2
 
+#def test_get_user_id(conn, whatever)
+
 
 # Test puts
 ###########
@@ -295,3 +303,7 @@ def test_put_map_annotation(conn, project_structure):
                        deleteAnns=True,
                        deleteChildren=True,
                        wait=True)
+
+    # test cross-group
+
+    # test non-existent ID
