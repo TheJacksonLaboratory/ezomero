@@ -398,8 +398,14 @@ def get_image(conn, image_id, no_pixels=False, start_coords=None,
     >>> im_object.getId()
     314
     """
+
+    if image_id is None:
+        raise TypeError('Object ID cannot be empty')
     pixel_view = None
     image = conn.getObject('Image', image_id)
+    if image is None:
+        logging.warning(f'Cannot load image {image_id} - check if you have permissions to do so')
+        return (None, None)
     size_x = image.getSizeX()
     size_y = image.getSizeY()
     size_z = image.getSizeZ()
@@ -762,7 +768,8 @@ def get_original_filepaths(conn, image_id, fpath='repo', across_groups=True):
 
 
 # puts
-def put_map_annotation(conn, map_ann_id, kv_dict, ns=None):
+@do_across_groups
+def put_map_annotation(conn, map_ann_id, kv_dict, ns=None, across_groups=True):
     """Update an existing map annotation with new values (kv pairs)
 
     Parameters
@@ -795,6 +802,9 @@ def put_map_annotation(conn, map_ann_id, kv_dict, ns=None):
     >>> put_map_annotation(conn, 16, new_values, 'test_v2')
     """
     map_ann = conn.getObject('MapAnnotation', map_ann_id)
+    if map_ann is None:
+        raise ValueError("MapAnnotation is non-existent or you do not have permissions to change it.")
+        return None
 
     if ns is None:
         ns = map_ann.getNs()
