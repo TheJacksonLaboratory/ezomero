@@ -3,6 +3,7 @@ import pytest
 import numpy as np
 from datetime import datetime
 import ezomero
+from ezomero import rois
 from omero.cli import CLI
 from omero.gateway import BlitzGateway
 from omero.gateway import ScreenWrapper, PlateWrapper
@@ -161,6 +162,23 @@ def image_fixture():
     test_image[0:100, 0:100, 11:20, 1, :] = 255
     test_image[101:200, 101:201, :, 2, :] = 255
     return test_image
+
+
+@pytest.fixture(scope='session')
+def roi_fixture():
+    point = rois.Point(x=4.0, y=5.0, z=1, c=0, t=5, label='test_point')
+    line = rois.Line(x1=4.0, y1=5.0, x2=7.0, y2=9.0, z=1, c=0, t=5, label='test_line')
+    rectangle = rois.Rectangle(x=4.0, y=5.0, width=30.0, height=40.0, z=1, c=0, t=5, label='test_rectangle')
+    ellipse = rois.Ellipse(x=4, y=5, x_rad=30.0, y_rad=40.0, z=1, c=0, t=5, label='test_ellipse')
+    polygon = rois.Polygon(points=[(4.0, 5.0), (14.0, 15.0), (4.0, 15.0)], z=1, c=0, t=5, label='test_polygon')
+
+    return {'shapes': [point, line, rectangle, ellipse, polygon],
+            'name': 'ROI_name',
+            'desc': 'A description for the ROI',
+            'fill_color': (255, 0, 0, 200),
+            'stroke_color': (255, 0, 0, 0),
+            'stroke_width': 2
+            }
 
 
 @pytest.fixture(scope='session')
