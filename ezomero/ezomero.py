@@ -38,6 +38,18 @@ __all__ = ["post_dataset",
 
 
 def get_default_args(func):
+    """Retrieves the default arguments of a function.
+
+    Parameters
+    ----------
+    func : function 
+        Function whose signature we want to inspect
+
+    Returns
+    -------
+    _ : dict
+        Key-value pairs of argument name and value.
+    """
     signature = inspect.signature(func)
     return {
         k: v.default
@@ -47,6 +59,19 @@ def get_default_args(func):
 
 
 def do_across_groups(f):
+    """Decorator functional for making functions work across
+    OMERO groups.
+
+    Parameters
+    ----------
+    f : function 
+        Function that will be decorated
+
+    Returns
+    -------
+    wrapper : Object
+        Return value of the decorated function.
+    """
     def wrapper(*args, **kwargs):
         defaults = get_default_args(f)
         if defaults['across_groups'] or kwargs['across_groups']:
@@ -78,8 +103,12 @@ def post_dataset(conn, dataset_name, project_id=None, description=None, across_g
     project_id : int, optional
         Id of Project in which to create the Dataset. If no Project is
         specified, the Dataset will be orphaned.
-    description : str
+    description : str, optional
         Description for the new Dataset.
+    across_groups : bool, optional
+        Defines cross-group behavior of function - set to 
+        ``False`` to disable it.
+
 
     Returns
     -------
@@ -154,6 +183,9 @@ def post_image(conn, image, image_name, description=None, dataset_id=None,
         ``image`` parameter.
     channel_list : list of ints
         Copies metadata from these channels in source image (if specified).
+    across_groups : bool, optional
+        Defines cross-group behavior of function - set to 
+        ``False`` to disable it.
 
     Returns
     -------
@@ -237,6 +269,9 @@ def post_map_annotation(conn, object_type, object_id, kv_dict, ns, across_groups
         key-value pairs that will be included in the MapAnnotation
     ns : str
         Namespace for the MapAnnotation
+    across_groups : bool, optional
+        Defines cross-group behavior of function - set to 
+        ``False`` to disable it.
 
     Notes
     -----
@@ -369,6 +404,9 @@ def get_image(conn, image_id, no_pixels=False, start_coords=None,
         If `axis_lengths` values would result in out-of-bounds indices, pad
         pixel array with zeros. Otherwise, such an operation will raise an
         exception. Ignored if `no_pixels` is True.
+    across_groups : bool, optional
+        Defines cross-group behavior of function - set to 
+        ``False`` to disable it.
 
     Returns
     -------
@@ -503,6 +541,9 @@ def get_image_ids(conn, dataset=None, well=None, across_groups=True):
         ID of Dataset from which to return image IDs.
     well : int, optional
         ID of Well from which to return image IDs.
+    across_groups : bool, optional
+        Defines cross-group behavior of function - set to 
+        ``False`` to disable it.
 
     Returns
     -------
@@ -588,6 +629,9 @@ def get_map_annotation_ids(conn, object_type, object_id, ns=None, across_groups=
         ID of object of ``object_type``.
     ns : str
         Namespace with which to filter results
+    across_groups : bool, optional
+        Defines cross-group behavior of function - set to 
+        ``False`` to disable it.
 
     Returns
     -------
@@ -619,6 +663,9 @@ def get_map_annotation(conn, map_ann_id, across_groups=True):
         OMERO connection.
     map_ann_id : int
         ID of map annotation to get.
+    across_groups : bool, optional
+        Defines cross-group behavior of function - set to 
+        ``False`` to disable it.
 
     Returns
     -------
@@ -676,6 +723,9 @@ def get_user_id(conn, user_name, across_groups=True):
         OMERO connection.
     user_name : str
         Name of the user for which an ID is to be returned.
+    across_groups : bool, optional
+        Defines cross-group behavior of function - set to 
+        ``False`` to disable it.
 
     Returns
     -------
@@ -710,6 +760,9 @@ def get_original_filepaths(conn, image_id, fpath='repo', across_groups=True):
         repository ('repo') or the path from which the image was imported
         ('client'). The latter is useful for images that were imported by
         the "in place" method. Defaults to 'repo'.
+    across_groups : bool, optional
+        Defines cross-group behavior of function - set to 
+        ``False`` to disable it.
 
     Notes
     -----
@@ -783,6 +836,9 @@ def put_map_annotation(conn, map_ann_id, kv_dict, ns=None, across_groups=True):
     ns : str
         New namespace for the MapAnnotation. If left as None, the old
         namespace will be used.
+    across_groups : bool, optional
+        Defines cross-group behavior of function - set to 
+        ``False`` to disable it.
 
     Notes
     -----
