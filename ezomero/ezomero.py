@@ -6,7 +6,7 @@ from omero.model import DatasetImageLinkI, ImageI, ExperimenterI
 from omero.model import RoiI, PointI, LineI, RectangleI, EllipseI, PolygonI, LengthI, enums
 from omero.rtypes import rlong, rstring, rint, rdouble
 from omero.sys import Parameters
-from rois import Point, Line, Rectangle, Ellipse, Polygon
+from ezomero.rois import Point, Line, Rectangle, Ellipse, Polygon
 
 
 # expose functions for import
