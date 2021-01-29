@@ -6,19 +6,11 @@ from omero.model import DatasetImageLinkI, ImageI, ExperimenterI
 from omero.model import RoiI, PointI, LineI, RectangleI, EllipseI, PolygonI, LengthI, enums
 from omero.rtypes import rlong, rstring, rint, rdouble
 from omero.sys import Parameters
-from abc import ABC
-from dataclasses import field
-from typing import List, Tuple
-from pydantic.dataclasses import dataclass
-from pydantic.color import Color
+from rois import Point, Line, Rectangle, Ellipse, Polygon
 
-#expose functions for import
-__all__ = ["Point",
-           "Line",
-           "Rectangle",
-           "Ellipse",
-           "Polygon",
-           "post_dataset",
+
+# expose functions for import
+__all__ = ["post_dataset",
            "post_image",
            "post_map_annotation",
            "post_project",
@@ -40,318 +32,6 @@ __all__ = ["Point",
            "print_datasets",
            "set_group"]
 
-
-# classes
-class Shape(ABC):
-    """
-    An abstract base class used to process data related to shapes.
-    This class should not be instantiated. Shapes should inherit from it
-
-    ...
-
-    Methods
-    ----------
-    configure_shape()
-    Does the configuration of extra arguments on the omero shape
-    """
-    def configure_shape(self):
-        if self.z is not None:
-            self._omero_shape.theZ = rint(self.z)
-        if self.c is not None:
-            self._omero_shape.theC = rint(self.c)
-        if self.t is not None:
-            self._omero_shape.theT = rint(self.t)
-        if self.label is not None:
-            self._omero_shape.setTextValue(rstring(self.label))
-        self._omero_shape.setFillColor(rint(_rgba_to_int(self.fill_color)))
-        self._omero_shape.setStrokeColor(rint(_rgba_to_int(self.stroke_color)))
-        self._omero_shape.setStrokeWidth(LengthI(self.stroke_width, enums.UnitsLength.PIXEL))
-
-
-@dataclass(frozen=True)
-class Point(Shape):
-    """
-    A dataclass used to represent a Point shape and create an OMERO equivalent.
-    This dataclass is frozen and should not be modified after instantiation
-
-    ...
-
-    Attributes
-    ----------
-    x: float
-        the x axis position of the point shape in pixels
-    y: float
-        the y axis position of the point shape in pixels
-    z: int, optional
-        the z position of the point in pixels (default is None)
-        Note this is the z plane to which the shape is linked and not the sub-voxel resolution position of your shape
-        If None (the default) is provided, it will not be linked to any z plane
-    c: int, optional
-        the channel index to which the shape is linked (default is None)
-        If None (the default) is provided, it will not be linked to any channel
-    t: int, optional
-        the time frame to which the shape is linked (default is None)
-        If None (the default) is provided, it will not be linked to any time frame
-    fill_color: pydantic Color type, optional
-        the color fill of the shape (default is (10, 10, 10, 0.1))
-        Colors can be specified as a name, a hexadecimal value, RGB/RGBA tuples, RGB/RGBA strings or HSL strings
-        https://pydantic-docs.helpmanual.io/usage/types/#color-type
-    stroke_color: Color, optional
-        the color of the shape edge (default is (255, 255, 255, 1.0))
-    stroke_width: int, optional
-        the width of the shape stroke (default is 1)
-    label: str, optional
-        the label of the shape (default is None)
-    """
-
-    x: float = field(metadata={'units': 'PIXELS'})
-    y: float = field(metadata={'units': 'PIXELS'})
-    z: int = field(default=None)
-    c: int = field(default=None)
-    t: int = field(default=None)
-    fill_color: Color = field(default=Color((10, 10, 10, 0.1)))
-    stroke_color: Color = field(default=Color((255, 255, 255, 1.0)))
-    stroke_width: int = field(default=1)
-    label: str = field(default=None)
-
-    def __post_init_post_parse__(self):
-        super().__setattr__('_omero_shape', PointI())
-        self._omero_shape.x = rdouble(self.x)
-        self._omero_shape.y = rdouble(self.y)
-        self.configure_shape()
-
-
-@dataclass(frozen=True)
-class Line(Shape):
-    """
-    A dataclass used to represent a Line shape and create an OMERO equivalent.
-    This dataclass is frozen and should not be modified after instantiation
-
-    ...
-
-    Attributes
-    ----------
-    x1: float
-        the x axis position of the start point of the line shape in pixels
-    y1: float
-        the y axis position of the start point of the line shape in pixels
-    x2: float
-        the x axis position of the end point of the line shape in pixels
-    y2: float
-        the y axis position of the end point of the line shape in pixels
-    z: int, optional
-        the z position of the point in pixels (default is None)
-        Note this is the z plane to which the shape is linked and not the sub-voxel resolution position of your shape
-        If None (the default) is provided, it will not be linked to any z plane
-    c: int, optional
-        the channel index to which the shape is linked (default is None)
-        If None (the default) is provided, it will not be linked to any channel
-    t: int, optional
-        the time frame to which the shape is linked (default is None)
-        If None (the default) is provided, it will not be linked to any time frame
-    fill_color: pydantic Color type, optional
-        the color fill of the shape (default is (10, 10, 10, 0.1))
-        Colors can be specified as a name, a hexadecimal value, RGB/RGBA tuples, RGB/RGBA strings or HSL strings
-        https://pydantic-docs.helpmanual.io/usage/types/#color-type
-    stroke_color: Color, optional
-        the color of the shape edge (default is (255, 255, 255, 1.0))
-    stroke_width: int, optional
-        the width of the shape stroke (default is 1)
-    label: str, optional
-        the label of the shape (default is None)
-    """
-
-    x1: float = field(metadata={'units': 'PIXELS'})
-    y1: float = field(metadata={'units': 'PIXELS'})
-    x2: float = field(metadata={'units': 'PIXELS'})
-    y2: float = field(metadata={'units': 'PIXELS'})
-    z: int = field(default=None)
-    c: int = field(default=None)
-    t: int = field(default=None)
-    fill_color: Color = field(default=Color((10, 10, 10, 0.1)))
-    stroke_color: Color = field(default=Color((255, 255, 255, 1.0)))
-    stroke_width: int = field(default=1)
-    label: str = field(default=None)
-
-    def __post_init_post_parse__(self):
-        super().__setattr__('_omero_shape', LineI())
-        self._omero_shape.x1 = rdouble(self.x1)
-        self._omero_shape.x2 = rdouble(self.x2)
-        self._omero_shape.y1 = rdouble(self.y1)
-        self._omero_shape.y2 = rdouble(self.y2)
-        self.configure_shape()
-
-
-@dataclass(frozen=True)
-class Rectangle(Shape):
-    """
-    A dataclass used to represent a Rectangle shape and create an OMERO equivalent.
-    This dataclass is frozen and should not be modified after instantiation
-
-    ...
-
-    Attributes
-    ----------
-    x: float
-        the x axis position of the rectangle shape in pixels
-    y: float
-        the y axis position of the rectangle shape in pixels
-    width: float
-        the width (x axis) of the rectangle shape in pixels
-    height: float
-        the height (y axis) of the rectangle shape in pixels
-    z: int, optional
-        the z position of the point in pixels (default is None)
-        Note this is the z plane to which the shape is linked and not the sub-voxel resolution position of your shape
-        If None (the default) is provided, it will not be linked to any z plane
-    c: int, optional
-        the channel index to which the shape is linked (default is None)
-        If None (the default) is provided, it will not be linked to any channel
-    t: int, optional
-        the time frame to which the shape is linked (default is None)
-        If None (the default) is provided, it will not be linked to any time frame
-    fill_color: pydantic Color type, optional
-        the color fill of the shape (default is (10, 10, 10, 0.1))
-        Colors can be specified as a name, a hexadecimal value, RGB/RGBA tuples, RGB/RGBA strings or HSL strings
-        https://pydantic-docs.helpmanual.io/usage/types/#color-type
-    stroke_color: Color, optional
-        the color of the shape edge (default is (255, 255, 255, 1.0))
-    stroke_width: int, optional
-        the width of the shape stroke (default is 1)
-    label: str, optional
-        the label of the shape (default is None)
-    """
-
-    x: float = field(metadata={'units': 'PIXELS'})
-    y: float = field(metadata={'units': 'PIXELS'})
-    width: float = field(metadata={'units': 'PIXELS'})
-    height: float = field(metadata={'units': 'PIXELS'})
-    z: int = field(default=None)
-    c: int = field(default=None)
-    t: int = field(default=None)
-    fill_color: Color = field(default=Color((10, 10, 10, 0.1)))
-    stroke_color: Color = field(default=Color((255, 255, 255, 1.0)))
-    stroke_width: int = field(default=1)
-    label: str = field(default=None)
-
-    def __post_init_post_parse__(self):
-        super().__setattr__('_omero_shape', RectangleI())
-        self._omero_shape.x = rdouble(self.x)
-        self._omero_shape.y = rdouble(self.y)
-        self._omero_shape.width = rdouble(self.width)
-        self._omero_shape.height = rdouble(self.height)
-        self.configure_shape()
-
-
-@dataclass(frozen=True)
-class Ellipse(Shape):
-    """
-    A dataclass used to represent an Ellipse shape and create an OMERO equivalent.
-    This dataclass is frozen and should not be modified after instantiation
-
-    ...
-
-    Attributes
-    ----------
-    x: float
-        the x axis position of the ellipse shape in pixels
-    y: float
-        the y axis position of the ellipse shape in pixels
-    x-rad: float
-        the x radius of the ellipse shape in pixels
-    y-rad: float
-        the y radius of the ellipse shape in pixels
-    z: int, optional
-        the z position of the point in pixels (default is None)
-        Note this is the z plane to which the shape is linked and not the sub-voxel resolution position of your shape
-        If None (the default) is provided, it will not be linked to any z plane
-    c: int, optional
-        the channel index to which the shape is linked (default is None)
-        If None (the default) is provided, it will not be linked to any channel
-    t: int, optional
-        the time frame to which the shape is linked (default is None)
-        If None (the default) is provided, it will not be linked to any time frame
-    fill_color: pydantic Color type, optional
-        the color fill of the shape (default is (10, 10, 10, 0.1))
-        Colors can be specified as a name, a hexadecimal value, RGB/RGBA tuples, RGB/RGBA strings or HSL strings
-        https://pydantic-docs.helpmanual.io/usage/types/#color-type
-    stroke_color: Color, optional
-        the color of the shape edge (default is (255, 255, 255, 1.0))
-    stroke_width: int, optional
-        the width of the shape stroke (default is 1)
-    label: str, optional
-        the label of the shape (default is None)
-    """
-
-    x: float = field(metadata={'units': 'PIXELS'})
-    y: float = field(metadata={'units': 'PIXELS'})
-    x_rad: float = field(metadata={'units': 'PIXELS'})
-    y_rad: float = field(metadata={'units': 'PIXELS'})
-    z: int = field(default=None)
-    c: int = field(default=None)
-    t: int = field(default=None)
-    fill_color: Color = field(default=Color((10, 10, 10, 0.1)))
-    stroke_color: Color = field(default=Color((255, 255, 255, 1.0)))
-    stroke_width: int = field(default=1)
-    label: str = field(default=None)
-
-    def __post_init_post_parse__(self):
-        super().__setattr__('_omero_shape', EllipseI())
-        self._omero_shape.x = rdouble(self.x)
-        self._omero_shape.y = rdouble(self.y)
-        self._omero_shape.radiusX = rdouble(self.x_rad)
-        self._omero_shape.radiusY = rdouble(self.y_rad)
-        self.configure_shape()
-
-
-@dataclass(frozen=True)
-class Polygon(Shape):
-    """
-    A dataclass used to represent a Polygon shape and create an OMERO equivalent.
-    This dataclass is frozen and should not be modified after instantiation
-
-    ...
-
-    Attributes
-    ----------
-    points: list of tuples of 2 floats
-        a list of 2 element tuples corresponding to the (x, y) coordinates of each vertex of the polygon
-    z: int, optional
-        the z position of the point in pixels (default is None)
-        Note this is the z plane to which the shape is linked and not the sub-voxel resolution position of your shape
-        If None (the default) is provided, it will not be linked to any z plane
-    c: int, optional
-        the channel index to which the shape is linked (default is None)
-        If None (the default) is provided, it will not be linked to any channel
-    t: int, optional
-        the time frame to which the shape is linked (default is None)
-        If None (the default) is provided, it will not be linked to any time frame
-    fill_color: pydantic Color type, optional
-        the color fill of the shape (default is (10, 10, 10, 0.1))
-        Colors can be specified as a name, a hexadecimal value, RGB/RGBA tuples, RGB/RGBA strings or HSL strings
-        https://pydantic-docs.helpmanual.io/usage/types/#color-type
-    stroke_color: Color, optional
-        the color of the shape edge (default is (255, 255, 255, 1.0))
-    stroke_width: int, optional
-        the width of the shape stroke (default is 1)
-    label: str, optional
-        the label of the shape (default is None)
-    """
-
-    points: List[Tuple[float, float]] = field(metadata={'units': 'PIXELS'})
-    z: int = field(default=None)
-    c: int = field(default=None)
-    t: int = field(default=None)
-    fill_color: Color = field(default=Color((10, 10, 10, 0.1)))
-    stroke_color: Color = field(default=Color((255, 255, 255, 1.0)))
-    stroke_width: int = field(default=1)
-    label: str = field(default=None)
-
-    def __post_init_post_parse__(self):
-        super().__setattr__('_omero_shape', PolygonI())
-        points_str = "".join("".join([str(x), ',', str(y), ', ']) for x, y in self.points)[:-2]
-        self._omero_shape.points = rstring(points_str)
-        self.configure_shape()
 
 
 # posts
@@ -603,7 +283,8 @@ def post_project(conn, project_name, description=None):
     return project.getId()
 
 
-def post_roi(conn, image_id, shapes, name=None, description=None):
+def post_roi(conn, image_id, shapes, name=None, description=None,
+             fill_color=(10, 10, 10, 10), stroke_color=(255, 255, 255, 255), stroke_width=1):
     """Create new ROI from a list of shapes and link to an image.
 
     Parameters
@@ -618,6 +299,17 @@ def post_roi(conn, image_id, shapes, name=None, description=None):
         Name for the new ROI
     description : str, optional
         Description of the new ROI
+    fill_color: tuple of ints, optional
+        the color fill of the shape (default is (10, 10, 10, 10))
+        Color is specified as a a tuple containing 4 integers from 0 to 255 representing red, green, blue and
+        alpha levels
+    stroke_color: tuple of int, optional
+        the color of the shape edge (default is (255, 255, 255, 255))
+        Color is specified as a a tuple containing 4 integers from 0 to 255 representing red, green, blue and
+        alpha levels
+    stroke_width: int, optional
+        the width of the shape stroke in pixels (default is 1)
+
 
     Returns
     -------
@@ -634,12 +326,12 @@ def post_roi(conn, image_id, shapes, name=None, description=None):
                               width=90,
                               height=40,
                               z=3,
-                              label='The place',
-                              fill_color=(255, 10, 10, 0.1),
-                              stroke_color='red',
-                              stroke_width=2)
+                              label='The place')
     >>> shapes.append(rectangle)
-    >>> post_roi(conn, 23, shapes, name='My Cell', description='Very important')
+    >>> post_roi(conn, 23, shapes, name='My Cell', description='Very important',
+                 fill_color=(255, 10, 10, 150),
+                 stroke_color=(255, 0, 0, 0),
+                 stroke_width=2)
     234
     """
     roi = RoiI()
@@ -648,16 +340,65 @@ def post_roi(conn, image_id, shapes, name=None, description=None):
     if description is not None:
         roi.setDescription(rstring(description))
     for shape in shapes:
-        roi.addShape(shape._omero_shape)
+        roi.addShape(_shape_to_omero_shape(shape, fill_color, stroke_color, stroke_width))
     image = conn.getObject('Image', image_id)
     roi.setImage(image._obj)
     roi = conn.getUpdateService().saveAndReturnObject(roi)
     return roi.getId().getValue()
 
 
-def _rgba_to_int(color: Color):
+def _shape_to_omero_shape(shape, fill_color, stroke_color, stroke_width):
+    """ Helper function to convert ezomero shapes into omero shapes"""
+    if isinstance(shape, Point):
+        omero_shape = PointI()
+        omero_shape.x = rdouble(shape.x)
+        omero_shape.y = rdouble(shape.y)
+    elif isinstance(shape, Line):
+        omero_shape = LineI()
+        omero_shape.x1 = rdouble(shape.x1)
+        omero_shape.x2 = rdouble(shape.x2)
+        omero_shape.y1 = rdouble(shape.y1)
+        omero_shape.y2 = rdouble(shape.y2)
+    elif isinstance(shape, Rectangle):
+        omero_shape = RectangleI()
+        omero_shape.x = rdouble(shape.x)
+        omero_shape.y = rdouble(shape.y)
+        omero_shape.width = rdouble(shape.width)
+        omero_shape.height = rdouble(shape.height)
+    elif isinstance(shape, Ellipse):
+        omero_shape = EllipseI()
+        omero_shape.x = rdouble(shape.x)
+        omero_shape.y = rdouble(shape.y)
+        omero_shape.radiusX = rdouble(shape.x_rad)
+        omero_shape.radiusY = rdouble(shape.y_rad)
+    elif isinstance(shape, Polygon):
+        omero_shape = PolygonI()
+        points_str = "".join("".join([str(x), ',', str(y), ', ']) for x, y in shape.points)[:-2]
+        omero_shape.points = rstring(points_str)
+    else:
+        raise TypeError('The shape passed for the roi is not a valid shape type')
+
+    if shape.z is not None:
+        omero_shape.theZ = rint(shape.z)
+    if shape.c is not None:
+        omero_shape.theC = rint(shape.c)
+    if shape.t is not None:
+        omero_shape.theT = rint(shape.t)
+    if shape.label is not None:
+        omero_shape.setTextValue(rstring(shape.label))
+    omero_shape.setFillColor(rint(_rgba_to_int(fill_color)))
+    omero_shape.setStrokeColor(rint(_rgba_to_int(stroke_color)))
+    omero_shape.setStrokeWidth(LengthI(stroke_width, enums.UnitsLength.PIXEL))
+
+    return omero_shape
+
+
+def _rgba_to_int(color: tuple):
     """ Helper function returning the color as an Integer in RGBA encoding """
-    (r, g, b, a) = color.as_rgb_tuple(alpha=True)
+    try:
+        r, g, b, a = color
+    except ValueError as e:
+        raise e('The format for the shape color is not addequate')
     r = r << 24
     g = g << 16
     b = b << 8
