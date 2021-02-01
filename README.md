@@ -27,7 +27,7 @@ Creates a new OMERO image from a numpy array. Returns a (new) image ID. `dataset
 
 ### `post_map_annotation(conn, object_type, object_id, kv_dict, ns, across_groups=True)`
 
-Creates a new MapAnnotation and links to images. Returns a (new) MapAnnotation ID. `object_id` does not need to be in the same group as the current `conn` group if `across_groups` is `True`.
+Creates a new MapAnnotation and links to an object. Returns a (new) MapAnnotation ID. `object_id` does not need to be in the same group as the current `conn` group if `across_groups` is `True`.
 
 ### `post_project(conn, project_name, description=None)`
 
