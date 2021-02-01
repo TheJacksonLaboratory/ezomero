@@ -17,17 +17,17 @@ In general, you will need to create a `BlitzGateway` object using `omero-py`, su
 
 ## `post` functions
 
-### `post_dataset(conn, dataset_name, project_id, description)`
+### `post_dataset(conn, dataset_name, project_id, description, across_groups=True)`
 
-Creates a new dataset. Returns a (new) dataset ID. `project_id` does not need to be in the same group as the user's default group.
+Creates a new dataset. Returns a (new) dataset ID. `project_id` does not need to be in the same group as the current `conn` group if `across_groups` is `True`.
 
-### `post_image(conn, image, image_name, description=None, dataset_id=None, source_image_id=None, channel_list=None)`
+### `post_image(conn, image, image_name, description=None, dataset_id=None, source_image_id=None, channel_list=None, across_groups=True)`
 
-Creates a new OMERO image from a numpy array. Returns a (new) image ID.
+Creates a new OMERO image from a numpy array. Returns a (new) image ID. `dataset_id` does not need to be in the same group as the current `conn` group if `across_groups` is `True`.
 
-### `post_map_annotation(conn, object_type, object_ids, kv_dict, ns)`
+### `post_map_annotation(conn, object_type, object_id, kv_dict, ns, across_groups=True)`
 
-Creates a new MapAnnotation and links to images. Returns a (new) MapAnnotation ID.
+Creates a new MapAnnotation and links to images. Returns a (new) MapAnnotation ID. `object_id` does not need to be in the same group as the current `conn` group if `across_groups` is `True`.
 
 ### `post_project(conn, project_name, description=None)`
 
@@ -35,39 +35,39 @@ Creates a new project. Returns a (new) project ID.
 
 ## `get` functions
 
-### `get_image(conn, image_id, no_pixels=False, start_coords=None, axis_lengths=None, xyzct=False, pad=False)`
+### `get_image(conn, image_id, no_pixels=False, start_coords=None, axis_lengths=None, xyzct=False, pad=False, across_groups=True)`
 
-Gets omero image object along with pixels as a numpy array. Returns an `omero.gateway.ImageWrapper` object along with an `ndarray` containing the image pixels.
+Gets omero image object along with pixels as a numpy array. Returns an `omero.gateway.ImageWrapper` object along with an `ndarray` containing the image pixels. `image_id` does not need to be in the same group as the current `conn` group if `across_groups` is `True`.
 
-### `get_image_ids(conn, dataset=None, well=None)`
+### `get_image_ids(conn, dataset=None, well=None, across_groups=True)`
 
-Returns a list of image ids based on project and dataset. Returns a list of `int`s with the desired IDs.
+Returns a list of image ids based on project and dataset. Returns a list of `int`s with the desired IDs. `dataset` does not need to be in the same group as the current `conn` group if `across_groups` is `True`.
 
-### `get_map_annotation_ids(conn, object_type, object_id, ns=None)`
+### `get_map_annotation_ids(conn, object_type, object_id, ns=None, across_groups=True)`
 
-Get IDs of map annotations associated with an object. Returns a list of `int`s with the desired IDs.
+Get IDs of map annotations associated with an object. Returns a list of `int`s with the desired IDs. `object_id` does not need to be in the same group as the current `conn` group if `across_groups` is `True`.
 
-### `get_map_annotation(conn, map_ann_id)`
+### `get_map_annotation(conn, map_ann_id, across_groups=True)`
 
-Get the value of a map annotation object. Returns a `dict` with the contents of the desired `MapAnnotation`.
+Get the value of a map annotation object. Returns a `dict` with the contents of the desired `MapAnnotation`. `map_ann_id` does not need to be in the same group as the current `conn` group if `across_groups` is `True`.
 
 ### `get_group_id(conn, group_name)`
 
 Get ID of a group based on group name. Must be an exact match. Case sensitive. Returns a single `int`.
 
-### `get_user_id(conn, user_name)`
+### `get_user_id(conn, user_name, across_groups=True)`
 
-Get ID of a user based on username. Must be an exact match. Case sensitive. Returns a single `int`.
+Get ID of a user based on username. Must be an exact match. Case sensitive. Returns a single `int`. `user_name` does not need to be in the same group as the current `conn` group if `across_groups` is `True`.
 
-### `get_original_filepaths(conn, image_id, fpath='repo')`
+### `get_original_filepaths(conn, image_id, fpath='repo', across_groups=True)`
 
-Get paths to original files for specified image. Returns a `list` of `str`.
+Get paths to original files for specified image. Returns a `list` of `str`. `image_id` does not need to be in the same group as the current `conn` group if `across_groups` is `True`.
 
 ## `put` functions
 
-### `put_map_annotation(conn, map_ann_id, kv_dict, ns=None)`
+### `put_map_annotation(conn, map_ann_id, kv_dict, ns=None, across_groups=True)`
 
-Update an existing map annotation with new values (kv pairs). 
+Update an existing map annotation with new values (kv pairs). `map_ann_id` does not need to be in the same group as the current `conn` group if `across_groups` is `True`.
 
 ## Filter functions
 
