@@ -94,11 +94,13 @@ def post_dataset(conn, dataset_name, project_id=None, description=None,
     Examples
     --------
     # Create a new orphaned Dataset:
+
     >>> did = post_dataset(conn, "New Dataset")
     >>> did
     234
 
     # Create a new Dataset in Project:120:
+
     >>> did = post_dataset(conn, "Child of 120", project_id=120)
     >>> did
     """
@@ -408,13 +410,16 @@ def get_image(conn, image_id, no_pixels=False, start_coords=None,
     Examples
     --------
     # Get an entire image as a numpy array:
+
     >>> im_object, im_array = get_image(conn, 314)
 
     # Get a subregion of an image as a numpy array:
+
     >>> im_o, im_a = get_image(conn, 314, start_coords=(40, 50, 4, 0, 0),
                                axis_lengths=(256, 256, 12, 10, 10))
 
     # Get only the OMERO image object, no pixels:
+
     >>> im_object, _ = get_image(conn, 314, no_pixels=True)
     >>> im_object.getId()
     314
@@ -545,9 +550,11 @@ def get_image_ids(conn, dataset=None, well=None, across_groups=True):
     Examples
     --------
     # Return orphaned images:
+
     >>> orphans = get_image_ids(conn)
 
     # Return IDs of all images from Dataset with ID 448:
+
     >>> ds_ims = get_image_ids(conn, dataset=448)
     """
     if (dataset is not None) & (well is not None):
@@ -626,9 +633,11 @@ def get_map_annotation_ids(conn, object_type, object_id, ns=None,
     Examples
     --------
     # Return IDs of all map annotations belonging to an image:
+
     >>> map_ann_ids = get_map_annotation_ids(conn, 'Image', 42)
 
     # Return IDs of map annotations with namespace "test" linked to a Dataset:
+
     >>> map_ann_ids = get_map_annotation_ids(conn, 'Dataset', 16, ns='test')
     """
 
@@ -768,12 +777,14 @@ def get_original_filepaths(conn, image_id, fpath='repo', across_groups=True):
     Examples
     --------
     # Return (relative) path of file in ManagedRepository:
+
     >>> get_original_filepaths(conn, 745)
     ['djme_2/2020-06/16/13-38-36.468/PJN17_083_07.ndpi']
 
     # Return client path (location of file when it was imported):
+
     >>> get_original_filepaths(conn, 2201, fpath='client')
-    ['/hyperfile/omero/Nishina_lab/Krebs_stack/PJN17_083_07.ndpi']
+    ['/client/omero/smith_lab/stack2/PJN17_083_07.ndpi']
     """
 
     q = conn.getQueryService()
@@ -840,10 +851,12 @@ def put_map_annotation(conn, map_ann_id, kv_dict, ns=None, across_groups=True):
     Examples
     --------
     # Change only the values of an existing map annotation:
+
     >>> new_values = {'testkey': 'testvalue', 'testkey2': 'testvalue2'}
     >>> put_map_annotation(conn, 15, new_values)
 
     # Change both the values and namespace of an existing map annotation:
+    
     >>> put_map_annotation(conn, 16, new_values, 'test_v2')
     """
     map_ann = conn.getObject('MapAnnotation', map_ann_id)

@@ -202,17 +202,21 @@ of the image if <cite>start_coords</cite> and <cite>axis_lengths</cite> are spec
 TZYXC, for performance reasons. If <cite>xyzct</cite> is <cite>True</cite>, the returned <cite>pixels</cite>
 array is actually a view of the original TZYXC array.</p>
 <p class="rubric">Examples</p>
-<p># Get an entire image as a numpy array:
-&gt;&gt;&gt; im_object, im_array = get_image(conn, 314)</p>
-<p># Get a subregion of an image as a numpy array:
-&gt;&gt;&gt; im_o, im_a = get_image(conn, 314, start_coords=(40, 50, 4, 0, 0),</p>
-<blockquote>
-<div><p>axis_lengths=(256, 256, 12, 10, 10))</p>
-</div></blockquote>
-<p># Get only the OMERO image object, no pixels:
-&gt;&gt;&gt; im_object, _ = get_image(conn, 314, no_pixels=True)
-&gt;&gt;&gt; im_object.getId()
-314</p>
+<p># Get an entire image as a numpy array:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">im_object</span><span class="p">,</span> <span class="n">im_array</span> <span class="o">=</span> <span class="n">get_image</span><span class="p">(</span><span class="n">conn</span><span class="p">,</span> <span class="mi">314</span><span class="p">)</span>
+</pre></div>
+</div>
+<p># Get a subregion of an image as a numpy array:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">im_o</span><span class="p">,</span> <span class="n">im_a</span> <span class="o">=</span> <span class="n">get_image</span><span class="p">(</span><span class="n">conn</span><span class="p">,</span> <span class="mi">314</span><span class="p">,</span> <span class="n">start_coords</span><span class="o">=</span><span class="p">(</span><span class="mi">40</span><span class="p">,</span> <span class="mi">50</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
+<span class="go">                           axis_lengths=(256, 256, 12, 10, 10))</span>
+</pre></div>
+</div>
+<p># Get only the OMERO image object, no pixels:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">im_object</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">get_image</span><span class="p">(</span><span class="n">conn</span><span class="p">,</span> <span class="mi">314</span><span class="p">,</span> <span class="n">no_pixels</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">im_object</span><span class="o">.</span><span class="n">getId</span><span class="p">()</span>
+<span class="go">314</span>
+</pre></div>
+</div>
 </dd></dl>
 
 <dl class="py function">
@@ -243,10 +247,14 @@ array is actually a view of the original TZYXC array.</p>
 the <cite>conn</cite> object to this function.</p>
 <p>If no Dataset or Well is specified, orphaned images are returned.</p>
 <p class="rubric">Examples</p>
-<p># Return orphaned images:
-&gt;&gt;&gt; orphans = get_image_ids(conn)</p>
-<p># Return IDs of all images from Dataset with ID 448:
-&gt;&gt;&gt; ds_ims = get_image_ids(conn, dataset=448)</p>
+<p># Return orphaned images:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">orphans</span> <span class="o">=</span> <span class="n">get_image_ids</span><span class="p">(</span><span class="n">conn</span><span class="p">)</span>
+</pre></div>
+</div>
+<p># Return IDs of all images from Dataset with ID 448:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">ds_ims</span> <span class="o">=</span> <span class="n">get_image_ids</span><span class="p">(</span><span class="n">conn</span><span class="p">,</span> <span class="n">dataset</span><span class="o">=</span><span class="mi">448</span><span class="p">)</span>
+</pre></div>
+</div>
 </dd></dl>
 
 <dl class="py function">
@@ -300,10 +308,14 @@ the <cite>conn</cite> object to this function.</p>
 </dd>
 </dl>
 <p class="rubric">Examples</p>
-<p># Return IDs of all map annotations belonging to an image:
-&gt;&gt;&gt; map_ann_ids = get_map_annotation_ids(conn, ‘Image’, 42)</p>
-<p># Return IDs of map annotations with namespace “test” linked to a Dataset:
-&gt;&gt;&gt; map_ann_ids = get_map_annotation_ids(conn, ‘Dataset’, 16, ns=’test’)</p>
+<p># Return IDs of all map annotations belonging to an image:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">map_ann_ids</span> <span class="o">=</span> <span class="n">get_map_annotation_ids</span><span class="p">(</span><span class="n">conn</span><span class="p">,</span> <span class="s1">&#39;Image&#39;</span><span class="p">,</span> <span class="mi">42</span><span class="p">)</span>
+</pre></div>
+</div>
+<p># Return IDs of map annotations with namespace “test” linked to a Dataset:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">map_ann_ids</span> <span class="o">=</span> <span class="n">get_map_annotation_ids</span><span class="p">(</span><span class="n">conn</span><span class="p">,</span> <span class="s1">&#39;Dataset&#39;</span><span class="p">,</span> <span class="mi">16</span><span class="p">,</span> <span class="n">ns</span><span class="o">=</span><span class="s1">&#39;test&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
 </dd></dl>
 
 <dl class="py function">
@@ -338,12 +350,16 @@ are absolute.</p>
 </dd>
 </dl>
 <p class="rubric">Examples</p>
-<p># Return (relative) path of file in ManagedRepository:
-&gt;&gt;&gt; get_original_filepaths(conn, 745)
-[‘djme_2/2020-06/16/13-38-36.468/PJN17_083_07.ndpi’]</p>
-<p># Return client path (location of file when it was imported):
-&gt;&gt;&gt; get_original_filepaths(conn, 2201, fpath=’client’)
-[‘/hyperfile/omero/Nishina_lab/Krebs_stack/PJN17_083_07.ndpi’]</p>
+<p># Return (relative) path of file in ManagedRepository:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">get_original_filepaths</span><span class="p">(</span><span class="n">conn</span><span class="p">,</span> <span class="mi">745</span><span class="p">)</span>
+<span class="go">[&#39;djme_2/2020-06/16/13-38-36.468/PJN17_083_07.ndpi&#39;]</span>
+</pre></div>
+</div>
+<p># Return client path (location of file when it was imported):</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">get_original_filepaths</span><span class="p">(</span><span class="n">conn</span><span class="p">,</span> <span class="mi">2201</span><span class="p">,</span> <span class="n">fpath</span><span class="o">=</span><span class="s1">&#39;client&#39;</span><span class="p">)</span>
+<span class="go">[&#39;/client/omero/smith_lab/stack2/PJN17_083_07.ndpi&#39;]</span>
+</pre></div>
+</div>
 </dd></dl>
 
 <dl class="py function">
@@ -430,13 +446,17 @@ specified, the Dataset will be orphaned.</p></li>
 </dd>
 </dl>
 <p class="rubric">Examples</p>
-<p># Create a new orphaned Dataset:
-&gt;&gt;&gt; did = post_dataset(conn, “New Dataset”)
-&gt;&gt;&gt; did
-234</p>
-<p># Create a new Dataset in Project:120:
-&gt;&gt;&gt; did = post_dataset(conn, “Child of 120”, project_id=120)
-&gt;&gt;&gt; did</p>
+<p># Create a new orphaned Dataset:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">did</span> <span class="o">=</span> <span class="n">post_dataset</span><span class="p">(</span><span class="n">conn</span><span class="p">,</span> <span class="s2">&quot;New Dataset&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">did</span>
+<span class="go">234</span>
+</pre></div>
+</div>
+<p># Create a new Dataset in Project:120:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">did</span> <span class="o">=</span> <span class="n">post_dataset</span><span class="p">(</span><span class="n">conn</span><span class="p">,</span> <span class="s2">&quot;Child of 120&quot;</span><span class="p">,</span> <span class="n">project_id</span><span class="o">=</span><span class="mi">120</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">did</span>
+</pre></div>
+</div>
 </dd></dl>
 
 <dl class="py function">
@@ -625,11 +645,15 @@ namespace will be used.</p></li>
 </dd>
 </dl>
 <p class="rubric">Examples</p>
-<p># Change only the values of an existing map annotation:
-&gt;&gt;&gt; new_values = {‘testkey’: ‘testvalue’, ‘testkey2’: ‘testvalue2’}
-&gt;&gt;&gt; put_map_annotation(conn, 15, new_values)</p>
-<p># Change both the values and namespace of an existing map annotation:
-&gt;&gt;&gt; put_map_annotation(conn, 16, new_values, ‘test_v2’)</p>
+<p># Change only the values of an existing map annotation:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">new_values</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;testkey&#39;</span><span class="p">:</span> <span class="s1">&#39;testvalue&#39;</span><span class="p">,</span> <span class="s1">&#39;testkey2&#39;</span><span class="p">:</span> <span class="s1">&#39;testvalue2&#39;</span><span class="p">}</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">put_map_annotation</span><span class="p">(</span><span class="n">conn</span><span class="p">,</span> <span class="mi">15</span><span class="p">,</span> <span class="n">new_values</span><span class="p">)</span>
+</pre></div>
+</div>
+<p># Change both the values and namespace of an existing map annotation:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">put_map_annotation</span><span class="p">(</span><span class="n">conn</span><span class="p">,</span> <span class="mi">16</span><span class="p">,</span> <span class="n">new_values</span><span class="p">,</span> <span class="s1">&#39;test_v2&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
 </dd></dl>
 
 <dl class="py function">
