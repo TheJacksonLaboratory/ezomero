@@ -272,7 +272,7 @@ def post_map_annotation(conn, object_type, object_id, kv_dict, ns,
     ...      'occupation': 'time traveler'
     ...      'first name': 'Kyle',
     ...      'surname': 'Reese'}
-    >>> post_map_annotation(conn, "Image", [23,56,78], d, ns)
+    >>> post_map_annotation(conn, "Image", 56, d, ns)
     234
     """
 
@@ -416,7 +416,7 @@ def get_image(conn, image_id, no_pixels=False, start_coords=None,
     # Get a subregion of an image as a numpy array:
 
     >>> im_o, im_a = get_image(conn, 314, start_coords=(40, 50, 4, 0, 0),
-                               axis_lengths=(256, 256, 12, 10, 10))
+    ...                        axis_lengths=(256, 256, 12, 10, 10))
 
     # Get only the OMERO image object, no pixels:
 

@@ -208,7 +208,7 @@ array is actually a view of the original TZYXC array.</p>
 </div>
 <p># Get a subregion of an image as a numpy array:</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">im_o</span><span class="p">,</span> <span class="n">im_a</span> <span class="o">=</span> <span class="n">get_image</span><span class="p">(</span><span class="n">conn</span><span class="p">,</span> <span class="mi">314</span><span class="p">,</span> <span class="n">start_coords</span><span class="o">=</span><span class="p">(</span><span class="mi">40</span><span class="p">,</span> <span class="mi">50</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
-<span class="go">                           axis_lengths=(256, 256, 12, 10, 10))</span>
+<span class="gp">... </span>                       <span class="n">axis_lengths</span><span class="o">=</span><span class="p">(</span><span class="mi">256</span><span class="p">,</span> <span class="mi">256</span><span class="p">,</span> <span class="mi">12</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">10</span><span class="p">))</span>
 </pre></div>
 </div>
 <p># Get only the OMERO image object, no pixels:</p>
@@ -530,7 +530,7 @@ specified, an orphaned image will be created.</p></li>
 <span class="gp">... </span>     <span class="s1">&#39;occupation&#39;</span><span class="p">:</span> <span class="s1">&#39;time traveler&#39;</span>
 <span class="gp">... </span>     <span class="s1">&#39;first name&#39;</span><span class="p">:</span> <span class="s1">&#39;Kyle&#39;</span><span class="p">,</span>
 <span class="gp">... </span>     <span class="s1">&#39;surname&#39;</span><span class="p">:</span> <span class="s1">&#39;Reese&#39;</span><span class="p">}</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">post_map_annotation</span><span class="p">(</span><span class="n">conn</span><span class="p">,</span> <span class="s2">&quot;Image&quot;</span><span class="p">,</span> <span class="p">[</span><span class="mi">23</span><span class="p">,</span><span class="mi">56</span><span class="p">,</span><span class="mi">78</span><span class="p">],</span> <span class="n">d</span><span class="p">,</span> <span class="n">ns</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">post_map_annotation</span><span class="p">(</span><span class="n">conn</span><span class="p">,</span> <span class="s2">&quot;Image&quot;</span><span class="p">,</span> <span class="mi">56</span><span class="p">,</span> <span class="n">d</span><span class="p">,</span> <span class="n">ns</span><span class="p">)</span>
 <span class="go">234</span>
 </pre></div>
 </div>
