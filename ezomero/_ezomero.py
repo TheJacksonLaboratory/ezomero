@@ -1,6 +1,8 @@
 import configparser
 import logging
 import os
+import functools
+import inspect
 import numpy as np
 from getpass import getpass
 from omero.gateway import BlitzGateway
@@ -9,7 +11,6 @@ from omero.model import MapAnnotationI, DatasetI, ProjectI, ProjectDatasetLinkI
 from omero.model import DatasetImageLinkI, ImageI, ExperimenterI
 from omero.rtypes import rlong, rstring
 from omero.sys import Parameters
-import inspect
 from pathlib import Path
 
 
@@ -48,6 +49,7 @@ def do_across_groups(f):
     wrapper : Object
         Return value of the decorated function.
     """
+    @functools.wraps(f)
     def wrapper(*args, **kwargs):
         defaults = get_default_args(f)
         if defaults['across_groups'] or kwargs['across_groups']:

@@ -162,33 +162,215 @@ in OMERO may share the same filename (e.g., image.tif).</p>
 
 <dl class="py function">
 <dt id="ezomero.get_image">
-<code class="sig-prename descclassname">ezomero.</code><code class="sig-name descname">get_image</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#ezomero.get_image" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<code class="sig-prename descclassname">ezomero.</code><code class="sig-name descname">get_image</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">conn</span></em>, <em class="sig-param"><span class="n">image_id</span></em>, <em class="sig-param"><span class="n">no_pixels</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">start_coords</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">axis_lengths</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">xyzct</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">pad</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">across_groups</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="headerlink" href="#ezomero.get_image" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get omero image object along with pixels as a numpy array.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>conn</strong> (<code class="docutils literal notranslate"><span class="pre">omero.gateway.BlitzGateway</span></code> object) – OMERO connection.</p></li>
+<li><p><strong>image_id</strong> (<em>int</em>) – Id of the image to get.</p></li>
+<li><p><strong>no_pixels</strong> (<em>bool</em><em>, </em><em>optional</em>) – If true, no pixel data is returned, only the OMERO image object.
+Default is <cite>False</cite>.</p></li>
+<li><p><strong>start_coords</strong> (<em>list</em><em> or </em><em>tuple of int</em><em>, </em><em>optional</em>) – Starting coordinates for each axis for the pixel region to be returned
+if <cite>no_pixels</cite> is <cite>False</cite> (assumes XYZCT ordering). If <cite>None</cite>, the zero
+coordinate is used for each axis. Default is None.</p></li>
+<li><p><strong>axis_lengths</strong> (<em>list</em><em> or </em><em>tuple of int</em><em>, </em><em>optional</em>) – Lengths for each axis for the pixel region to be returned if
+<cite>no_pixels</cite> is <cite>False</cite>. If <cite>None</cite>, the lengths will be set such that
+the entire possible range of pixels is returned. Default is None.</p></li>
+<li><p><strong>xyzct</strong> (<em>bool</em><em>, </em><em>optional</em>) – Option to return array with dimensional ordering XYZCT. If <cite>False</cite>, the
+<code class="docutils literal notranslate"><span class="pre">skimage</span></code> preferred ordering will be used (TZYXC). Default is False.</p></li>
+<li><p><strong>pad</strong> (<em>bool</em><em>, </em><em>optional</em>) – If <cite>axis_lengths</cite> values would result in out-of-bounds indices, pad
+pixel array with zeros. Otherwise, such an operation will raise an
+exception. Ignored if <cite>no_pixels</cite> is True.</p></li>
+<li><p><strong>across_groups</strong> (<em>bool</em><em>, </em><em>optional</em>) – Defines cross-group behavior of function - set to
+<code class="docutils literal notranslate"><span class="pre">False</span></code> to disable it.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><strong>image</strong> (<code class="docutils literal notranslate"><span class="pre">omero.gateway.ImageWrapper</span></code> object) – OMERO image object.</p></li>
+<li><p><strong>pixels</strong> (<em>ndarray</em>) – Array containing pixel values from OMERO image. Can be a subregion
+of the image if <cite>start_coords</cite> and <cite>axis_lengths</cite> are specified.</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>Regardless of whether <cite>xyzct</cite> is <cite>True</cite>, the numpy array is created as
+TZYXC, for performance reasons. If <cite>xyzct</cite> is <cite>True</cite>, the returned <cite>pixels</cite>
+array is actually a view of the original TZYXC array.</p>
+<p class="rubric">Examples</p>
+<p>Get an entire image as a numpy array:
+&gt;&gt;&gt; im_object, im_array = get_image(conn, 314)</p>
+<p>Get a subregion of an image as a numpy array:
+&gt;&gt;&gt; im_o, im_a = get_image(conn, 314, start_coords=(40, 50, 4, 0, 0),</p>
+<blockquote>
+<div><p>axis_lengths=(256, 256, 12, 10, 10))</p>
+</div></blockquote>
+<p>Get only the OMERO image object, no pixels:
+&gt;&gt;&gt; im_object, _ = get_image(conn, 314, no_pixels=True)
+&gt;&gt;&gt; im_object.getId()
+314</p>
+</dd></dl>
 
 <dl class="py function">
 <dt id="ezomero.get_image_ids">
-<code class="sig-prename descclassname">ezomero.</code><code class="sig-name descname">get_image_ids</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#ezomero.get_image_ids" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<code class="sig-prename descclassname">ezomero.</code><code class="sig-name descname">get_image_ids</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">conn</span></em>, <em class="sig-param"><span class="n">dataset</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">well</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">across_groups</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="headerlink" href="#ezomero.get_image_ids" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a list of image ids based on image container</p>
+<p>If neither dataset nor well is specified, function will return orphans.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>conn</strong> (<code class="docutils literal notranslate"><span class="pre">omero.gateway.BlitzGateway</span></code> object) – OMERO connection.</p></li>
+<li><p><strong>dataset</strong> (<em>int</em><em>, </em><em>optional</em>) – ID of Dataset from which to return image IDs.</p></li>
+<li><p><strong>well</strong> (<em>int</em><em>, </em><em>optional</em>) – ID of Well from which to return image IDs.</p></li>
+<li><p><strong>across_groups</strong> (<em>bool</em><em>, </em><em>optional</em>) – Defines cross-group behavior of function - set to
+<code class="docutils literal notranslate"><span class="pre">False</span></code> to disable it.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>im_ids</strong> – List of image IDs contained in the given Dataset, Well, or orphans.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>list of ints</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>User and group information comes from the <cite>conn</cite> object. Be sure to use
+<code class="docutils literal notranslate"><span class="pre">ezomero.set_group</span></code> to specify group prior to passing
+the <cite>conn</cite> object to this function.</p>
+<p>If no Dataset or Well is specified, orphaned images are returned.</p>
+<p class="rubric">Examples</p>
+<p>Return orphaned images:
+&gt;&gt;&gt; orphans = get_image_ids(conn)</p>
+<p>Return IDs of all images from Dataset with ID 448:
+&gt;&gt;&gt; ds_ims = get_image_ids(conn, dataset=448)</p>
+</dd></dl>
 
 <dl class="py function">
 <dt id="ezomero.get_map_annotation">
-<code class="sig-prename descclassname">ezomero.</code><code class="sig-name descname">get_map_annotation</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#ezomero.get_map_annotation" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<code class="sig-prename descclassname">ezomero.</code><code class="sig-name descname">get_map_annotation</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">conn</span></em>, <em class="sig-param"><span class="n">map_ann_id</span></em>, <em class="sig-param"><span class="n">across_groups</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="headerlink" href="#ezomero.get_map_annotation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the value of a map annotation object</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>conn</strong> (<code class="docutils literal notranslate"><span class="pre">omero.gateway.BlitzGateway</span></code> object) – OMERO connection.</p></li>
+<li><p><strong>map_ann_id</strong> (<em>int</em>) – ID of map annotation to get.</p></li>
+<li><p><strong>across_groups</strong> (<em>bool</em><em>, </em><em>optional</em>) – Defines cross-group behavior of function - set to
+<code class="docutils literal notranslate"><span class="pre">False</span></code> to disable it.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>kv_dict</strong> – The value of the specified map annotation object, as a Python dict.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">ma_dict</span> <span class="o">=</span> <span class="n">get_map_annotation</span><span class="p">(</span><span class="n">conn</span><span class="p">,</span> <span class="mi">62</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">ma_dict</span><span class="p">)</span>
+<span class="go">{&#39;testkey&#39;: &#39;testvalue&#39;, &#39;testkey2&#39;: &#39;testvalue2&#39;}</span>
+</pre></div>
+</div>
+</dd></dl>
 
 <dl class="py function">
 <dt id="ezomero.get_map_annotation_ids">
-<code class="sig-prename descclassname">ezomero.</code><code class="sig-name descname">get_map_annotation_ids</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#ezomero.get_map_annotation_ids" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<code class="sig-prename descclassname">ezomero.</code><code class="sig-name descname">get_map_annotation_ids</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">conn</span></em>, <em class="sig-param"><span class="n">object_type</span></em>, <em class="sig-param"><span class="n">object_id</span></em>, <em class="sig-param"><span class="n">ns</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">across_groups</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="headerlink" href="#ezomero.get_map_annotation_ids" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get IDs of map annotations associated with an object</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>conn</strong> (<code class="docutils literal notranslate"><span class="pre">omero.gateway.BlitzGateway</span></code> object) – OMERO connection.</p></li>
+<li><p><strong>object_type</strong> (<em>str</em>) – OMERO object type, passed to <code class="docutils literal notranslate"><span class="pre">BlitzGateway.getObject</span></code></p></li>
+<li><p><strong>object_id</strong> (<em>int</em>) – ID of object of <code class="docutils literal notranslate"><span class="pre">object_type</span></code>.</p></li>
+<li><p><strong>ns</strong> (<em>str</em>) – Namespace with which to filter results</p></li>
+<li><p><strong>across_groups</strong> (<em>bool</em><em>, </em><em>optional</em>) – Defines cross-group behavior of function - set to
+<code class="docutils literal notranslate"><span class="pre">False</span></code> to disable it.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>map_ann_ids</strong></p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>list of ints</p>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<p>Return IDs of all map annotations belonging to an image:
+&gt;&gt;&gt; map_ann_ids = get_map_annotation_ids(conn, ‘Image’, 42)</p>
+<p>Return IDs of map annotations with namespace “test” linked to a Dataset:
+&gt;&gt;&gt; map_ann_ids = get_map_annotation_ids(conn, ‘Dataset’, 16, ns=’test’)</p>
+</dd></dl>
 
 <dl class="py function">
 <dt id="ezomero.get_original_filepaths">
-<code class="sig-prename descclassname">ezomero.</code><code class="sig-name descname">get_original_filepaths</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#ezomero.get_original_filepaths" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<code class="sig-prename descclassname">ezomero.</code><code class="sig-name descname">get_original_filepaths</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">conn</span></em>, <em class="sig-param"><span class="n">image_id</span></em>, <em class="sig-param"><span class="n">fpath</span><span class="o">=</span><span class="default_value">'repo'</span></em>, <em class="sig-param"><span class="n">across_groups</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="headerlink" href="#ezomero.get_original_filepaths" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get paths to original files for specified image.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>conn</strong> (<code class="docutils literal notranslate"><span class="pre">omero.gateway.BlitzGateway</span></code> object) – OMERO connection.</p></li>
+<li><p><strong>image_id</strong> (<em>int</em>) – ID of image for which filepath info is to be returned.</p></li>
+<li><p><strong>fpath</strong> (<em>{'repo'</em><em>, </em><em>'client'}</em><em>, </em><em>optional</em>) – Specify whether you want to return path to file in the managed
+repository (‘repo’) or the path from which the image was imported
+(‘client’). The latter is useful for images that were imported by
+the “in place” method. Defaults to ‘repo’.</p></li>
+<li><p><strong>across_groups</strong> (<em>bool</em><em>, </em><em>optional</em>) – Defines cross-group behavior of function - set to
+<code class="docutils literal notranslate"><span class="pre">False</span></code> to disable it.</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>The ManagedRepository (‘repo’) paths are relative, whereas the client paths
+are absolute.</p>
+<p>The client path may not be accessible if the image was not imported using
+“in place” imports (e.g., <code class="docutils literal notranslate"><span class="pre">transfer=ln_s</span></code>).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p><strong>original_filepaths</strong></p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>list of str</p>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<p>Return (relative) path of file in ManagedRepository:
+&gt;&gt;&gt; get_original_filepaths(conn, 745)
+[‘djme_2/2020-06/16/13-38-36.468/PJN17_083_07.ndpi’]</p>
+<p>Return client path (location of file when it was imported):
+&gt;&gt;&gt; get_original_filepaths(conn, 2201, fpath=’client’)
+[‘/hyperfile/omero/Nishina_lab/Krebs_stack/PJN17_083_07.ndpi’]</p>
+</dd></dl>
 
 <dl class="py function">
 <dt id="ezomero.get_user_id">
-<code class="sig-prename descclassname">ezomero.</code><code class="sig-name descname">get_user_id</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#ezomero.get_user_id" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<code class="sig-prename descclassname">ezomero.</code><code class="sig-name descname">get_user_id</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">conn</span></em>, <em class="sig-param"><span class="n">user_name</span></em>, <em class="sig-param"><span class="n">across_groups</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="headerlink" href="#ezomero.get_user_id" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get ID of a user based on user name.</p>
+<p>Must be an exact match. Case sensitive.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>conn</strong> (<code class="docutils literal notranslate"><span class="pre">omero.gateway.BlitzGateway</span></code> object) – OMERO connection.</p></li>
+<li><p><strong>user_name</strong> (<em>str</em>) – Name of the user for which an ID is to be returned.</p></li>
+<li><p><strong>across_groups</strong> (<em>bool</em><em>, </em><em>optional</em>) – Defines cross-group behavior of function - set to
+<code class="docutils literal notranslate"><span class="pre">False</span></code> to disable it.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>user_id</strong> – ID of the OMERO user. Returns <cite>None</cite> if group cannot be found.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">get_user_id</span><span class="p">(</span><span class="n">conn</span><span class="p">,</span> <span class="s2">&quot;jaxl&quot;</span><span class="p">)</span>
+<span class="go">35</span>
+</pre></div>
+</div>
+</dd></dl>
 
 <dl class="py function">
 <dt id="ezomero.link_datasets_to_project">
@@ -224,18 +406,113 @@ in OMERO may share the same filename (e.g., image.tif).</p>
 
 <dl class="py function">
 <dt id="ezomero.post_dataset">
-<code class="sig-prename descclassname">ezomero.</code><code class="sig-name descname">post_dataset</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#ezomero.post_dataset" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<code class="sig-prename descclassname">ezomero.</code><code class="sig-name descname">post_dataset</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">conn</span></em>, <em class="sig-param"><span class="n">dataset_name</span></em>, <em class="sig-param"><span class="n">project_id</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">description</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">across_groups</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="headerlink" href="#ezomero.post_dataset" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a new dataset.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>conn</strong> (<code class="docutils literal notranslate"><span class="pre">omero.gateway.BlitzGateway</span></code> object) – OMERO connection.</p></li>
+<li><p><strong>dataset_name</strong> (<em>str</em>) – Name of the Dataset being created.</p></li>
+<li><p><strong>project_id</strong> (<em>int</em><em>, </em><em>optional</em>) – Id of Project in which to create the Dataset. If no Project is
+specified, the Dataset will be orphaned.</p></li>
+<li><p><strong>description</strong> (<em>str</em><em>, </em><em>optional</em>) – Description for the new Dataset.</p></li>
+<li><p><strong>across_groups</strong> (<em>bool</em><em>, </em><em>optional</em>) – Defines cross-group behavior of function - set to
+<code class="docutils literal notranslate"><span class="pre">False</span></code> to disable it.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>dataset_id</strong> – Id of the dataset that has been created.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<p>Create a new orphaned Dataset:
+&gt;&gt;&gt; did = post_dataset(conn, “New Dataset”)
+&gt;&gt;&gt; did
+234</p>
+<p>Create a new Dataset in Project:120:
+&gt;&gt;&gt; did = post_dataset(conn, “Child of 120”, project_id=120)
+&gt;&gt;&gt; did</p>
+</dd></dl>
 
 <dl class="py function">
 <dt id="ezomero.post_image">
-<code class="sig-prename descclassname">ezomero.</code><code class="sig-name descname">post_image</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#ezomero.post_image" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<code class="sig-prename descclassname">ezomero.</code><code class="sig-name descname">post_image</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">conn</span></em>, <em class="sig-param"><span class="n">image</span></em>, <em class="sig-param"><span class="n">image_name</span></em>, <em class="sig-param"><span class="n">description</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">dataset_id</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">source_image_id</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">channel_list</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">across_groups</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="headerlink" href="#ezomero.post_image" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a new OMERO image from numpy array.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>conn</strong> (<code class="docutils literal notranslate"><span class="pre">omero.gateway.BlitzGateway</span></code> object) – OMERO connection.</p></li>
+<li><p><strong>image</strong> (<code class="docutils literal notranslate"><span class="pre">numpy.ndarray</span></code>) – The numpy array from which a new OMERO image will be created. Note that
+array.ndim must equal 5. The function assumes this <code class="docutils literal notranslate"><span class="pre">ndarray</span></code> uses
+XYZCT ordering.</p></li>
+<li><p><strong>image_name</strong> (<em>str</em>) – Name of the new image to be created.</p></li>
+<li><p><strong>description</strong> (<em>str</em><em>, </em><em>optional</em>) – Description for the new image.</p></li>
+<li><p><strong>dataset_id</strong> (<em>str</em><em>, </em><em>optional</em>) – Id of the Dataset in which to create the image. If no Dataset is
+specified, an orphaned image will be created.</p></li>
+<li><p><strong>source_image_id</strong> (<em>int</em><em>, </em><em>optional</em>) – If specified, copy this image with metadata, then add pixel data from
+<code class="docutils literal notranslate"><span class="pre">image</span></code> parameter.</p></li>
+<li><p><strong>channel_list</strong> (<em>list of ints</em>) – Copies metadata from these channels in source image (if specified).</p></li>
+<li><p><strong>across_groups</strong> (<em>bool</em><em>, </em><em>optional</em>) – Defines cross-group behavior of function - set to
+<code class="docutils literal notranslate"><span class="pre">False</span></code> to disable it.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>image_id</strong> – Id of the new image that has been created.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">test_image</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">200</span><span class="p">,</span> <span class="mi">200</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">im_id</span> <span class="o">=</span> <span class="n">post_image</span><span class="p">(</span><span class="n">conn</span><span class="p">,</span> <span class="n">test_image</span><span class="p">,</span> <span class="s2">&quot;test&quot;</span><span class="p">,</span> <span class="n">dataset_id</span><span class="o">=</span><span class="mi">105</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">im_id</span><span class="p">)</span>
+<span class="go">234</span>
+</pre></div>
+</div>
+</dd></dl>
 
 <dl class="py function">
 <dt id="ezomero.post_map_annotation">
-<code class="sig-prename descclassname">ezomero.</code><code class="sig-name descname">post_map_annotation</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#ezomero.post_map_annotation" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<code class="sig-prename descclassname">ezomero.</code><code class="sig-name descname">post_map_annotation</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">conn</span></em>, <em class="sig-param"><span class="n">object_type</span></em>, <em class="sig-param"><span class="n">object_id</span></em>, <em class="sig-param"><span class="n">kv_dict</span></em>, <em class="sig-param"><span class="n">ns</span></em>, <em class="sig-param"><span class="n">across_groups</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="headerlink" href="#ezomero.post_map_annotation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create new MapAnnotation and link to images.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>conn</strong> (<code class="docutils literal notranslate"><span class="pre">omero.gateway.BlitzGateway</span></code> object) – OMERO connection.</p></li>
+<li><p><strong>object_type</strong> (<em>str</em>) – OMERO object type, passed to <code class="docutils literal notranslate"><span class="pre">BlitzGateway.getObjects</span></code></p></li>
+<li><p><strong>object_ids</strong> (<em>int</em>) – ID of object to which the new MapAnnotation will be linked.</p></li>
+<li><p><strong>kv_dict</strong> (<em>dict</em>) – key-value pairs that will be included in the MapAnnotation</p></li>
+<li><p><strong>ns</strong> (<em>str</em>) – Namespace for the MapAnnotation</p></li>
+<li><p><strong>across_groups</strong> (<em>bool</em><em>, </em><em>optional</em>) – Defines cross-group behavior of function - set to
+<code class="docutils literal notranslate"><span class="pre">False</span></code> to disable it.</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>All keys and values are converted to strings before saving in OMERO.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p><strong>map_ann_id</strong> – IDs of newly created MapAnnotation</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>int</p>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">ns</span> <span class="o">=</span> <span class="s1">&#39;jax.org/jax/example/namespace&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">d</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;species&#39;</span><span class="p">:</span> <span class="s1">&#39;human&#39;</span><span class="p">,</span>
+<span class="go">         &#39;occupation&#39;: &#39;time traveler&#39;</span>
+<span class="go">         &#39;first name&#39;: &#39;Kyle&#39;,</span>
+<span class="go">         &#39;surname&#39;: &#39;Reese&#39;}</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">post_map_annotation</span><span class="p">(</span><span class="n">conn</span><span class="p">,</span> <span class="s2">&quot;Image&quot;</span><span class="p">,</span> <span class="p">[</span><span class="mi">23</span><span class="p">,</span><span class="mi">56</span><span class="p">,</span><span class="mi">78</span><span class="p">],</span> <span class="n">d</span><span class="p">,</span> <span class="n">ns</span><span class="p">)</span>
+<span class="go">234</span>
+</pre></div>
+</div>
+</dd></dl>
 
 <dl class="py function">
 <dt id="ezomero.post_project">
@@ -320,8 +597,38 @@ orphans are listed.</p></li>
 
 <dl class="py function">
 <dt id="ezomero.put_map_annotation">
-<code class="sig-prename descclassname">ezomero.</code><code class="sig-name descname">put_map_annotation</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#ezomero.put_map_annotation" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<code class="sig-prename descclassname">ezomero.</code><code class="sig-name descname">put_map_annotation</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">conn</span></em>, <em class="sig-param"><span class="n">map_ann_id</span></em>, <em class="sig-param"><span class="n">kv_dict</span></em>, <em class="sig-param"><span class="n">ns</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">across_groups</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="headerlink" href="#ezomero.put_map_annotation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Update an existing map annotation with new values (kv pairs)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>conn</strong> (<code class="docutils literal notranslate"><span class="pre">omero.gateway.BlitzGateway</span></code> object) – OMERO connection.</p></li>
+<li><p><strong>map_ann_id</strong> (<em>int</em>) – ID of map annotation whose values (kv pairs) will be replaced.</p></li>
+<li><p><strong>kv_dict</strong> (<em>dict</em>) – New values (kv pairs) for the MapAnnotation.</p></li>
+<li><p><strong>ns</strong> (<em>str</em>) – New namespace for the MapAnnotation. If left as None, the old
+namespace will be used.</p></li>
+<li><p><strong>across_groups</strong> (<em>bool</em><em>, </em><em>optional</em>) – Defines cross-group behavior of function - set to
+<code class="docutils literal notranslate"><span class="pre">False</span></code> to disable it.</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>All keys and values are converted to strings before saving in OMERO.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p></p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>Returns None.</p>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<p>Change only the values of an existing map annotation:
+&gt;&gt;&gt; new_values = {‘testkey’: ‘testvalue’, ‘testkey2’: ‘testvalue2’}
+&gt;&gt;&gt; put_map_annotation(conn, 15, new_values)</p>
+<p>Change both the values and namespace of an existing map annotation:
+&gt;&gt;&gt; put_map_annotation(conn, 16, new_values, ‘test_v2’)</p>
+</dd></dl>
 
 <dl class="py function">
 <dt id="ezomero.set_group">
