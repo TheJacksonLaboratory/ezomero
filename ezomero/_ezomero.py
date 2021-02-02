@@ -269,9 +269,9 @@ def post_map_annotation(conn, object_type, object_id, kv_dict, ns,
     --------
     >>> ns = 'jax.org/jax/example/namespace'
     >>> d = {'species': 'human',
-             'occupation': 'time traveler'
-             'first name': 'Kyle',
-             'surname': 'Reese'}
+    ...      'occupation': 'time traveler'
+    ...      'first name': 'Kyle',
+    ...      'surname': 'Reese'}
     >>> post_map_annotation(conn, "Image", [23,56,78], d, ns)
     234
     """
@@ -856,7 +856,7 @@ def put_map_annotation(conn, map_ann_id, kv_dict, ns=None, across_groups=True):
     >>> put_map_annotation(conn, 15, new_values)
 
     # Change both the values and namespace of an existing map annotation:
-    
+
     >>> put_map_annotation(conn, 16, new_values, 'test_v2')
     """
     map_ann = conn.getObject('MapAnnotation', map_ann_id)
