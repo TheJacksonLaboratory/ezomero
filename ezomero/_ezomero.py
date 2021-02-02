@@ -299,8 +299,6 @@ def post_map_annotation(conn, object_type, object_id, kv_dict, ns,
     else:
         raise TypeError('Object ID cannot be empty')
 
-    obj = conn.getObject(object_type, object_id)
-
     map_ann = MapAnnotationWrapper(conn)
     map_ann.setNs(str(ns))
     map_ann.setValue(kv_pairs)
