@@ -1,6 +1,8 @@
 import configparser
 import logging
 import os
+import functools
+import inspect
 import numpy as np
 from getpass import getpass
 from omero.gateway import BlitzGateway
@@ -9,32 +11,7 @@ from omero.model import MapAnnotationI, DatasetI, ProjectI, ProjectDatasetLinkI
 from omero.model import DatasetImageLinkI, ImageI, ExperimenterI
 from omero.rtypes import rlong, rstring
 from omero.sys import Parameters
-import inspect
 from pathlib import Path
-
-# expose functions for import
-__all__ = ["post_dataset",
-           "post_image",
-           "post_map_annotation",
-           "post_project",
-           "get_image",
-           "get_image_ids",
-           "get_map_annotation_ids",
-           "get_map_annotation",
-           "get_group_id",
-           "get_user_id",
-           "get_original_filepaths",
-           "put_map_annotation",
-           "filter_by_filename",
-           "link_images_to_dataset",
-           "link_datasets_to_project",
-           "print_map_annotation",
-           "print_groups",
-           "print_projects",
-           "print_datasets",
-           "connect",
-           "store_connection_params",
-           "set_group"]
 
 
 def get_default_args(func):
@@ -42,7 +19,7 @@ def get_default_args(func):
 
     Parameters
     ----------
-    func : function 
+    func : function
         Function whose signature we want to inspect
 
     Returns
@@ -64,7 +41,7 @@ def do_across_groups(f):
 
     Parameters
     ----------
-    f : function 
+    f : function
         Function that will be decorated
 
     Returns
@@ -72,6 +49,7 @@ def do_across_groups(f):
     wrapper : Object
         Return value of the decorated function.
     """
+    @functools.wraps(f)
     def wrapper(*args, **kwargs):
         defaults = get_default_args(f)
         if defaults['across_groups'] or kwargs['across_groups']:
@@ -85,13 +63,11 @@ def do_across_groups(f):
     return wrapper
 
 
-
-
-
 # posts
 
 @do_across_groups
-def post_dataset(conn, dataset_name, project_id=None, description=None, across_groups=True):
+def post_dataset(conn, dataset_name, project_id=None, description=None,
+                 across_groups=True):
     """Create a new dataset.
 
     Parameters
@@ -106,7 +82,7 @@ def post_dataset(conn, dataset_name, project_id=None, description=None, across_g
     description : str, optional
         Description for the new Dataset.
     across_groups : bool, optional
-        Defines cross-group behavior of function - set to 
+        Defines cross-group behavior of function - set to
         ``False`` to disable it.
 
 
@@ -117,12 +93,14 @@ def post_dataset(conn, dataset_name, project_id=None, description=None, across_g
 
     Examples
     --------
-    Create a new orphaned Dataset:
+    # Create a new orphaned Dataset:
+
     >>> did = post_dataset(conn, "New Dataset")
     >>> did
     234
 
-    Create a new Dataset in Project:120:
+    # Create a new Dataset in Project:120:
+
     >>> did = post_dataset(conn, "Child of 120", project_id=120)
     >>> did
     """
@@ -142,11 +120,12 @@ def post_dataset(conn, dataset_name, project_id=None, description=None, across_g
             if ret is False:
                 return None
         else:
-            logging.warning(f'Project {project_id} could not be found (check if you have permissions to it)')
+            logging.warning(f'Project {project_id} could not be found '
+                            '(check if you have permissions to it)')
             return None
     else:
-        default_group = conn.getDefaultGroup(conn.getUser().getId()).getId()  
-        set_group(conn, default_group)    
+        default_group = conn.getDefaultGroup(conn.getUser().getId()).getId()
+        set_group(conn, default_group)
 
     dataset = DatasetWrapper(conn, DatasetI())
     dataset.setName(dataset_name)
@@ -157,6 +136,7 @@ def post_dataset(conn, dataset_name, project_id=None, description=None, across_g
     if project is not None:
         link_datasets_to_project(conn, [dataset.getId()], project_id)
     return dataset.getId()
+
 
 @do_across_groups
 def post_image(conn, image, image_name, description=None, dataset_id=None,
@@ -184,7 +164,7 @@ def post_image(conn, image, image_name, description=None, dataset_id=None,
     channel_list : list of ints
         Copies metadata from these channels in source image (if specified).
     across_groups : bool, optional
-        Defines cross-group behavior of function - set to 
+        Defines cross-group behavior of function - set to
         ``False`` to disable it.
 
     Returns
@@ -222,10 +202,11 @@ def post_image(conn, image, image_name, description=None, dataset_id=None,
             if ret is False:
                 return None
         else:
-            logging.warning(f'Dataset {dataset_id} could not be found (check if you have permissions to it)')
+            logging.warning(f'Dataset {dataset_id} could not be found '
+                            '(check if you have permissions to it)')
             return None
     else:
-        default_group = conn.getDefaultGroup(conn.getUser().getId()).getId()  
+        default_group = conn.getDefaultGroup(conn.getUser().getId()).getId()
         set_group(conn, default_group)
         dataset = None
 
@@ -253,8 +234,10 @@ def post_image(conn, image, image_name, description=None, dataset_id=None,
                                           channel_list)
     return new_im.getId()
 
+
 @do_across_groups
-def post_map_annotation(conn, object_type, object_id, kv_dict, ns, across_groups=True):
+def post_map_annotation(conn, object_type, object_id, kv_dict, ns,
+                        across_groups=True):
     """Create new MapAnnotation and link to images.
 
     Parameters
@@ -263,14 +246,14 @@ def post_map_annotation(conn, object_type, object_id, kv_dict, ns, across_groups
         OMERO connection.
     object_type : str
        OMERO object type, passed to ``BlitzGateway.getObjects``
-    object_ids : int 
+    object_ids : int
         ID of object to which the new MapAnnotation will be linked.
     kv_dict : dict
         key-value pairs that will be included in the MapAnnotation
     ns : str
         Namespace for the MapAnnotation
     across_groups : bool, optional
-        Defines cross-group behavior of function - set to 
+        Defines cross-group behavior of function - set to
         ``False`` to disable it.
 
     Notes
@@ -286,13 +269,13 @@ def post_map_annotation(conn, object_type, object_id, kv_dict, ns, across_groups
     --------
     >>> ns = 'jax.org/jax/example/namespace'
     >>> d = {'species': 'human',
-             'occupation': 'time traveler'
-             'first name': 'Kyle',
-             'surname': 'Reese'}
-    >>> post_map_annotation(conn, "Image", [23,56,78], d, ns)
+    ...      'occupation': 'time traveler'
+    ...      'first name': 'Kyle',
+    ...      'surname': 'Reese'}
+    >>> post_map_annotation(conn, "Image", 56, d, ns)
     234
     """
-    
+
     if type(kv_dict) is not dict:
         raise TypeError('kv_dict must be of type `dict`')
 
@@ -310,27 +293,29 @@ def post_map_annotation(conn, object_type, object_id, kv_dict, ns, across_groups
         if obj is not None:
             ret = set_group(conn, obj.getDetails().group.id.val)
             if ret is False:
-                logging.warning(f'Cannot change into group where object {object_id} is. ')
+                logging.warning('Cannot change into group '
+                                f'where object {object_id} is.')
                 return None
         else:
-            logging.warning(f'Object {object_id} could not be found (check if you have permissions to it)')
+            logging.warning(f'Object {object_id} could not be found '
+                            '(check if you have permissions to it)')
             return None
     else:
         raise TypeError('Object ID cannot be empty')
-    
-    objs = conn.getObject(object_type, object_id)
-    
+
     map_ann = MapAnnotationWrapper(conn)
     map_ann.setNs(str(ns))
     map_ann.setValue(kv_pairs)
     map_ann.save()
     try:
         obj.linkAnnotation(map_ann)
-    except:
-        logging.warning(f'Cannot link to object {object_id} - check if you have permissions to do so')
+    except:  # fix this bare exception
+        logging.warning(f'Cannot link to object {object_id} - '
+                        'check if you have permissions to do so')
         return None
-        
+
     return map_ann.getId()
+
 
 def post_project(conn, project_name, description=None):
     """Create a new project.
@@ -405,7 +390,7 @@ def get_image(conn, image_id, no_pixels=False, start_coords=None,
         pixel array with zeros. Otherwise, such an operation will raise an
         exception. Ignored if `no_pixels` is True.
     across_groups : bool, optional
-        Defines cross-group behavior of function - set to 
+        Defines cross-group behavior of function - set to
         ``False`` to disable it.
 
     Returns
@@ -424,14 +409,17 @@ def get_image(conn, image_id, no_pixels=False, start_coords=None,
 
     Examples
     --------
-    Get an entire image as a numpy array:
+    # Get an entire image as a numpy array:
+
     >>> im_object, im_array = get_image(conn, 314)
 
-    Get a subregion of an image as a numpy array:
-    >>> im_o, im_a = get_image(conn, 314, start_coords=(40, 50, 4, 0, 0),
-                               axis_lengths=(256, 256, 12, 10, 10))
+    # Get a subregion of an image as a numpy array:
 
-    Get only the OMERO image object, no pixels:
+    >>> im_o, im_a = get_image(conn, 314, start_coords=(40, 50, 4, 0, 0),
+    ...                        axis_lengths=(256, 256, 12, 10, 10))
+
+    # Get only the OMERO image object, no pixels:
+
     >>> im_object, _ = get_image(conn, 314, no_pixels=True)
     >>> im_object.getId()
     314
@@ -442,7 +430,8 @@ def get_image(conn, image_id, no_pixels=False, start_coords=None,
     pixel_view = None
     image = conn.getObject('Image', image_id)
     if image is None:
-        logging.warning(f'Cannot load image {image_id} - check if you have permissions to do so')
+        logging.warning(f'Cannot load image {image_id} - '
+                        'check if you have permissions to do so')
         return (None, None)
     size_x = image.getSizeX()
     size_y = image.getSizeY()
@@ -542,7 +531,7 @@ def get_image_ids(conn, dataset=None, well=None, across_groups=True):
     well : int, optional
         ID of Well from which to return image IDs.
     across_groups : bool, optional
-        Defines cross-group behavior of function - set to 
+        Defines cross-group behavior of function - set to
         ``False`` to disable it.
 
     Returns
@@ -560,10 +549,12 @@ def get_image_ids(conn, dataset=None, well=None, across_groups=True):
 
     Examples
     --------
-    Return orphaned images:
+    # Return orphaned images:
+
     >>> orphans = get_image_ids(conn)
 
-    Return IDs of all images from Dataset with ID 448:
+    # Return IDs of all images from Dataset with ID 448:
+
     >>> ds_ims = get_image_ids(conn, dataset=448)
     """
     if (dataset is not None) & (well is not None):
@@ -615,8 +606,10 @@ def get_image_ids(conn, dataset=None, well=None, across_groups=True):
 
     return [r[0].val for r in results]
 
+
 @do_across_groups
-def get_map_annotation_ids(conn, object_type, object_id, ns=None, across_groups=True):
+def get_map_annotation_ids(conn, object_type, object_id, ns=None,
+                           across_groups=True):
     """Get IDs of map annotations associated with an object
 
     Parameters
@@ -630,7 +623,7 @@ def get_map_annotation_ids(conn, object_type, object_id, ns=None, across_groups=
     ns : str
         Namespace with which to filter results
     across_groups : bool, optional
-        Defines cross-group behavior of function - set to 
+        Defines cross-group behavior of function - set to
         ``False`` to disable it.
 
     Returns
@@ -639,10 +632,12 @@ def get_map_annotation_ids(conn, object_type, object_id, ns=None, across_groups=
 
     Examples
     --------
-    Return IDs of all map annotations belonging to an image:
+    # Return IDs of all map annotations belonging to an image:
+
     >>> map_ann_ids = get_map_annotation_ids(conn, 'Image', 42)
 
-    Return IDs of map annotations with namespace "test" linked to a Dataset:
+    # Return IDs of map annotations with namespace "test" linked to a Dataset:
+
     >>> map_ann_ids = get_map_annotation_ids(conn, 'Dataset', 16, ns='test')
     """
 
@@ -652,6 +647,7 @@ def get_map_annotation_ids(conn, object_type, object_id, ns=None, across_groups=
         if ann.OMERO_TYPE is MapAnnotationI:
             map_ann_ids.append(ann.getId())
     return map_ann_ids
+
 
 @do_across_groups
 def get_map_annotation(conn, map_ann_id, across_groups=True):
@@ -664,7 +660,7 @@ def get_map_annotation(conn, map_ann_id, across_groups=True):
     map_ann_id : int
         ID of map annotation to get.
     across_groups : bool, optional
-        Defines cross-group behavior of function - set to 
+        Defines cross-group behavior of function - set to
         ``False`` to disable it.
 
     Returns
@@ -711,6 +707,7 @@ def get_group_id(conn, group_name):
             return g.getId()
     return None
 
+
 @do_across_groups
 def get_user_id(conn, user_name, across_groups=True):
     """Get ID of a user based on user name.
@@ -724,7 +721,7 @@ def get_user_id(conn, user_name, across_groups=True):
     user_name : str
         Name of the user for which an ID is to be returned.
     across_groups : bool, optional
-        Defines cross-group behavior of function - set to 
+        Defines cross-group behavior of function - set to
         ``False`` to disable it.
 
     Returns
@@ -745,6 +742,7 @@ def get_user_id(conn, user_name, across_groups=True):
             return u.getId()
     return None
 
+
 @do_across_groups
 def get_original_filepaths(conn, image_id, fpath='repo', across_groups=True):
     """Get paths to original files for specified image.
@@ -761,7 +759,7 @@ def get_original_filepaths(conn, image_id, fpath='repo', across_groups=True):
         ('client'). The latter is useful for images that were imported by
         the "in place" method. Defaults to 'repo'.
     across_groups : bool, optional
-        Defines cross-group behavior of function - set to 
+        Defines cross-group behavior of function - set to
         ``False`` to disable it.
 
     Notes
@@ -778,13 +776,15 @@ def get_original_filepaths(conn, image_id, fpath='repo', across_groups=True):
 
     Examples
     --------
-    Return (relative) path of file in ManagedRepository:
+    # Return (relative) path of file in ManagedRepository:
+
     >>> get_original_filepaths(conn, 745)
     ['djme_2/2020-06/16/13-38-36.468/PJN17_083_07.ndpi']
 
-    Return client path (location of file when it was imported):
+    # Return client path (location of file when it was imported):
+
     >>> get_original_filepaths(conn, 2201, fpath='client')
-    ['/hyperfile/omero/Nishina_lab/Krebs_stack/PJN17_083_07.ndpi']
+    ['/client/omero/smith_lab/stack2/PJN17_083_07.ndpi']
     """
 
     q = conn.getQueryService()
@@ -837,7 +837,7 @@ def put_map_annotation(conn, map_ann_id, kv_dict, ns=None, across_groups=True):
         New namespace for the MapAnnotation. If left as None, the old
         namespace will be used.
     across_groups : bool, optional
-        Defines cross-group behavior of function - set to 
+        Defines cross-group behavior of function - set to
         ``False`` to disable it.
 
     Notes
@@ -850,16 +850,19 @@ def put_map_annotation(conn, map_ann_id, kv_dict, ns=None, across_groups=True):
 
     Examples
     --------
-    Change only the values of an existing map annotation:
+    # Change only the values of an existing map annotation:
+
     >>> new_values = {'testkey': 'testvalue', 'testkey2': 'testvalue2'}
     >>> put_map_annotation(conn, 15, new_values)
 
-    Change both the values and namespace of an existing map annotation:
+    # Change both the values and namespace of an existing map annotation:
+
     >>> put_map_annotation(conn, 16, new_values, 'test_v2')
     """
     map_ann = conn.getObject('MapAnnotation', map_ann_id)
     if map_ann is None:
-        raise ValueError("MapAnnotation is non-existent or you do not have permissions to change it.")
+        raise ValueError("MapAnnotation is non-existent or you do not have "
+                         "permissions to change it.")
         return None
 
     if ns is None:
@@ -1112,12 +1115,12 @@ def connect(user=None, password=None, group=None, host=None, port=None,
 
     2) If a parameter is not given to `ezconnect`, populate from variables
        in ``os.environ``:
-        OMERO_USER
-        OMERO_PASS
-        OMERO_GROUP
-        OMERO_HOST
-        OMERO_PORT
-        OMERO_SECURE
+        * OMERO_USER
+        * OMERO_PASS
+        * OMERO_GROUP
+        * OMERO_HOST
+        * OMERO_PORT
+        * OMERO_SECURE
 
     3) If environment variables are not set, try to load from a config file.
        This file should be called '.ezomero'. By default, this function will
