@@ -1,4 +1,5 @@
 from dataclasses import dataclass, field
+from typing import List, Tuple
 
 __all__ = ["Point",
            "Line",
@@ -195,7 +196,7 @@ class Polygon:
         the label of the shape (default is None)
     """
 
-    points: list[tuple[float, float]] = field(metadata={'units': 'PIXELS'})
+    points: List[Tuple[float, float]] = field(metadata={'units': 'PIXELS'})
     z: int = field(default=None)
     c: int = field(default=None)
     t: int = field(default=None)

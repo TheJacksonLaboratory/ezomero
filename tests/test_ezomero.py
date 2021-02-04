@@ -152,6 +152,25 @@ def test_post_get_map_annotation(conn, project_structure, users_groups):
                        deleteChildren=True, wait=True)
 
 
+def test_post_roi(conn, project_structure, roi_fixture):
+    image_info = project_structure[2]
+    im_id = image_info[0][1]
+    roi_id = ezomero.post_roi(conn, im_id,
+                              shapes=roi_fixture['shapes'],
+                              name=roi_fixture['name'],
+                              description=roi_fixture['desc'],
+                              fill_color=roi_fixture['fill_color'],
+                              stroke_color=roi_fixture['stroke_color'],
+                              stroke_width=roi_fixture['stroke_width'])
+
+    roi_in_omero = conn.getObject('Roi', roi_id)
+    assert roi_in_omero.sizeOfShapes == len(roi_fixture['shapes'])
+    assert roi_in_omero.getName() == roi_fixture['name']
+    assert roi_in_omero.getDescription() == roi_fixture['desc']
+    conn.deleteObjects("Roi", [roi_in_omero], deleteAnns=True,
+                       deleteChildren=True, wait=True)
+
+
 def test_post_project(conn, timestamp):
     # No description
     new_proj = "test_post_project_" + timestamp
