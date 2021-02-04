@@ -62,7 +62,6 @@ def test_post_dataset(conn, project_structure, users_groups, timestamp):
                         deleteChildren=True, wait=True)
     
 
-
 def test_post_image(conn, project_structure, users_groups, timestamp, image_fixture):
     dataset_info = project_structure[1]
     did = dataset_info[0][1]
@@ -114,6 +113,7 @@ def test_post_image(conn, project_structure, users_groups, timestamp, image_fixt
     conn.deleteObjects("Image", [im_id, im_id2, im_id4], deleteAnns=True,
                        deleteChildren=True, wait=True)
 
+
 def test_post_get_map_annotation(conn, project_structure, users_groups):
     image_info = project_structure[2]
     im_id = image_info[0][1]
@@ -131,20 +131,20 @@ def test_post_get_map_annotation(conn, project_structure, users_groups):
     assert map_ann_id2 == None
     
     # Test posting cross-group
-    username = users_groups[1][0][0] #test_user1
-    groupname = users_groups[0][0][0] #test_group_1
+    username = users_groups[1][0][0]  # test_user1
+    groupname = users_groups[0][0][0]  # test_group_1
     current_conn = conn.suConn(username, groupname)
-    im_id3 = image_info[2][1] #im2, in test_group_2
+    im_id3 = image_info[2][1]  # im2, in test_group_2
     map_ann_id3 = ezomero.post_map_annotation(current_conn, "Image", im_id3, kv, ns)
     kv_pairs3 = ezomero.get_map_annotation(current_conn, map_ann_id3)
     assert kv_pairs3["key2"] == "value2"
     current_conn.close()
 
     # Test posting to an invalid cross-group 
-    username = users_groups[1][2][0] #test_user3
-    groupname = users_groups[0][1][0] #test_group_2
+    username = users_groups[1][2][0]  # test_user3
+    groupname = users_groups[0][1][0]  # test_group_2
     current_conn = conn.suConn(username, groupname)
-    im_id4 = image_info[1][1] #im1(in test_group_1)
+    im_id4 = image_info[1][1]  # im1(in test_group_1)
     map_ann_id4 = ezomero.post_map_annotation(current_conn, "Image", im_id4, kv, ns)
     assert map_ann_id4 == None
     current_conn.close()
@@ -152,7 +152,7 @@ def test_post_get_map_annotation(conn, project_structure, users_groups):
                        deleteChildren=True, wait=True)
 
 
-def test_post_roi(conn, project_structure, roi_fixture):
+def test_post_roi(conn, project_structure, roi_fixture, users_groups):
     image_info = project_structure[2]
     im_id = image_info[0][1]
     roi_id = ezomero.post_roi(conn, im_id,
@@ -162,12 +162,54 @@ def test_post_roi(conn, project_structure, roi_fixture):
                               fill_color=roi_fixture['fill_color'],
                               stroke_color=roi_fixture['stroke_color'],
                               stroke_width=roi_fixture['stroke_width'])
-
     roi_in_omero = conn.getObject('Roi', roi_id)
-    assert roi_in_omero.sizeOfShapes == len(roi_fixture['shapes'])
     assert roi_in_omero.getName() == roi_fixture['name']
     assert roi_in_omero.getDescription() == roi_fixture['desc']
-    conn.deleteObjects("Roi", [roi_in_omero], deleteAnns=True,
+
+    # Test posting to a non-existing image
+    im_id2 = 999999999
+    with pytest.raises(Exception):  # TODO: verify which exception type
+        _ = ezomero.post_roi(conn, im_id2,
+                             shapes=roi_fixture['shapes'],
+                             name=roi_fixture['name'],
+                             description=roi_fixture['desc'],
+                             fill_color=roi_fixture['fill_color'],
+                             stroke_color=roi_fixture['stroke_color'],
+                             stroke_width=roi_fixture['stroke_width'])
+
+    # Test posting across groups
+    username = users_groups[1][0][0]  # test_user1
+    groupname = users_groups[0][0][0]  # test_group_1
+    current_conn = conn.suConn(username, groupname)
+    im_id3 = image_info[2][1]  # im2, in test_group_2
+    roi_id_3 = ezomero.post_roi(current_conn, im_id3,
+                                shapes=roi_fixture['shapes'],
+                                name='Shared_ROI',
+                                description=roi_fixture['desc'],
+                                fill_color=roi_fixture['fill_color'],
+                                stroke_color=roi_fixture['stroke_color'],
+                                stroke_width=roi_fixture['stroke_width'])
+
+    roi_in_omero_3 = conn.getObject('Roi', roi_id_3)
+    assert roi_in_omero_3.getName() == 'Shared_ROI'
+    assert roi_in_omero_3.getDescription() == roi_fixture['desc']
+
+    # Test posting to an invalid cross-group
+    username = users_groups[1][2][0]  # test_user3
+    groupname = users_groups[0][1][0]  # test_group_2
+    current_conn = conn.suConn(username, groupname)
+    im_id4 = image_info[1][1]  # im1(in test_group_1)
+    with pytest.raises(Exception):  # TODO: verify which exception type
+        _ = ezomero.post_roi(current_conn, im_id4,
+                             shapes=roi_fixture['shapes'],
+                             name=roi_fixture['name'],
+                             description=roi_fixture['desc'],
+                             fill_color=roi_fixture['fill_color'],
+                             stroke_color=roi_fixture['stroke_color'],
+                             stroke_width=roi_fixture['stroke_width'])
+    current_conn.close()
+
+    conn.deleteObjects("Roi", [roi_id, roi_id_3], deleteAnns=True,
                        deleteChildren=True, wait=True)
 
 
