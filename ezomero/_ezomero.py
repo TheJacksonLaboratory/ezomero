@@ -1,41 +1,73 @@
+import configparser
 import logging
+import os
+import functools
+import inspect
 import numpy as np
+from getpass import getpass
+from omero.gateway import BlitzGateway
 from omero.gateway import MapAnnotationWrapper, DatasetWrapper, ProjectWrapper
 from omero.model import MapAnnotationI, DatasetI, ProjectI, ProjectDatasetLinkI
 from omero.model import DatasetImageLinkI, ImageI, ExperimenterI
-from omero.model import RoiI, PointI, LineI, RectangleI, EllipseI, PolygonI, LengthI, enums
-from omero.rtypes import rlong, rstring, rint, rdouble
+from omero.rtypes import rlong, rstring
 from omero.sys import Parameters
-from rois import Point, Line, Rectangle, Ellipse, Polygon
+from pathlib import Path
 
 
-# expose functions for import
-__all__ = ["post_dataset",
-           "post_image",
-           "post_map_annotation",
-           "post_project",
-           "post_roi",
-           "get_image",
-           "get_image_ids",
-           "get_map_annotation_ids",
-           "get_map_annotation",
-           "get_group_id",
-           "get_user_id",
-           "get_original_filepaths",
-           "put_map_annotation",
-           "filter_by_filename",
-           "link_images_to_dataset",
-           "link_datasets_to_project",
-           "print_map_annotation",
-           "print_groups",
-           "print_projects",
-           "print_datasets",
-           "set_group"]
+def get_default_args(func):
+    """Retrieves the default arguments of a function.
 
+    Parameters
+    ----------
+    func : function
+        Function whose signature we want to inspect
+
+    Returns
+    -------
+    _ : dict
+        Key-value pairs of argument name and value.
+    """
+    signature = inspect.signature(func)
+    return {
+        k: v.default
+        for k, v in signature.parameters.items()
+        if v.default is not inspect.Parameter.empty
+    }
+
+
+def do_across_groups(f):
+    """Decorator functional for making functions work across
+    OMERO groups.
+
+    Parameters
+    ----------
+    f : function
+        Function that will be decorated
+
+    Returns
+    -------
+    wrapper : Object
+        Return value of the decorated function.
+    """
+    @functools.wraps(f)
+    def wrapper(*args, **kwargs):
+        defaults = get_default_args(f)
+        if defaults['across_groups'] or kwargs['across_groups']:
+            current_group = args[0].getGroupFromContext().getId()
+            args[0].SERVICE_OPTS.setOmeroGroup('-1')
+            res = f(*args, **kwargs)
+            set_group(args[0], current_group)
+        else:
+            res = f(*args, **kwargs)
+        return res
+    return wrapper
 
 
 # posts
-def post_dataset(conn, dataset_name, project_id=None, description=None):
+
+@do_across_groups
+def post_dataset(conn, dataset_name, project_id=None, description=None,
+                 across_groups=True):
     """Create a new dataset.
 
     Parameters
@@ -47,8 +79,12 @@ def post_dataset(conn, dataset_name, project_id=None, description=None):
     project_id : int, optional
         Id of Project in which to create the Dataset. If no Project is
         specified, the Dataset will be orphaned.
-    description : str
+    description : str, optional
         Description for the new Dataset.
+    across_groups : bool, optional
+        Defines cross-group behavior of function - set to
+        ``False`` to disable it.
+
 
     Returns
     -------
@@ -57,12 +93,14 @@ def post_dataset(conn, dataset_name, project_id=None, description=None):
 
     Examples
     --------
-    Create a new orphaned Dataset:
+    # Create a new orphaned Dataset:
+
     >>> did = post_dataset(conn, "New Dataset")
     >>> did
     234
 
-    Create a new Dataset in Project:120:
+    # Create a new Dataset in Project:120:
+
     >>> did = post_dataset(conn, "Child of 120", project_id=120)
     >>> did
     """
@@ -73,16 +111,21 @@ def post_dataset(conn, dataset_name, project_id=None, description=None):
         raise TypeError('Dataset description must be a string')
 
     project = None
-    current_group = conn.SERVICE_OPTS.getOmeroGroup()
     if project_id is not None:
         if type(project_id) is not int:
             raise TypeError('Project ID must be integer')
-        conn.SERVICE_OPTS.setOmeroGroup('-1')
         project = conn.getObject('Project', project_id)
         if project is not None:
-            set_group(conn, project.getDetails().group.id.val)
+            ret = set_group(conn, project.getDetails().group.id.val)
+            if ret is False:
+                return None
         else:
-            set_group(conn, current_group)
+            logging.warning(f'Project {project_id} could not be found '
+                            '(check if you have permissions to it)')
+            return None
+    else:
+        default_group = conn.getDefaultGroup(conn.getUser().getId()).getId()
+        set_group(conn, default_group)
 
     dataset = DatasetWrapper(conn, DatasetI())
     dataset.setName(dataset_name)
@@ -92,13 +135,12 @@ def post_dataset(conn, dataset_name, project_id=None, description=None):
 
     if project is not None:
         link_datasets_to_project(conn, [dataset.getId()], project_id)
-
-    conn.SERVICE_OPTS.setOmeroGroup(current_group)
     return dataset.getId()
 
 
+@do_across_groups
 def post_image(conn, image, image_name, description=None, dataset_id=None,
-               source_image_id=None, channel_list=None):
+               source_image_id=None, channel_list=None, across_groups=True):
     """Create a new OMERO image from numpy array.
 
     Parameters
@@ -121,6 +163,9 @@ def post_image(conn, image, image_name, description=None, dataset_id=None,
         ``image`` parameter.
     channel_list : list of ints
         Copies metadata from these channels in source image (if specified).
+    across_groups : bool, optional
+        Defines cross-group behavior of function - set to
+        ``False`` to disable it.
 
     Returns
     -------
@@ -152,7 +197,17 @@ def post_image(conn, image, image_name, description=None, dataset_id=None,
         if type(dataset_id) is not int:
             raise ValueError("Dataset ID must be an integer")
         dataset = conn.getObject("Dataset", dataset_id)
+        if dataset is not None:
+            ret = set_group(conn, dataset.getDetails().group.id.val)
+            if ret is False:
+                return None
+        else:
+            logging.warning(f'Dataset {dataset_id} could not be found '
+                            '(check if you have permissions to it)')
+            return None
     else:
+        default_group = conn.getDefaultGroup(conn.getUser().getId()).getId()
+        set_group(conn, default_group)
         dataset = None
 
     image_sizez = image.shape[2]
@@ -180,7 +235,9 @@ def post_image(conn, image, image_name, description=None, dataset_id=None,
     return new_im.getId()
 
 
-def post_map_annotation(conn, object_type, object_ids, kv_dict, ns):
+@do_across_groups
+def post_map_annotation(conn, object_type, object_id, kv_dict, ns,
+                        across_groups=True):
     """Create new MapAnnotation and link to images.
 
     Parameters
@@ -189,12 +246,15 @@ def post_map_annotation(conn, object_type, object_ids, kv_dict, ns):
         OMERO connection.
     object_type : str
        OMERO object type, passed to ``BlitzGateway.getObjects``
-    object_ids : int or list of ints
-        IDs of objects to which the new MapAnnotation will be linked.
+    object_ids : int
+        ID of object to which the new MapAnnotation will be linked.
     kv_dict : dict
         key-value pairs that will be included in the MapAnnotation
     ns : str
         Namespace for the MapAnnotation
+    across_groups : bool, optional
+        Defines cross-group behavior of function - set to
+        ``False`` to disable it.
 
     Notes
     -----
@@ -209,19 +269,12 @@ def post_map_annotation(conn, object_type, object_ids, kv_dict, ns):
     --------
     >>> ns = 'jax.org/jax/example/namespace'
     >>> d = {'species': 'human',
-             'occupation': 'time traveler'
-             'first name': 'Kyle',
-             'surname': 'Reese'}
-    >>> post_map_annotation(conn, "Image", [23,56,78], d, ns)
+    ...      'occupation': 'time traveler'
+    ...      'first name': 'Kyle',
+    ...      'surname': 'Reese'}
+    >>> post_map_annotation(conn, "Image", 56, d, ns)
     234
     """
-    if type(object_ids) not in [list, int]:
-        raise TypeError('object_ids must be list or integer')
-    if type(object_ids) is not list:
-        object_ids = [object_ids]
-
-    if len(object_ids) == 0:
-        raise ValueError('object_ids must contain one or more items')
 
     if type(kv_dict) is not dict:
         raise TypeError('kv_dict must be of type `dict`')
@@ -232,12 +285,35 @@ def post_map_annotation(conn, object_type, object_ids, kv_dict, ns):
         v = str(v)
         kv_pairs.append([k, v])
 
+    obj = None
+    if object_id is not None:
+        if type(object_id) is not int:
+            raise TypeError('object_ids must be integer')
+        obj = conn.getObject(object_type, object_id)
+        if obj is not None:
+            ret = set_group(conn, obj.getDetails().group.id.val)
+            if ret is False:
+                logging.warning('Cannot change into group '
+                                f'where object {object_id} is.')
+                return None
+        else:
+            logging.warning(f'Object {object_id} could not be found '
+                            '(check if you have permissions to it)')
+            return None
+    else:
+        raise TypeError('Object ID cannot be empty')
+
     map_ann = MapAnnotationWrapper(conn)
     map_ann.setNs(str(ns))
     map_ann.setValue(kv_pairs)
     map_ann.save()
-    for o in conn.getObjects(object_type, object_ids):
-        o.linkAnnotation(map_ann)
+    try:
+        obj.linkAnnotation(map_ann)
+    except:  # fix this bare exception
+        logging.warning(f'Cannot link to object {object_id} - '
+                        'check if you have permissions to do so')
+        return None
+
     return map_ann.getId()
 
 
@@ -283,136 +359,10 @@ def post_project(conn, project_name, description=None):
     return project.getId()
 
 
-def post_roi(conn, image_id, shapes, name=None, description=None,
-             fill_color=(10, 10, 10, 10), stroke_color=(255, 255, 255, 255), stroke_width=1):
-    """Create new ROI from a list of shapes and link to an image.
-
-    Parameters
-    ----------
-    conn : ``omero.gateway.BlitzGateway`` object
-        OMERO connection.
-    image_id : int
-        IDs of the image to which the new ROI will be linked.
-    shapes : list of shapes
-        list of shape objects conforming the new ROI
-    name : str, optional
-        Name for the new ROI
-    description : str, optional
-        Description of the new ROI
-    fill_color: tuple of ints, optional
-        the color fill of the shape (default is (10, 10, 10, 10))
-        Color is specified as a a tuple containing 4 integers from 0 to 255 representing red, green, blue and
-        alpha levels
-    stroke_color: tuple of int, optional
-        the color of the shape edge (default is (255, 255, 255, 255))
-        Color is specified as a a tuple containing 4 integers from 0 to 255 representing red, green, blue and
-        alpha levels
-    stroke_width: int, optional
-        the width of the shape stroke in pixels (default is 1)
-
-
-    Returns
-    -------
-    ROI_id : int
-        ID of newly created ROI
-
-    Examples
-    --------
-    >>> shapes = list()
-    >>> point = Point(x=30.6, y=80.4)
-    >>> shapes.append(point)
-    >>> rectangle = Rectangle(x=50.0,
-                              y=51.3,
-                              width=90,
-                              height=40,
-                              z=3,
-                              label='The place')
-    >>> shapes.append(rectangle)
-    >>> post_roi(conn, 23, shapes, name='My Cell', description='Very important',
-                 fill_color=(255, 10, 10, 150),
-                 stroke_color=(255, 0, 0, 0),
-                 stroke_width=2)
-    234
-    """
-    roi = RoiI()
-    if name is not None:
-        roi.setName(rstring(name))
-    if description is not None:
-        roi.setDescription(rstring(description))
-    for shape in shapes:
-        roi.addShape(_shape_to_omero_shape(shape, fill_color, stroke_color, stroke_width))
-    image = conn.getObject('Image', image_id)
-    roi.setImage(image._obj)
-    roi = conn.getUpdateService().saveAndReturnObject(roi)
-    return roi.getId().getValue()
-
-
-def _shape_to_omero_shape(shape, fill_color, stroke_color, stroke_width):
-    """ Helper function to convert ezomero shapes into omero shapes"""
-    if isinstance(shape, Point):
-        omero_shape = PointI()
-        omero_shape.x = rdouble(shape.x)
-        omero_shape.y = rdouble(shape.y)
-    elif isinstance(shape, Line):
-        omero_shape = LineI()
-        omero_shape.x1 = rdouble(shape.x1)
-        omero_shape.x2 = rdouble(shape.x2)
-        omero_shape.y1 = rdouble(shape.y1)
-        omero_shape.y2 = rdouble(shape.y2)
-    elif isinstance(shape, Rectangle):
-        omero_shape = RectangleI()
-        omero_shape.x = rdouble(shape.x)
-        omero_shape.y = rdouble(shape.y)
-        omero_shape.width = rdouble(shape.width)
-        omero_shape.height = rdouble(shape.height)
-    elif isinstance(shape, Ellipse):
-        omero_shape = EllipseI()
-        omero_shape.x = rdouble(shape.x)
-        omero_shape.y = rdouble(shape.y)
-        omero_shape.radiusX = rdouble(shape.x_rad)
-        omero_shape.radiusY = rdouble(shape.y_rad)
-    elif isinstance(shape, Polygon):
-        omero_shape = PolygonI()
-        points_str = "".join("".join([str(x), ',', str(y), ', ']) for x, y in shape.points)[:-2]
-        omero_shape.points = rstring(points_str)
-    else:
-        raise TypeError('The shape passed for the roi is not a valid shape type')
-
-    if shape.z is not None:
-        omero_shape.theZ = rint(shape.z)
-    if shape.c is not None:
-        omero_shape.theC = rint(shape.c)
-    if shape.t is not None:
-        omero_shape.theT = rint(shape.t)
-    if shape.label is not None:
-        omero_shape.setTextValue(rstring(shape.label))
-    omero_shape.setFillColor(rint(_rgba_to_int(fill_color)))
-    omero_shape.setStrokeColor(rint(_rgba_to_int(stroke_color)))
-    omero_shape.setStrokeWidth(LengthI(stroke_width, enums.UnitsLength.PIXEL))
-
-    return omero_shape
-
-
-def _rgba_to_int(color: tuple):
-    """ Helper function returning the color as an Integer in RGBA encoding """
-    try:
-        r, g, b, a = color
-    except ValueError as e:
-        raise e('The format for the shape color is not addequate')
-    r = r << 24
-    g = g << 16
-    b = b << 8
-    a = int(a * 255)
-    rgba_int = sum([r, g, b, a])
-    if rgba_int > (2**31-1):  # convert to signed 32-bit int
-        rgba_int = rgba_int - 2**32
-
-    return rgba_int
-
-
 # gets
+@do_across_groups
 def get_image(conn, image_id, no_pixels=False, start_coords=None,
-              axis_lengths=None, xyzct=False, pad=False):
+              axis_lengths=None, xyzct=False, pad=False, across_groups=True):
     """Get omero image object along with pixels as a numpy array.
 
     Parameters
@@ -439,6 +389,9 @@ def get_image(conn, image_id, no_pixels=False, start_coords=None,
         If `axis_lengths` values would result in out-of-bounds indices, pad
         pixel array with zeros. Otherwise, such an operation will raise an
         exception. Ignored if `no_pixels` is True.
+    across_groups : bool, optional
+        Defines cross-group behavior of function - set to
+        ``False`` to disable it.
 
     Returns
     -------
@@ -456,20 +409,30 @@ def get_image(conn, image_id, no_pixels=False, start_coords=None,
 
     Examples
     --------
-    Get an entire image as a numpy array:
+    # Get an entire image as a numpy array:
+
     >>> im_object, im_array = get_image(conn, 314)
 
-    Get a subregion of an image as a numpy array:
-    >>> im_o, im_a = get_image(conn, 314, start_coords=(40, 50, 4, 0, 0),
-                               axis_lengths=(256, 256, 12, 10, 10))
+    # Get a subregion of an image as a numpy array:
 
-    Get only the OMERO image object, no pixels:
+    >>> im_o, im_a = get_image(conn, 314, start_coords=(40, 50, 4, 0, 0),
+    ...                        axis_lengths=(256, 256, 12, 10, 10))
+
+    # Get only the OMERO image object, no pixels:
+
     >>> im_object, _ = get_image(conn, 314, no_pixels=True)
     >>> im_object.getId()
     314
     """
+
+    if image_id is None:
+        raise TypeError('Object ID cannot be empty')
     pixel_view = None
     image = conn.getObject('Image', image_id)
+    if image is None:
+        logging.warning(f'Cannot load image {image_id} - '
+                        'check if you have permissions to do so')
+        return (None, None)
     size_x = image.getSizeX()
     size_y = image.getSizeY()
     size_z = image.getSizeZ()
@@ -553,7 +516,8 @@ def get_image(conn, image_id, no_pixels=False, start_coords=None,
     return (image, pixel_view)
 
 
-def get_image_ids(conn, dataset=None, well=None):
+@do_across_groups
+def get_image_ids(conn, dataset=None, well=None, across_groups=True):
     """Return a list of image ids based on image container
 
     If neither dataset nor well is specified, function will return orphans.
@@ -566,6 +530,9 @@ def get_image_ids(conn, dataset=None, well=None):
         ID of Dataset from which to return image IDs.
     well : int, optional
         ID of Well from which to return image IDs.
+    across_groups : bool, optional
+        Defines cross-group behavior of function - set to
+        ``False`` to disable it.
 
     Returns
     -------
@@ -582,10 +549,12 @@ def get_image_ids(conn, dataset=None, well=None):
 
     Examples
     --------
-    Return orphaned images:
+    # Return orphaned images:
+
     >>> orphans = get_image_ids(conn)
 
-    Return IDs of all images from Dataset with ID 448:
+    # Return IDs of all images from Dataset with ID 448:
+
     >>> ds_ims = get_image_ids(conn, dataset=448)
     """
     if (dataset is not None) & (well is not None):
@@ -638,7 +607,9 @@ def get_image_ids(conn, dataset=None, well=None):
     return [r[0].val for r in results]
 
 
-def get_map_annotation_ids(conn, object_type, object_id, ns=None):
+@do_across_groups
+def get_map_annotation_ids(conn, object_type, object_id, ns=None,
+                           across_groups=True):
     """Get IDs of map annotations associated with an object
 
     Parameters
@@ -651,6 +622,9 @@ def get_map_annotation_ids(conn, object_type, object_id, ns=None):
         ID of object of ``object_type``.
     ns : str
         Namespace with which to filter results
+    across_groups : bool, optional
+        Defines cross-group behavior of function - set to
+        ``False`` to disable it.
 
     Returns
     -------
@@ -658,10 +632,12 @@ def get_map_annotation_ids(conn, object_type, object_id, ns=None):
 
     Examples
     --------
-    Return IDs of all map annotations belonging to an image:
+    # Return IDs of all map annotations belonging to an image:
+
     >>> map_ann_ids = get_map_annotation_ids(conn, 'Image', 42)
 
-    Return IDs of map annotations with namespace "test" linked to a Dataset:
+    # Return IDs of map annotations with namespace "test" linked to a Dataset:
+
     >>> map_ann_ids = get_map_annotation_ids(conn, 'Dataset', 16, ns='test')
     """
 
@@ -673,7 +649,8 @@ def get_map_annotation_ids(conn, object_type, object_id, ns=None):
     return map_ann_ids
 
 
-def get_map_annotation(conn, map_ann_id):
+@do_across_groups
+def get_map_annotation(conn, map_ann_id, across_groups=True):
     """Get the value of a map annotation object
 
     Parameters
@@ -682,6 +659,9 @@ def get_map_annotation(conn, map_ann_id):
         OMERO connection.
     map_ann_id : int
         ID of map annotation to get.
+    across_groups : bool, optional
+        Defines cross-group behavior of function - set to
+        ``False`` to disable it.
 
     Returns
     -------
@@ -728,7 +708,8 @@ def get_group_id(conn, group_name):
     return None
 
 
-def get_user_id(conn, user_name):
+@do_across_groups
+def get_user_id(conn, user_name, across_groups=True):
     """Get ID of a user based on user name.
 
     Must be an exact match. Case sensitive.
@@ -739,6 +720,9 @@ def get_user_id(conn, user_name):
         OMERO connection.
     user_name : str
         Name of the user for which an ID is to be returned.
+    across_groups : bool, optional
+        Defines cross-group behavior of function - set to
+        ``False`` to disable it.
 
     Returns
     -------
@@ -759,7 +743,8 @@ def get_user_id(conn, user_name):
     return None
 
 
-def get_original_filepaths(conn, image_id, fpath='repo'):
+@do_across_groups
+def get_original_filepaths(conn, image_id, fpath='repo', across_groups=True):
     """Get paths to original files for specified image.
 
     Parameters
@@ -773,6 +758,9 @@ def get_original_filepaths(conn, image_id, fpath='repo'):
         repository ('repo') or the path from which the image was imported
         ('client'). The latter is useful for images that were imported by
         the "in place" method. Defaults to 'repo'.
+    across_groups : bool, optional
+        Defines cross-group behavior of function - set to
+        ``False`` to disable it.
 
     Notes
     -----
@@ -788,13 +776,15 @@ def get_original_filepaths(conn, image_id, fpath='repo'):
 
     Examples
     --------
-    Return (relative) path of file in ManagedRepository:
+    # Return (relative) path of file in ManagedRepository:
+
     >>> get_original_filepaths(conn, 745)
     ['djme_2/2020-06/16/13-38-36.468/PJN17_083_07.ndpi']
 
-    Return client path (location of file when it was imported):
+    # Return client path (location of file when it was imported):
+
     >>> get_original_filepaths(conn, 2201, fpath='client')
-    ['/hyperfile/omero/Nishina_lab/Krebs_stack/PJN17_083_07.ndpi']
+    ['/client/omero/smith_lab/stack2/PJN17_083_07.ndpi']
     """
 
     q = conn.getQueryService()
@@ -831,7 +821,8 @@ def get_original_filepaths(conn, image_id, fpath='repo'):
 
 
 # puts
-def put_map_annotation(conn, map_ann_id, kv_dict, ns=None):
+@do_across_groups
+def put_map_annotation(conn, map_ann_id, kv_dict, ns=None, across_groups=True):
     """Update an existing map annotation with new values (kv pairs)
 
     Parameters
@@ -845,6 +836,9 @@ def put_map_annotation(conn, map_ann_id, kv_dict, ns=None):
     ns : str
         New namespace for the MapAnnotation. If left as None, the old
         namespace will be used.
+    across_groups : bool, optional
+        Defines cross-group behavior of function - set to
+        ``False`` to disable it.
 
     Notes
     -----
@@ -856,14 +850,20 @@ def put_map_annotation(conn, map_ann_id, kv_dict, ns=None):
 
     Examples
     --------
-    Change only the values of an existing map annotation:
+    # Change only the values of an existing map annotation:
+
     >>> new_values = {'testkey': 'testvalue', 'testkey2': 'testvalue2'}
     >>> put_map_annotation(conn, 15, new_values)
 
-    Change both the values and namespace of an existing map annotation:
+    # Change both the values and namespace of an existing map annotation:
+
     >>> put_map_annotation(conn, 16, new_values, 'test_v2')
     """
     map_ann = conn.getObject('MapAnnotation', map_ann_id)
+    if map_ann is None:
+        raise ValueError("MapAnnotation is non-existent or you do not have "
+                         "permissions to change it.")
+        return None
 
     if ns is None:
         ns = map_ann.getNs()
@@ -1061,6 +1061,232 @@ def print_datasets(conn, project=None):
 
 
 # functions for managing connection context and service options.
+
+def connect(user=None, password=None, group=None, host=None, port=None,
+            secure=None, config_path=None):
+    """Create an OMERO connection
+
+    This function will create an OMERO connection by populating certain
+    parameters for ``omero.gateway.BlitzGateway`` initialization by the
+    procedure described in the notes below. Note that this function may
+    ask for user input, so be cautious if using in the context of a script.
+
+    Finally, don't forget to close the connection ``conn.close()`` when it
+    is no longer needed!
+
+    Parameters
+    ----------
+    user : str, optional
+        OMERO username.
+
+    password : str, optional
+        OMERO password.
+
+    group : str, optional
+        OMERO group.
+
+    host : str, optional
+        OMERO.server host.
+
+    port : int, optional
+        OMERO port.
+
+    secure : boolean, optional
+        Whether to create a secure session.
+
+    config_path : str, optional
+        Path to directory containing '.ezomero' file that stores connection
+        information. If left as ``None``, defaults to the home directory as
+        determined by Python's ``pathlib``.
+
+    Returns
+    -------
+    conn : ``omero.gateway.BlitzGateway`` object or None
+        OMERO connection, if successful. Otherwise an error is logged and
+        returns None.
+
+    Notes
+    -----
+    The procedure for choosing parameters for ``omero.gateway.BlitzGateway``
+    initialization is as follows:
+
+    1) Any parameters given to `ezconnect` will be used to initialize
+       ``omero.gateway.BlitzGateway``
+
+    2) If a parameter is not given to `ezconnect`, populate from variables
+       in ``os.environ``:
+        * OMERO_USER
+        * OMERO_PASS
+        * OMERO_GROUP
+        * OMERO_HOST
+        * OMERO_PORT
+        * OMERO_SECURE
+
+    3) If environment variables are not set, try to load from a config file.
+       This file should be called '.ezomero'. By default, this function will
+       look in the home directory, but ``config_path`` can be used to specify
+       a directory in which to look for '.ezomero'.
+
+       The function ``ezomero.store_connection_params`` can be used to create
+       the '.ezomero' file.
+
+       Note that passwords can not be loaded from the '.ezomero' file. This is
+       to discourage storing credentials in a file as cleartext.
+
+    4) If any remaining parameters have not been set by the above steps, the
+       user is prompted to enter a value for each unset parameter.
+    """
+    # load from .ezomero config file if it exists
+    if config_path is None:
+        config_fp = Path.home() / '.ezomero'
+    elif type(config_path) is str:
+        config_fp = Path(config_path) / '.ezomero'
+    else:
+        raise TypeError('config_path must be a string')
+
+    config_dict = {}
+    if config_fp.exists():
+        config = configparser.ConfigParser()
+        with config_fp.open() as fp:
+            config.read_file(fp)
+        config_dict = config["DEFAULT"]
+
+    # set user
+    if user is None:
+        user = config_dict.get("OMERO_USER", user)
+        user = os.environ.get("OMERO_USER", user)
+    if user is None:
+        user = input('Enter username: ')
+
+    # set password
+    if password is None:
+        password = os.environ.get("OMERO_PASS", password)
+    if password is None:
+        password = getpass('Enter password: ')
+
+    # set group
+    if group is None:
+        group = config_dict.get("OMERO_GROUP", group)
+        group = os.environ.get("OMERO_GROUP", group)
+    if group is None:
+        group = input('Enter group name (or leave blank for default group): ')
+    if group == "":
+        group = None
+
+    # set host
+    if host is None:
+        host = config_dict.get("OMERO_HOST", host)
+        host = os.environ.get("OMERO_HOST", host)
+    if host is None:
+        host = input('Enter host: ')
+
+    # set port
+    if port is None:
+        port = config_dict.get("OMERO_PORT", port)
+        port = os.environ.get("OMERO_PORT", port)
+    if port is None:
+        port = input('Enter port: ')
+    port = int(port)
+
+    # set session security
+    if secure is None:
+        secure = config_dict.get("OMERO_SECURE", secure)
+        secure = os.environ.get("OMERO_SECURE", secure)
+    if secure is None:
+        secure = input('Secure session (True or False): ')
+    if type(secure) is str:
+        if secure.lower() in ["true", "t"]:
+            secure = True
+        elif secure.lower() in ["false", "f"]:
+            secure = False
+        else:
+            raise ValueError('secure must be set to either True or False')
+
+    # create connection
+    conn = BlitzGateway(user, password, group=group, host=host, port=port,
+                        secure=secure)
+    if conn.connect():
+        return conn
+    else:
+        logging.error('Could not connect, check your settings')
+        return None
+
+
+def store_connection_params(user=None, group=None, host=None, port=None,
+                            secure=None, config_path=None):
+    """Save OMERO connection parameters in a file.
+
+    This function creates a config file ('.ezomero') in which
+    certain OMERO parameters are stored, to make it easier to create
+    ``omero.gateway.BlitzGateway`` objects.
+
+    Parameters
+    ----------
+    user : str, optional
+        OMERO username.
+
+    group : str, optional
+        OMERO group.
+
+    host : str, optional
+        OMERO.server host.
+
+    port : int, optional
+        OMERO port.
+
+    secure : boolean, optional
+        Whether to create a secure session.
+
+    config_path : str, optional
+        Path to directory that will contain the '.ezomero' file. If left as
+        ``None``, defaults to the home directory as determined by Python's
+        ``pathlib``.
+    """
+    if config_path is None:
+        config_path = Path.home()
+    elif type(config_path) is str:
+        config_path = Path(config_path)
+    else:
+        raise ValueError('config_path must be a string')
+
+    if not config_path.is_dir():
+        raise ValueError('config_path must point to a valid directory')
+    ezo_file = config_path / '.ezomero'
+    if ezo_file.exists():
+        resp = input(f'{ezo_file} already exists. Overwrite? (Y/N)')
+        if resp.lower() not in ['yes', 'y']:
+            return
+
+    # get parameters
+    if user is None:
+        user = input('Enter username: ')
+    if group is None:
+        group = input('Enter group name (or leave blank for default group): ')
+    if host is None:
+        host = input('Enter host: ')
+    if port is None:
+        port = input('Enter port: ')
+    if secure is None:
+        secure_str = input('Secure session (True or False): ')
+        if secure_str.lower() in ["true", "t"]:
+            secure = "True"
+        elif secure_str.lower() in ["false", "f"]:
+            secure = "False"
+        else:
+            raise ValueError('secure must be set to either True or False')
+
+    # make parameter dictionary and save as configfile
+    # just use 'DEFAULT' for right now, we can possibly add alt configs later
+    config = configparser.ConfigParser()
+    config['DEFAULT'] = {'OMERO_USER': user,
+                         'OMERO_GROUP': group,
+                         'OMERO_HOST': host,
+                         'OMERO_PORT': port,
+                         'OMERO_SECURE': secure}
+    with ezo_file.open('w') as configfile:
+        config.write(configfile)
+        print(f'Connection settings saved to {ezo_file}')
+
 
 def set_group(conn, group_id):
     """Safely switch OMERO group.

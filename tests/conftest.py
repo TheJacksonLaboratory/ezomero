@@ -11,7 +11,7 @@ from omero.model import ScreenPlateLinkI
 from omero.plugins.sessions import SessionsControl
 from omero.plugins.user import UserControl
 from omero.plugins.group import GroupControl
-from omero.rtypes import rint
+from omero.rtypes import rint, rstring
 
 # Settings for OMERO
 DEFAULT_OMERO_USER = "root"
@@ -42,6 +42,7 @@ USERS_TO_CREATE = [
                     []
                    ]
                   ]
+
 
 
 def pytest_addoption(parser):
@@ -345,10 +346,12 @@ def project_structure(conn, timestamp, image_fixture, users_groups,
                 current_conn.close()
 
     yield [project_info, dataset_info, image_info]
+    current_group = conn.getGroupFromContext().getId()
     conn.SERVICE_OPTS.setOmeroGroup(-1)
     for pname, pid in project_info:
         conn.deleteObjects("Project", [pid], deleteAnns=True,
                            deleteChildren=True, wait=True)
+    conn.SERVICE_OPTS.setOmeroGroup(current_group)
 
 
 @pytest.fixture(scope='session')
@@ -361,7 +364,6 @@ def screen_structure(conn, timestamp, image_fixture):
     screen.setName(screen_name)
     screen.save()
     screen_id = screen.getId()
-
     # Create Plate
     plate_name = "plate_" + timestamp
     plate = PlateWrapper(conn, PlateI())
@@ -389,6 +391,8 @@ def screen_structure(conn, timestamp, image_fixture):
     well_id = well_obj.getId().getValue()
 
     yield [plate_id, well_id, im_id1, screen_id]
+    current_group = conn.getGroupFromContext().getId()
     conn.SERVICE_OPTS.setOmeroGroup(-1)
     conn.deleteObjects("Screen", [screen_id], deleteAnns=True,
                        deleteChildren=True, wait=True)
+    conn.SERVICE_OPTS.setOmeroGroup(current_group)
