@@ -18,7 +18,7 @@ setuptools.setup(
     install_requires=[
         'omero-py',
         'numpy',
-        'dataclasses'
+        'dataclasses;python_version<"3.7"'
     ],
-    python_requires='<3.7'
+    python_requires='>=3.6'
 )
