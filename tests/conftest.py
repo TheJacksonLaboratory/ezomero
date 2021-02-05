@@ -167,11 +167,11 @@ def image_fixture():
 
 @pytest.fixture(scope='session')
 def roi_fixture():
-    point = rois.Point(x=4.0, y=5.0, z=1, c=0, t=5, label='test_point')
-    line = rois.Line(x1=4.0, y1=5.0, x2=7.0, y2=9.0, z=1, c=0, t=5, label='test_line')
-    rectangle = rois.Rectangle(x=4.0, y=5.0, width=30.0, height=40.0, z=1, c=0, t=5, label='test_rectangle')
-    ellipse = rois.Ellipse(x=4, y=5, x_rad=30.0, y_rad=40.0, z=1, c=0, t=5, label='test_ellipse')
-    polygon = rois.Polygon(points=[(4.0, 5.0), (14.0, 15.0), (4.0, 15.0)], z=1, c=0, t=5, label='test_polygon')
+    point = rois.Point(x=100.0, y=100.0, z=0, c=0, t=0, label='test_point')
+    line = rois.Line(x1=100.0, y1=100.0, x2=150.0, y2=150.0, z=0, c=0, t=0, label='test_line')
+    rectangle = rois.Rectangle(x=100.0, y=100.0, width=50.0, height=40.0, z=0, c=0, t=0, label='test_rectangle')
+    ellipse = rois.Ellipse(x=80, y=60, x_rad=20.0, y_rad=40.0, z=0, c=0, t=0, label='test_ellipse')
+    polygon = rois.Polygon(points=[(100.0, 100.0), (110.0, 150.0), (100.0, 150.0)], z=0, c=0, t=0, label='test_polygon')
 
     return {'shapes': [point, line, rectangle, ellipse, polygon],
             'name': 'ROI_name',
