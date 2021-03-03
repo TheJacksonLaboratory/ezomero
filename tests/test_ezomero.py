@@ -177,23 +177,6 @@ def test_post_roi(conn, project_structure, roi_fixture, users_groups):
                              stroke_color=roi_fixture['stroke_color'],
                              stroke_width=roi_fixture['stroke_width'])
 
-    # Test posting across groups
-    username = users_groups[1][0][0]  # test_user1
-    groupname = users_groups[0][0][0]  # test_group_1
-    current_conn = conn.suConn(username, groupname)
-    im_id3 = image_info[2][1]  # im2, in test_group_2
-    roi_id_3 = ezomero.post_roi(current_conn, im_id3,
-                                shapes=roi_fixture['shapes'],
-                                name='Shared_ROI',
-                                description=roi_fixture['desc'],
-                                fill_color=roi_fixture['fill_color'],
-                                stroke_color=roi_fixture['stroke_color'],
-                                stroke_width=roi_fixture['stroke_width'])
-
-    roi_in_omero_3 = conn.getObject('Roi', roi_id_3)
-    assert roi_in_omero_3.getName() == 'Shared_ROI'
-    assert roi_in_omero_3.getDescription() == roi_fixture['desc']
-
     # Test posting to an invalid cross-group
     username = users_groups[1][2][0]  # test_user3
     groupname = users_groups[0][1][0]  # test_group_2
@@ -209,7 +192,7 @@ def test_post_roi(conn, project_structure, roi_fixture, users_groups):
                              stroke_width=roi_fixture['stroke_width'])
     current_conn.close()
 
-    conn.deleteObjects("Roi", [roi_id, roi_id_3], deleteAnns=True,
+    conn.deleteObjects("Roi", [roi_id], deleteAnns=True,
                        deleteChildren=True, wait=True)
 
 
