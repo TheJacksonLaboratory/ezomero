@@ -52,7 +52,17 @@ def do_across_groups(f):
     @functools.wraps(f)
     def wrapper(*args, **kwargs):
         defaults = get_default_args(f)
-        if defaults['across_groups'] or kwargs['across_groups']:
+        do_across_groups = False
+        #test if user is overriding default
+        if 'across_groups' in kwargs:
+            #if they are, respect user settings
+            if kwargs['across_groups']:
+                do_across_groups = True
+        else:
+            #else, respect default
+            if defaults['across_groups']:
+                do_across_groups = True
+        if do_across_groups:
             current_group = args[0].getGroupFromContext().getId()
             args[0].SERVICE_OPTS.setOmeroGroup('-1')
             res = f(*args, **kwargs)
