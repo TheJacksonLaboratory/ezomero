@@ -718,8 +718,7 @@ def get_group_id(conn, group_name):
     return None
 
 
-@do_across_groups
-def get_user_id(conn, user_name, across_groups=True):
+def get_user_id(conn, user_name):
     """Get ID of a user based on user name.
 
     Must be an exact match. Case sensitive.
@@ -730,9 +729,7 @@ def get_user_id(conn, user_name, across_groups=True):
         OMERO connection.
     user_name : str
         Name of the user for which an ID is to be returned.
-    across_groups : bool, optional
-        Defines cross-group behavior of function - set to
-        ``False`` to disable it.
+    
 
     Returns
     -------
