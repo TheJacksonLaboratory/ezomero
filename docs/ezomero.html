@@ -364,7 +364,7 @@ are absolute.</p>
 
 <dl class="py function">
 <dt id="ezomero.get_user_id">
-<code class="sig-prename descclassname">ezomero.</code><code class="sig-name descname">get_user_id</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">conn</span></em>, <em class="sig-param"><span class="n">user_name</span></em>, <em class="sig-param"><span class="n">across_groups</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="headerlink" href="#ezomero.get_user_id" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">ezomero.</code><code class="sig-name descname">get_user_id</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">conn</span></em>, <em class="sig-param"><span class="n">user_name</span></em><span class="sig-paren">)</span><a class="headerlink" href="#ezomero.get_user_id" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get ID of a user based on user name.</p>
 <p>Must be an exact match. Case sensitive.</p>
 <dl class="field-list simple">
@@ -372,8 +372,6 @@ are absolute.</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>conn</strong> (<code class="docutils literal notranslate"><span class="pre">omero.gateway.BlitzGateway</span></code> object) – OMERO connection.</p></li>
 <li><p><strong>user_name</strong> (<em>str</em>) – Name of the user for which an ID is to be returned.</p></li>
-<li><p><strong>across_groups</strong> (<em>bool</em><em>, </em><em>optional</em>) – Defines cross-group behavior of function - set to
-<code class="docutils literal notranslate"><span class="pre">False</span></code> to disable it.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
