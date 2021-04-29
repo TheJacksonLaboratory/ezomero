@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="ezomero",
-    version="0.1.0",
+    version="0.1.1",
     maintainer="Dave Mellert",
     maintainer_email="Dave.Mellert@jax.org",
     description=("A suite of convenience functions for working"
