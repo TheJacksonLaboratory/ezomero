@@ -9,8 +9,10 @@ from omero.gateway import BlitzGateway
 from omero.gateway import MapAnnotationWrapper, DatasetWrapper, ProjectWrapper
 from omero.model import MapAnnotationI, DatasetI, ProjectI, ProjectDatasetLinkI
 from omero.model import DatasetImageLinkI, ImageI, ExperimenterI
-from omero.rtypes import rlong, rstring
+from omero.model import RoiI, PointI, LineI, RectangleI, EllipseI, PolygonI, LengthI, enums
+from omero.rtypes import rlong, rstring, rint, rdouble
 from omero.sys import Parameters
+from ezomero.rois import Point, Line, Rectangle, Ellipse, Polygon
 from pathlib import Path
 
 
@@ -367,6 +369,133 @@ def post_project(conn, project_name, description=None):
         project.setDescription(description)
     project.save()
     return project.getId()
+
+
+def post_roi(conn, image_id, shapes, name=None, description=None,
+             fill_color=(10, 10, 10, 10), stroke_color=(255, 255, 255, 255), stroke_width=1):
+    """Create new ROI from a list of shapes and link to an image.
+
+    Parameters
+    ----------
+    conn : ``omero.gateway.BlitzGateway`` object
+        OMERO connection.
+    image_id : int
+        IDs of the image to which the new ROI will be linked.
+    shapes : list of shapes
+        list of shape objects conforming the new ROI
+    name : str, optional
+        Name for the new ROI
+    description : str, optional
+        Description of the new ROI
+    fill_color: tuple of ints, optional
+        the color fill of the shape (default is (10, 10, 10, 10))
+        Color is specified as a a tuple containing 4 integers from 0 to 255 representing red, green, blue and
+        alpha levels
+    stroke_color: tuple of int, optional
+        the color of the shape edge (default is (255, 255, 255, 255))
+        Color is specified as a a tuple containing 4 integers from 0 to 255 representing red, green, blue and
+        alpha levels
+    stroke_width: int, optional
+        the width of the shape stroke in pixels (default is 1)
+
+
+    Returns
+    -------
+    ROI_id : int
+        ID of newly created ROI
+
+    Examples
+    --------
+    >>> shapes = list()
+    >>> point = Point(x=30.6, y=80.4)
+    >>> shapes.append(point)
+    >>> rectangle = Rectangle(x=50.0,
+                              y=51.3,
+                              width=90,
+                              height=40,
+                              z=3,
+                              label='The place')
+    >>> shapes.append(rectangle)
+    >>> post_roi(conn, 23, shapes, name='My Cell', description='Very important',
+                 fill_color=(255, 10, 10, 150),
+                 stroke_color=(255, 0, 0, 0),
+                 stroke_width=2)
+    234
+    """
+    roi = RoiI()
+    if name is not None:
+        roi.setName(rstring(name))
+    if description is not None:
+        roi.setDescription(rstring(description))
+    for shape in shapes:
+        roi.addShape(_shape_to_omero_shape(shape, fill_color, stroke_color, stroke_width))
+    image = conn.getObject('Image', image_id)
+    roi.setImage(image._obj)
+    roi = conn.getUpdateService().saveAndReturnObject(roi)
+    return roi.getId().getValue()
+
+
+def _shape_to_omero_shape(shape, fill_color, stroke_color, stroke_width):
+    """ Helper function to convert ezomero shapes into omero shapes"""
+    if isinstance(shape, Point):
+        omero_shape = PointI()
+        omero_shape.x = rdouble(shape.x)
+        omero_shape.y = rdouble(shape.y)
+    elif isinstance(shape, Line):
+        omero_shape = LineI()
+        omero_shape.x1 = rdouble(shape.x1)
+        omero_shape.x2 = rdouble(shape.x2)
+        omero_shape.y1 = rdouble(shape.y1)
+        omero_shape.y2 = rdouble(shape.y2)
+    elif isinstance(shape, Rectangle):
+        omero_shape = RectangleI()
+        omero_shape.x = rdouble(shape.x)
+        omero_shape.y = rdouble(shape.y)
+        omero_shape.width = rdouble(shape.width)
+        omero_shape.height = rdouble(shape.height)
+    elif isinstance(shape, Ellipse):
+        omero_shape = EllipseI()
+        omero_shape.x = rdouble(shape.x)
+        omero_shape.y = rdouble(shape.y)
+        omero_shape.radiusX = rdouble(shape.x_rad)
+        omero_shape.radiusY = rdouble(shape.y_rad)
+    elif isinstance(shape, Polygon):
+        omero_shape = PolygonI()
+        points_str = "".join("".join([str(x), ',', str(y), ', ']) for x, y in shape.points)[:-2]
+        omero_shape.points = rstring(points_str)
+    else:
+        raise TypeError('The shape passed for the roi is not a valid shape type')
+
+    if shape.z is not None:
+        omero_shape.theZ = rint(shape.z)
+    if shape.c is not None:
+        omero_shape.theC = rint(shape.c)
+    if shape.t is not None:
+        omero_shape.theT = rint(shape.t)
+    if shape.label is not None:
+        omero_shape.setTextValue(rstring(shape.label))
+    omero_shape.setFillColor(rint(_rgba_to_int(fill_color)))
+    omero_shape.setStrokeColor(rint(_rgba_to_int(stroke_color)))
+    omero_shape.setStrokeWidth(LengthI(stroke_width, enums.UnitsLength.PIXEL))
+
+    return omero_shape
+
+
+def _rgba_to_int(color: tuple):
+    """ Helper function returning the color as an Integer in RGBA encoding """
+    try:
+        r, g, b, a = color
+    except ValueError as e:
+        raise e('The format for the shape color is not addequate')
+    r = r << 24
+    g = g << 16
+    b = b << 8
+    a = int(a * 255)
+    rgba_int = sum([r, g, b, a])
+    if rgba_int > (2**31-1):  # convert to signed 32-bit int
+        rgba_int = rgba_int - 2**32
+
+    return rgba_int
 
 
 # gets
