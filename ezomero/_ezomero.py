@@ -7,7 +7,7 @@ import mimetypes
 import numpy as np
 from getpass import getpass
 from omero.gateway import BlitzGateway
-from omero.gateway import MapAnnotationWrapper, DatasetWrapper, ProjectWrapper
+from omero.gateway import MapAnnotationWrapper, DatasetWrapper, ProjectWrapper, FileAnnotationWrapper
 from omero.model import MapAnnotationI, DatasetI, ProjectI, ProjectDatasetLinkI
 from omero.model import DatasetImageLinkI, ImageI, ExperimenterI
 from omero.model import RoiI, PointI, LineI, RectangleI, EllipseI, PolygonI, LengthI, enums
@@ -862,6 +862,48 @@ def get_map_annotation_ids(conn, object_type, object_id, ns=None,
 
 
 @do_across_groups
+def get_file_annotation_ids(conn, object_type, object_id, ns=None,
+                           across_groups=True):
+    """Get IDs of map annotations associated with an object
+
+    Parameters
+    ----------
+    conn : ``omero.gateway.BlitzGateway`` object
+        OMERO connection.
+    object_type : str
+        OMERO object type, passed to ``BlitzGateway.getObject``
+    object_id : int
+        ID of object of ``object_type``.
+    ns : str
+        Namespace with which to filter results
+    across_groups : bool, optional
+        Defines cross-group behavior of function - set to
+        ``False`` to disable it.
+
+    Returns
+    -------
+    file_ann_ids : list of ints
+
+    Examples
+    --------
+    # Return IDs of all file annotations belonging to an image:
+
+    >>> file_ann_ids = get_file_annotation_ids(conn, 'Image', 42)
+
+    # Return IDs of file annotations with namespace "test" linked to a Dataset:
+
+    >>> file_ann_ids = get_file_annotation_ids(conn, 'Dataset', 16, ns='test')
+    """
+
+    target_object = conn.getObject(object_type, object_id)
+    file_ann_ids = []
+    for ann in target_object.listAnnotations(ns):
+        if isinstance(ann, FileAnnotationWrapper):
+            file_ann_ids.append(ann.getId())
+    return file_ann_ids
+
+
+@do_across_groups
 def get_map_annotation(conn, map_ann_id, across_groups=True):
     """Get the value of a map annotation object
 
@@ -887,6 +929,39 @@ def get_map_annotation(conn, map_ann_id, across_groups=True):
     {'testkey': 'testvalue', 'testkey2': 'testvalue2'}
     """
     return dict(conn.getObject('MapAnnotation', map_ann_id).getValue())
+
+
+@do_across_groups
+def get_file_annotation(conn, file_ann_id, folder_path=None, across_groups=True):
+    """Get the value of a map annotation object
+
+    Parameters
+    ----------
+    conn : ``omero.gateway.BlitzGateway`` object
+        OMERO connection.
+    file_ann_id : int
+        ID of map annotation to get.
+    folder_path : str
+        Path where file annotation will be saved. Defaults to local script directory.
+    across_groups : bool, optional
+        Defines cross-group behavior of function - set to
+        ``False`` to disable it.
+
+
+    Examples
+    --------
+    >>> get_file_annotation(conn, folder_path='/home/user/Downloads',62)
+    
+    """
+
+    if not os.path.exists(folder_path):
+        path = os.path.dirname(__file__)
+    ann = conn.getObject('FileAnnotation', file_ann_id)
+    file_path = os.path.join(path, ann.getFile().getName())
+    with open(str(file_path), 'wb') as f:
+            for chunk in ann.getFileInChunks():
+                f.write(chunk)
+    return 
 
 
 def get_group_id(conn, group_name):
