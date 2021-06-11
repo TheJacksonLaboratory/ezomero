@@ -392,8 +392,8 @@ def post_file_annotation(conn, object_type, object_id, file_path, ns,
             return None
     else:
         raise TypeError('Object ID cannot be empty')
-    
-    mimetype = mimetypes.guess_type(file_path)
+    if not mimetype:
+        mimetype = mimetypes.guess_type(file_path)
     file_ann = conn.createFileAnnfromLocalFile(
         file_path, mimetype=mimetype, ns=ns, desc=description)
     obj.linkAnnotation(file_ann)     
