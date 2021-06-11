@@ -1,6 +1,8 @@
 import pytest
 import numpy as np
 import ezomero
+import filecmp
+import os
 
 
 def test_omero_connection(conn, omero_params):
@@ -185,6 +187,65 @@ def test_post_get_map_annotation(conn, project_structure, users_groups):
 
     conn.deleteObjects("Annotation", [map_ann_id, map_ann_id3], deleteAnns=True,
                        deleteChildren=True, wait=True)
+
+
+
+def test_post_get_file_annotation(conn, project_structure, users_groups, tmp_path):
+    
+    image_info = project_structure[2]
+    im_id = image_info[0][1]
+    # This test both ezomero.post_file_annotation and ezomero.get_file_annotation
+    
+    d = tmp_path / "input"
+    d.mkdir()
+    file_path = d / "hello.txt"
+    file_path.write_text("hello world!")
+    file_ann = str(file_path)
+    
+    ns = "jax.org/omeroutils/tests/v0"
+    file_ann_id = ezomero.post_file_annotation(conn, "Image", im_id, file_ann, ns)
+    return_ann = ezomero.get_file_annotation(conn, file_ann_id)
+    assert filecmp.cmp(return_ann, file_ann)
+    os.remove(return_ann)
+
+    # Test posting to non-existing object
+    im_id2 = 999999999
+    file_ann_id2 = ezomero.post_file_annotation(conn, "Image", im_id2, file_ann, ns)
+    assert file_ann_id2 == None
+    
+    # Test posting cross-group
+    username = users_groups[1][0][0]  # test_user1
+    groupname = users_groups[0][0][0]  # test_group_1
+    current_conn = conn.suConn(username, groupname)
+    im_id3 = image_info[2][1]  # im2, in test_group_2
+    file_ann_id3 = ezomero.post_file_annotation(current_conn, "Image", im_id3, file_ann, ns)
+    return_ann3 = ezomero.get_file_annotation(current_conn, file_ann_id3)
+    assert filecmp.cmp(return_ann3, file_ann)
+    os.remove(return_ann3)
+    current_conn.close()
+
+    # Test posting to an invalid cross-group 
+    username = users_groups[1][2][0]  # test_user3
+    groupname = users_groups[0][1][0]  # test_group_2
+    current_conn = conn.suConn(username, groupname)
+    im_id4 = image_info[1][1]  # im1(in test_group_1)
+    file_ann_id4 = ezomero.post_file_annotation(current_conn, "Image", im_id4, file_ann, ns)
+    assert file_ann_id4 == None
+    current_conn.close()
+
+    # Test posting cross-group, across_groups unset
+    username = users_groups[1][0][0] #test_user1
+    groupname = users_groups[0][0][0] #test_group_1
+    current_conn = conn.suConn(username, groupname)
+    im_id5 = image_info[2][1] #im2, in test_group_2
+    file_ann_id5 = ezomero.post_file_annotation(current_conn, "Image", im_id5, file_ann, ns, across_groups=False)
+    assert file_ann_id5 == None
+    current_conn.close()
+
+    conn.deleteObjects("Annotation", [file_ann_id, file_ann_id3], deleteAnns=True,
+                       deleteChildren=True, wait=True)
+    
+    
 
 
 def test_post_roi(conn, project_structure, roi_fixture, users_groups):
@@ -406,6 +467,32 @@ def test_get_map_annotation_ids(conn, project_structure):
     assert map_ann_id4 not in map_ann_ids
     conn.deleteObjects("Annotation",
                        [map_ann_id, map_ann_id2, map_ann_id3, map_ann_id4],
+                       deleteAnns=True,
+                       deleteChildren=True,
+                       wait=True)
+
+def test_get_file_annotation_ids(conn, project_structure, tmp_path):
+    image_info = project_structure[2]
+    im_id = image_info[0][1]
+    
+    d = tmp_path / "input"
+    d.mkdir()
+    file_path = d / "hello.txt"
+    file_path.write_text("hello world!")
+    file_ann = str(file_path)
+    ns = "jax.org/omeroutils/tests/v0"
+    file_ann_id = ezomero.post_file_annotation(conn, "Image", im_id, file_ann, ns)
+    file_ann_id2 = ezomero.post_file_annotation(conn, "Image", im_id, file_ann, ns)
+    file_ann_id3 = ezomero.post_file_annotation(conn, "Image", im_id, file_ann, ns)
+    ns2 = "different namespace"
+    file_ann_id4 = ezomero.post_file_annotation(conn, "Image", im_id, file_ann, ns2)
+    file_ann_ids = ezomero.get_file_annotation_ids(conn, "Image", im_id, ns=ns)
+
+    good_ids = [file_ann_id, file_ann_id2, file_ann_id3]
+    assert all([mid in file_ann_ids for mid in good_ids])
+    assert file_ann_id4 not in file_ann_ids
+    conn.deleteObjects("Annotation",
+                       [file_ann_id, file_ann_id2, file_ann_id3, file_ann_id4],
                        deleteAnns=True,
                        deleteChildren=True,
                        wait=True)
