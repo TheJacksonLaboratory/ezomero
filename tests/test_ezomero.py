@@ -1,6 +1,8 @@
 import pytest
 import numpy as np
 import ezomero
+import filecmp
+import os
 
 
 def test_omero_connection(conn, omero_params):
@@ -189,8 +191,7 @@ def test_post_get_map_annotation(conn, project_structure, users_groups):
 
 
 def test_post_get_file_annotation(conn, project_structure, users_groups, tmp_path):
-    import filecmp
-    import os
+    
     image_info = project_structure[2]
     im_id = image_info[0][1]
     # This test both ezomero.post_file_annotation and ezomero.get_file_annotation
