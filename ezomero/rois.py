@@ -10,30 +10,32 @@ __all__ = ["Point",
 
 @dataclass(frozen=True)
 class Point:
-    """
+    """A dataclass used to create an OMERO Point.
+
     A dataclass used to represent a Point shape and create an OMERO equivalent.
     This dataclass is frozen and should not be modified after instantiation
 
-    ...
-
     Attributes
     ----------
-    x: float
-        the x axis position of the point shape in pixels
-    y: float
-        the y axis position of the point shape in pixels
-    z: int, optional
-        the z position of the point in pixels (default is None)
-        Note this is the z plane to which the shape is linked and not the sub-voxel resolution position of your shape
-        If None (the default) is provided, it will not be linked to any z plane
-    c: int, optional
-        the channel index to which the shape is linked (default is None)
-        If None (the default) is provided, it will not be linked to any channel
-    t: int, optional
-        the time frame to which the shape is linked (default is None)
-        If None (the default) is provided, it will not be linked to any time frame
-    label: str, optional
-        the label of the shape (default is None)
+    x : float
+        The x axis position of the point shape in pixels.
+    y : float
+        The y axis position of the point shape in pixels.
+    z : int, optional
+        The z position of the point in pixels. Note this is the z plane to
+        which the shape is linked and not the sub-voxel resolution position of
+        your shape. If ``None``, the Point will not be linked to any z plane.
+        Default is ``None``.
+    c : int, optional
+        The channel index to which the shape is linked.
+        If None, the Point will not be linked to any channel. Default is
+        ``None``.
+    t : int, optional
+        The time frame to which the shape is linked.
+        If ``None``, the Point will not be linked to any time frame.
+        Default is ``None``.
+    label : str, optional
+        The label of the shape. Default is ``None``.
     """
 
     x: float = field(metadata={'units': 'PIXELS'})
