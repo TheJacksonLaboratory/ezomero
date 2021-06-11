@@ -15,7 +15,7 @@ class Point:
     A dataclass used to represent a Point shape and create an OMERO equivalent.
     This dataclass is frozen and should not be modified after instantiation
 
-    Attributes
+    Parameters
     ----------
     x : float
         The x axis position of the point shape in pixels.
