@@ -954,14 +954,14 @@ def get_file_annotation(conn, file_ann_id, folder_path=None, across_groups=True)
     
     """
 
-    if not os.path.exists(folder_path):
+    if not folder_path or not os.path.exists(folder_path):
         path = os.path.dirname(__file__)
     ann = conn.getObject('FileAnnotation', file_ann_id)
     file_path = os.path.join(path, ann.getFile().getName())
     with open(str(file_path), 'wb') as f:
             for chunk in ann.getFileInChunks():
                 f.write(chunk)
-    return 
+    return file_path
 
 
 def get_group_id(conn, group_name):
