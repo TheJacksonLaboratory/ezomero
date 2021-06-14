@@ -10,30 +10,32 @@ __all__ = ["Point",
 
 @dataclass(frozen=True)
 class Point:
-    """
+    """A dataclass used to create an OMERO Point.
+
     A dataclass used to represent a Point shape and create an OMERO equivalent.
     This dataclass is frozen and should not be modified after instantiation
 
-    ...
-
-    Attributes
+    Parameters
     ----------
-    x: float
-        the x axis position of the point shape in pixels
-    y: float
-        the y axis position of the point shape in pixels
-    z: int, optional
-        the z position of the point in pixels (default is None)
-        Note this is the z plane to which the shape is linked and not the sub-voxel resolution position of your shape
-        If None (the default) is provided, it will not be linked to any z plane
-    c: int, optional
-        the channel index to which the shape is linked (default is None)
-        If None (the default) is provided, it will not be linked to any channel
-    t: int, optional
-        the time frame to which the shape is linked (default is None)
-        If None (the default) is provided, it will not be linked to any time frame
-    label: str, optional
-        the label of the shape (default is None)
+    x : float
+        The x axis position of the point shape in pixels.
+    y : float
+        The y axis position of the point shape in pixels.
+    z : int, optional
+        The z position of the point in pixels. Note this is the z plane to
+        which the shape is linked and not the sub-voxel resolution position of
+        your shape. If ``None``, the Point will not be linked to any z plane.
+        Default is ``None``.
+    c : int, optional
+        The channel index to which the shape is linked.
+        If None, the Point will not be linked to any channel. Default is
+        ``None``.
+    t : int, optional
+        The time frame to which the shape is linked.
+        If ``None``, the Point will not be linked to any time frame.
+        Default is ``None``.
+    label : str, optional
+        The label of the shape. Default is ``None``.
     """
 
     x: float = field(metadata={'units': 'PIXELS'})
@@ -46,34 +48,36 @@ class Point:
 
 @dataclass(frozen=True)
 class Line:
-    """
+    """A dataclass used to create an OMERO Line.
+
     A dataclass used to represent a Line shape and create an OMERO equivalent.
-    This dataclass is frozen and should not be modified after instantiation
+    This dataclass is frozen and should not be modified after instantiation.
 
-    ...
-
-    Attributes
+    Parameters
     ----------
-    x1: float
-        the x axis position of the start point of the line shape in pixels
-    y1: float
-        the y axis position of the start point of the line shape in pixels
-    x2: float
-        the x axis position of the end point of the line shape in pixels
-    y2: float
-        the y axis position of the end point of the line shape in pixels
-    z: int, optional
-        the z position of the point in pixels (default is None)
-        Note this is the z plane to which the shape is linked and not the sub-voxel resolution position of your shape
-        If None (the default) is provided, it will not be linked to any z plane
-    c: int, optional
-        the channel index to which the shape is linked (default is None)
-        If None (the default) is provided, it will not be linked to any channel
-    t: int, optional
-        the time frame to which the shape is linked (default is None)
-        If None (the default) is provided, it will not be linked to any time frame
-    label: str, optional
-        the label of the shape (default is None)
+    x1 : float
+        The x axis position of the start point of the line shape in pixels.
+    y1 : float
+        The y axis position of the start point of the line shape in pixels.
+    x2 : float
+        The x axis position of the end point of the line shape in pixels.
+    y2 : float
+        The y axis position of the end point of the line shape in pixels.
+    z : int, optional
+        The z position of the shape in pixels. Note this is the z plane to
+        which the shape is linked and not the sub-voxel resolution position of
+        your shape. If ``None``, the Point will not be linked to any z plane.
+        Default is ``None``.
+    c : int, optional
+        The channel index to which the shape is linked.
+        If None, the shape will not be linked to any channel. Default is
+        ``None``.
+    t : int, optional
+        The time frame to which the shape is linked.
+        If ``None``, the shape will not be linked to any time frame.
+        Default is ``None``.
+    label : str, optional
+        The label of the shape. Default is ``None``.
     """
 
     x1: float = field(metadata={'units': 'PIXELS'})
@@ -88,34 +92,37 @@ class Line:
 
 @dataclass(frozen=True)
 class Rectangle:
-    """
-    A dataclass used to represent a Rectangle shape and create an OMERO equivalent.
-    This dataclass is frozen and should not be modified after instantiation
+    """A dataclass used to create an OMERO rectangle.
 
-    ...
+    A dataclass used to represent a Rectangle shape and create an OMERO
+    equivalent. This dataclass is frozen and should not be modified after
+    instantiation.
 
-    Attributes
+    Parameters
     ----------
-    x: float
-        the x axis position of the rectangle shape in pixels
-    y: float
-        the y axis position of the rectangle shape in pixels
-    width: float
-        the width (x axis) of the rectangle shape in pixels
-    height: float
-        the height (y axis) of the rectangle shape in pixels
-    z: int, optional
-        the z position of the point in pixels (default is None)
-        Note this is the z plane to which the shape is linked and not the sub-voxel resolution position of your shape
-        If None (the default) is provided, it will not be linked to any z plane
-    c: int, optional
-        the channel index to which the shape is linked (default is None)
-        If None (the default) is provided, it will not be linked to any channel
-    t: int, optional
-        the time frame to which the shape is linked (default is None)
-        If None (the default) is provided, it will not be linked to any time frame
-    label: str, optional
-        the label of the shape (default is None)
+    x : float
+        The x axis position of the rectangle shape in pixels.
+    y : float
+        The y axis position of the rectangle shape in pixels.
+    width : float
+        The width (x axis) of the rectangle shape in pixels.
+    height : float
+        The height (y axis) of the rectangle shape in pixels.
+    z : int, optional
+        The z position of the shape in pixels. Note this is the z plane to
+        which the shape is linked and not the sub-voxel resolution position of
+        your shape. If ``None``, the Point will not be linked to any z plane.
+        Default is ``None``.
+    c : int, optional
+        The channel index to which the shape is linked.
+        If None, the shape will not be linked to any channel. Default is
+        ``None``.
+    t : int, optional
+        The time frame to which the shape is linked.
+        If ``None``, the shape will not be linked to any time frame.
+        Default is ``None``.
+    label : str, optional
+        The label of the shape. Default is ``None``.
     """
 
     x: float = field(metadata={'units': 'PIXELS'})
@@ -130,34 +137,37 @@ class Rectangle:
 
 @dataclass(frozen=True)
 class Ellipse:
-    """
-    A dataclass used to represent an Ellipse shape and create an OMERO equivalent.
-    This dataclass is frozen and should not be modified after instantiation
+    """A dataclass used to create an OMERO Ellipse.
 
-    ...
+    A dataclass used to represent an Ellipse shape and create an OMERO
+    equivalent. This dataclass is frozen and should not be modified after
+    instantiation.
 
-    Attributes
+    Parameters
     ----------
-    x: float
-        the x axis position of the ellipse shape in pixels
-    y: float
-        the y axis position of the ellipse shape in pixels
-    x-rad: float
-        the x radius of the ellipse shape in pixels
-    y-rad: float
-        the y radius of the ellipse shape in pixels
-    z: int, optional
-        the z position of the point in pixels (default is None)
-        Note this is the z plane to which the shape is linked and not the sub-voxel resolution position of your shape
-        If None (the default) is provided, it will not be linked to any z plane
-    c: int, optional
-        the channel index to which the shape is linked (default is None)
-        If None (the default) is provided, it will not be linked to any channel
-    t: int, optional
-        the time frame to which the shape is linked (default is None)
-        If None (the default) is provided, it will not be linked to any time frame
-    label: str, optional
-        the label of the shape (default is None)
+    x : float
+        The x axis position of the ellipse shape in pixels.
+    y : float
+        The y axis position of the ellipse shape in pixels.
+    x_rad : float
+        The x radius of the ellipse shape in pixels.
+    y_rad : float
+        The y radius of the ellipse shape in pixels.
+    z : int, optional
+        The z position of the shape in pixels. Note this is the z plane to
+        which the shape is linked and not the sub-voxel resolution position of
+        your shape. If ``None``, the Point will not be linked to any z plane.
+        Default is ``None``.
+    c : int, optional
+        The channel index to which the shape is linked.
+        If None, the shape will not be linked to any channel. Default is
+        ``None``.
+    t : int, optional
+        The time frame to which the shape is linked.
+        If ``None``, the shape will not be linked to any time frame.
+        Default is ``None``.
+    label : str, optional
+        The label of the shape. Default is ``None``.
     """
 
     x: float = field(metadata={'units': 'PIXELS'})
@@ -172,28 +182,32 @@ class Ellipse:
 
 @dataclass(frozen=True)
 class Polygon:
-    """
-    A dataclass used to represent a Polygon shape and create an OMERO equivalent.
-    This dataclass is frozen and should not be modified after instantiation
+    """A dataclass used to create an OMERO polygon.
 
-    ...
+    A dataclass used to represent a Polygon shape and create an OMERO
+    equivalent. This dataclass is frozen and should not be modified after
+    instantiation.
 
-    Attributes
+    Parameters
     ----------
-    points: list of tuples of 2 floats
-        a list of 2 element tuples corresponding to the (x, y) coordinates of each vertex of the polygon
-    z: int, optional
-        the z position of the point in pixels (default is None)
-        Note this is the z plane to which the shape is linked and not the sub-voxel resolution position of your shape
-        If None (the default) is provided, it will not be linked to any z plane
-    c: int, optional
-        the channel index to which the shape is linked (default is None)
-        If None (the default) is provided, it will not be linked to any channel
-    t: int, optional
-        the time frame to which the shape is linked (default is None)
-        If None (the default) is provided, it will not be linked to any time frame
-    label: str, optional
-        the label of the shape (default is None)
+    points : list of tuples of 2 floats
+        A list of 2 element tuples corresponding to the (x, y) coordinates of
+        each vertex of the polygon.
+    z : int, optional
+        The z position of the shape in pixels. Note this is the z plane to
+        which the shape is linked and not the sub-voxel resolution position of
+        your shape. If ``None``, the Point will not be linked to any z plane.
+        Default is ``None``.
+    c : int, optional
+        The channel index to which the shape is linked.
+        If None, the shape will not be linked to any channel. Default is
+        ``None``.
+    t : int, optional
+        The time frame to which the shape is linked.
+        If ``None``, the shape will not be linked to any time frame.
+        Default is ``None``.
+    label : str, optional
+        The label of the shape. Default is ``None``.
     """
 
     points: List[Tuple[float, float]] = field(metadata={'units': 'PIXELS'})
@@ -201,4 +215,3 @@ class Polygon:
     c: int = field(default=None)
     t: int = field(default=None)
     label: str = field(default=None)
-

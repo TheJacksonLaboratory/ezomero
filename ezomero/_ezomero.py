@@ -7,10 +7,12 @@ import mimetypes
 import numpy as np
 from getpass import getpass
 from omero.gateway import BlitzGateway
-from omero.gateway import MapAnnotationWrapper, DatasetWrapper, ProjectWrapper, FileAnnotationWrapper
+from omero.gateway import MapAnnotationWrapper, FileAnnotationWrapper
+from omero.gateway import ProjectWrapper, DatasetWrapper
 from omero.model import MapAnnotationI, DatasetI, ProjectI, ProjectDatasetLinkI
 from omero.model import DatasetImageLinkI, ImageI, ExperimenterI
-from omero.model import RoiI, PointI, LineI, RectangleI, EllipseI, PolygonI, LengthI, enums
+from omero.model import RoiI, PointI, LineI, RectangleI, EllipseI
+from omero.model import PolygonI, LengthI, enums
 from omero.rtypes import rlong, rstring, rint, rdouble
 from omero.sys import Parameters
 from ezomero.rois import Point, Line, Rectangle, Ellipse, Polygon
@@ -56,13 +58,13 @@ def do_across_groups(f):
     def wrapper(*args, **kwargs):
         defaults = get_default_args(f)
         do_across_groups = False
-        #test if user is overriding default
+        # test if user is overriding default
         if 'across_groups' in kwargs:
-            #if they are, respect user settings
+            # if they are, respect user settings
             if kwargs['across_groups']:
                 do_across_groups = True
         else:
-            #else, respect default
+            # else, respect default
             if defaults['across_groups']:
                 do_across_groups = True
         if do_across_groups:
@@ -332,7 +334,7 @@ def post_map_annotation(conn, object_type, object_id, kv_dict, ns,
 
 @do_across_groups
 def post_file_annotation(conn, object_type, object_id, file_path, ns,
-                        mimetype=None, description=None, across_groups=True):
+                         mimetype=None, description=None, across_groups=True):
     """Create new FileAnnotation and link to images.
 
     Parameters
@@ -348,7 +350,8 @@ def post_file_annotation(conn, object_type, object_id, file_path, ns,
     ns : str
         Namespace for the FileAnnotation
     mimetype : str
-        String of the form 'type/subtype', usable for a MIME content-type header.
+        String of the form 'type/subtype', usable for a MIME content-type
+        header.
     description : str
         File description to be added to FileAnnotation
     across_groups : bool, optional
@@ -396,10 +399,9 @@ def post_file_annotation(conn, object_type, object_id, file_path, ns,
         mimetype = mimetypes.guess_type(file_path)
     file_ann = conn.createFileAnnfromLocalFile(
         file_path, mimetype=mimetype, ns=ns, desc=description)
-    obj.linkAnnotation(file_ann)     
+    obj.linkAnnotation(file_ann)
 
     return file_ann.getId()
-    
 
 
 def post_project(conn, project_name, description=None):
@@ -445,7 +447,8 @@ def post_project(conn, project_name, description=None):
 
 
 def post_roi(conn, image_id, shapes, name=None, description=None,
-             fill_color=(10, 10, 10, 10), stroke_color=(255, 255, 255, 255), stroke_width=1):
+             fill_color=(10, 10, 10, 10), stroke_color=(255, 255, 255, 255),
+             stroke_width=1):
     """Create new ROI from a list of shapes and link to an image.
 
     Parameters
@@ -455,21 +458,21 @@ def post_roi(conn, image_id, shapes, name=None, description=None,
     image_id : int
         IDs of the image to which the new ROI will be linked.
     shapes : list of shapes
-        list of shape objects conforming the new ROI
+        List of shape objects associated with the new ROI.
     name : str, optional
-        Name for the new ROI
+        Name for the new ROI.
     description : str, optional
-        Description of the new ROI
-    fill_color: tuple of ints, optional
-        the color fill of the shape (default is (10, 10, 10, 10))
-        Color is specified as a a tuple containing 4 integers from 0 to 255 representing red, green, blue and
-        alpha levels
+        Description of the new ROI.
+    fill_color: tuple of int, optional
+        The color fill of the shape. Color is specified as a a tuple containing
+        4 integers from 0 to 255, representing red, green, blue and alpha
+        levels. Default is (10, 10, 10, 10).
     stroke_color: tuple of int, optional
-        the color of the shape edge (default is (255, 255, 255, 255))
-        Color is specified as a a tuple containing 4 integers from 0 to 255 representing red, green, blue and
-        alpha levels
+        The color of the shape edge. Color is specified as a a tuple containing
+        4 integers from 0 to 255, representing red, green, blue and alpha
+        levels. Default is (255, 255, 255, 255).
     stroke_width: int, optional
-        the width of the shape stroke in pixels (default is 1)
+        The width of the shape stroke in pixels. Default is 1.
 
 
     Returns
@@ -489,7 +492,8 @@ def post_roi(conn, image_id, shapes, name=None, description=None,
                               z=3,
                               label='The place')
     >>> shapes.append(rectangle)
-    >>> post_roi(conn, 23, shapes, name='My Cell', description='Very important',
+    >>> post_roi(conn, 23, shapes, name='My Cell',
+                 description='Very important',
                  fill_color=(255, 10, 10, 150),
                  stroke_color=(255, 0, 0, 0),
                  stroke_width=2)
@@ -501,7 +505,8 @@ def post_roi(conn, image_id, shapes, name=None, description=None,
     if description is not None:
         roi.setDescription(rstring(description))
     for shape in shapes:
-        roi.addShape(_shape_to_omero_shape(shape, fill_color, stroke_color, stroke_width))
+        roi.addShape(_shape_to_omero_shape(shape, fill_color, stroke_color,
+                                           stroke_width))
     image = conn.getObject('Image', image_id)
     roi.setImage(image._obj)
     roi = conn.getUpdateService().saveAndReturnObject(roi)
@@ -537,7 +542,8 @@ def _shape_to_omero_shape(shape, fill_color, stroke_color, stroke_width):
         points_str = "".join("".join([str(x), ',', str(y), ', ']) for x, y in shape.points)[:-2]
         omero_shape.points = rstring(points_str)
     else:
-        raise TypeError('The shape passed for the roi is not a valid shape type')
+        err = 'The shape passed for the roi is not a valid shape type'
+        raise TypeError(err)
 
     if shape.z is not None:
         omero_shape.theZ = rint(shape.z)
@@ -863,7 +869,7 @@ def get_map_annotation_ids(conn, object_type, object_id, ns=None,
 
 @do_across_groups
 def get_file_annotation_ids(conn, object_type, object_id, ns=None,
-                           across_groups=True):
+                            across_groups=True):
     """Get IDs of map annotations associated with an object
 
     Parameters
@@ -932,7 +938,8 @@ def get_map_annotation(conn, map_ann_id, across_groups=True):
 
 
 @do_across_groups
-def get_file_annotation(conn, file_ann_id, folder_path=None, across_groups=True):
+def get_file_annotation(conn, file_ann_id, folder_path=None,
+                        across_groups=True):
     """Get the value of a map annotation object
 
     Parameters
@@ -942,7 +949,8 @@ def get_file_annotation(conn, file_ann_id, folder_path=None, across_groups=True)
     file_ann_id : int
         ID of map annotation to get.
     folder_path : str
-        Path where file annotation will be saved. Defaults to local script directory.
+        Path where file annotation will be saved. Defaults to local script
+        directory.
     across_groups : bool, optional
         Defines cross-group behavior of function - set to
         ``False`` to disable it.
@@ -951,7 +959,6 @@ def get_file_annotation(conn, file_ann_id, folder_path=None, across_groups=True)
     Examples
     --------
     >>> get_file_annotation(conn, folder_path='/home/user/Downloads',62)
-    
     """
 
     if not folder_path or not os.path.exists(folder_path):
@@ -959,8 +966,8 @@ def get_file_annotation(conn, file_ann_id, folder_path=None, across_groups=True)
     ann = conn.getObject('FileAnnotation', file_ann_id)
     file_path = os.path.join(path, ann.getFile().getName())
     with open(str(file_path), 'wb') as f:
-            for chunk in ann.getFileInChunks():
-                f.write(chunk)
+        for chunk in ann.getFileInChunks():
+            f.write(chunk)
     return file_path
 
 
@@ -1006,7 +1013,6 @@ def get_user_id(conn, user_name):
         OMERO connection.
     user_name : str
         Name of the user for which an ID is to be returned.
-    
 
     Returns
     -------
