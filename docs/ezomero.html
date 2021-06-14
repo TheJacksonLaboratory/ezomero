@@ -32,6 +32,161 @@
             
   <div class="section" id="ezomero-package">
 <h1>ezomero package<a class="headerlink" href="#ezomero-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-ezomero.rois">
+<span id="ezomero-rois-module"></span><h2>ezomero.rois module<a class="headerlink" href="#module-ezomero.rois" title="Permalink to this headline">¶</a></h2>
+<dl class="py class">
+<dt id="ezomero.rois.Ellipse">
+<em class="property">class </em><code class="sig-prename descclassname">ezomero.rois.</code><code class="sig-name descname">Ellipse</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">x</span><span class="p">:</span> <span class="n">float</span></em>, <em class="sig-param"><span class="n">y</span><span class="p">:</span> <span class="n">float</span></em>, <em class="sig-param"><span class="n">x_rad</span><span class="p">:</span> <span class="n">float</span></em>, <em class="sig-param"><span class="n">y_rad</span><span class="p">:</span> <span class="n">float</span></em>, <em class="sig-param"><span class="n">z</span><span class="p">:</span> <span class="n">Optional<span class="p">[</span>int<span class="p">]</span></span> <span class="o">=</span> <span class="default_value">None</span></em>, <em class="sig-param"><span class="n">c</span><span class="p">:</span> <span class="n">Optional<span class="p">[</span>int<span class="p">]</span></span> <span class="o">=</span> <span class="default_value">None</span></em>, <em class="sig-param"><span class="n">t</span><span class="p">:</span> <span class="n">Optional<span class="p">[</span>int<span class="p">]</span></span> <span class="o">=</span> <span class="default_value">None</span></em>, <em class="sig-param"><span class="n">label</span><span class="p">:</span> <span class="n">Optional<span class="p">[</span>str<span class="p">]</span></span> <span class="o">=</span> <span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#ezomero.rois.Ellipse" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>A dataclass used to create an OMERO Ellipse.</p>
+<p>A dataclass used to represent an Ellipse shape and create an OMERO
+equivalent. This dataclass is frozen and should not be modified after
+instantiation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>x</strong> (<em>float</em>) – The x axis position of the ellipse shape in pixels.</p></li>
+<li><p><strong>y</strong> (<em>float</em>) – The y axis position of the ellipse shape in pixels.</p></li>
+<li><p><strong>x_rad</strong> (<em>float</em>) – The x radius of the ellipse shape in pixels.</p></li>
+<li><p><strong>y_rad</strong> (<em>float</em>) – The y radius of the ellipse shape in pixels.</p></li>
+<li><p><strong>z</strong> (<em>int</em><em>, </em><em>optional</em>) – The z position of the shape in pixels. Note this is the z plane to
+which the shape is linked and not the sub-voxel resolution position of
+your shape. If <code class="docutils literal notranslate"><span class="pre">None</span></code>, the Point will not be linked to any z plane.
+Default is <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p></li>
+<li><p><strong>c</strong> (<em>int</em><em>, </em><em>optional</em>) – The channel index to which the shape is linked.
+If None, the shape will not be linked to any channel. Default is
+<code class="docutils literal notranslate"><span class="pre">None</span></code>.</p></li>
+<li><p><strong>t</strong> (<em>int</em><em>, </em><em>optional</em>) – The time frame to which the shape is linked.
+If <code class="docutils literal notranslate"><span class="pre">None</span></code>, the shape will not be linked to any time frame.
+Default is <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p></li>
+<li><p><strong>label</strong> (<em>str</em><em>, </em><em>optional</em>) – The label of the shape. Default is <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt id="ezomero.rois.Line">
+<em class="property">class </em><code class="sig-prename descclassname">ezomero.rois.</code><code class="sig-name descname">Line</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">x1</span><span class="p">:</span> <span class="n">float</span></em>, <em class="sig-param"><span class="n">y1</span><span class="p">:</span> <span class="n">float</span></em>, <em class="sig-param"><span class="n">x2</span><span class="p">:</span> <span class="n">float</span></em>, <em class="sig-param"><span class="n">y2</span><span class="p">:</span> <span class="n">float</span></em>, <em class="sig-param"><span class="n">z</span><span class="p">:</span> <span class="n">Optional<span class="p">[</span>int<span class="p">]</span></span> <span class="o">=</span> <span class="default_value">None</span></em>, <em class="sig-param"><span class="n">c</span><span class="p">:</span> <span class="n">Optional<span class="p">[</span>int<span class="p">]</span></span> <span class="o">=</span> <span class="default_value">None</span></em>, <em class="sig-param"><span class="n">t</span><span class="p">:</span> <span class="n">Optional<span class="p">[</span>int<span class="p">]</span></span> <span class="o">=</span> <span class="default_value">None</span></em>, <em class="sig-param"><span class="n">label</span><span class="p">:</span> <span class="n">Optional<span class="p">[</span>str<span class="p">]</span></span> <span class="o">=</span> <span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#ezomero.rois.Line" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>A dataclass used to create an OMERO Line.</p>
+<p>A dataclass used to represent a Line shape and create an OMERO equivalent.
+This dataclass is frozen and should not be modified after instantiation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>x1</strong> (<em>float</em>) – The x axis position of the start point of the line shape in pixels.</p></li>
+<li><p><strong>y1</strong> (<em>float</em>) – The y axis position of the start point of the line shape in pixels.</p></li>
+<li><p><strong>x2</strong> (<em>float</em>) – The x axis position of the end point of the line shape in pixels.</p></li>
+<li><p><strong>y2</strong> (<em>float</em>) – The y axis position of the end point of the line shape in pixels.</p></li>
+<li><p><strong>z</strong> (<em>int</em><em>, </em><em>optional</em>) – The z position of the shape in pixels. Note this is the z plane to
+which the shape is linked and not the sub-voxel resolution position of
+your shape. If <code class="docutils literal notranslate"><span class="pre">None</span></code>, the Point will not be linked to any z plane.
+Default is <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p></li>
+<li><p><strong>c</strong> (<em>int</em><em>, </em><em>optional</em>) – The channel index to which the shape is linked.
+If None, the shape will not be linked to any channel. Default is
+<code class="docutils literal notranslate"><span class="pre">None</span></code>.</p></li>
+<li><p><strong>t</strong> (<em>int</em><em>, </em><em>optional</em>) – The time frame to which the shape is linked.
+If <code class="docutils literal notranslate"><span class="pre">None</span></code>, the shape will not be linked to any time frame.
+Default is <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p></li>
+<li><p><strong>label</strong> (<em>str</em><em>, </em><em>optional</em>) – The label of the shape. Default is <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt id="ezomero.rois.Point">
+<em class="property">class </em><code class="sig-prename descclassname">ezomero.rois.</code><code class="sig-name descname">Point</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">x</span><span class="p">:</span> <span class="n">float</span></em>, <em class="sig-param"><span class="n">y</span><span class="p">:</span> <span class="n">float</span></em>, <em class="sig-param"><span class="n">z</span><span class="p">:</span> <span class="n">Optional<span class="p">[</span>int<span class="p">]</span></span> <span class="o">=</span> <span class="default_value">None</span></em>, <em class="sig-param"><span class="n">c</span><span class="p">:</span> <span class="n">Optional<span class="p">[</span>int<span class="p">]</span></span> <span class="o">=</span> <span class="default_value">None</span></em>, <em class="sig-param"><span class="n">t</span><span class="p">:</span> <span class="n">Optional<span class="p">[</span>int<span class="p">]</span></span> <span class="o">=</span> <span class="default_value">None</span></em>, <em class="sig-param"><span class="n">label</span><span class="p">:</span> <span class="n">Optional<span class="p">[</span>str<span class="p">]</span></span> <span class="o">=</span> <span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#ezomero.rois.Point" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>A dataclass used to create an OMERO Point.</p>
+<p>A dataclass used to represent a Point shape and create an OMERO equivalent.
+This dataclass is frozen and should not be modified after instantiation</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>x</strong> (<em>float</em>) – The x axis position of the point shape in pixels.</p></li>
+<li><p><strong>y</strong> (<em>float</em>) – The y axis position of the point shape in pixels.</p></li>
+<li><p><strong>z</strong> (<em>int</em><em>, </em><em>optional</em>) – The z position of the point in pixels. Note this is the z plane to
+which the shape is linked and not the sub-voxel resolution position of
+your shape. If <code class="docutils literal notranslate"><span class="pre">None</span></code>, the Point will not be linked to any z plane.
+Default is <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p></li>
+<li><p><strong>c</strong> (<em>int</em><em>, </em><em>optional</em>) – The channel index to which the shape is linked.
+If None, the Point will not be linked to any channel. Default is
+<code class="docutils literal notranslate"><span class="pre">None</span></code>.</p></li>
+<li><p><strong>t</strong> (<em>int</em><em>, </em><em>optional</em>) – The time frame to which the shape is linked.
+If <code class="docutils literal notranslate"><span class="pre">None</span></code>, the Point will not be linked to any time frame.
+Default is <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p></li>
+<li><p><strong>label</strong> (<em>str</em><em>, </em><em>optional</em>) – The label of the shape. Default is <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt id="ezomero.rois.Polygon">
+<em class="property">class </em><code class="sig-prename descclassname">ezomero.rois.</code><code class="sig-name descname">Polygon</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">points</span><span class="p">:</span> <span class="n">List<span class="p">[</span>Tuple<span class="p">[</span>float<span class="p">, </span>float<span class="p">]</span><span class="p">]</span></span></em>, <em class="sig-param"><span class="n">z</span><span class="p">:</span> <span class="n">Optional<span class="p">[</span>int<span class="p">]</span></span> <span class="o">=</span> <span class="default_value">None</span></em>, <em class="sig-param"><span class="n">c</span><span class="p">:</span> <span class="n">Optional<span class="p">[</span>int<span class="p">]</span></span> <span class="o">=</span> <span class="default_value">None</span></em>, <em class="sig-param"><span class="n">t</span><span class="p">:</span> <span class="n">Optional<span class="p">[</span>int<span class="p">]</span></span> <span class="o">=</span> <span class="default_value">None</span></em>, <em class="sig-param"><span class="n">label</span><span class="p">:</span> <span class="n">Optional<span class="p">[</span>str<span class="p">]</span></span> <span class="o">=</span> <span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#ezomero.rois.Polygon" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>A dataclass used to create an OMERO polygon.</p>
+<p>A dataclass used to represent a Polygon shape and create an OMERO
+equivalent. This dataclass is frozen and should not be modified after
+instantiation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>points</strong> (<em>list of tuples of 2 floats</em>) – A list of 2 element tuples corresponding to the (x, y) coordinates of
+each vertex of the polygon.</p></li>
+<li><p><strong>z</strong> (<em>int</em><em>, </em><em>optional</em>) – The z position of the shape in pixels. Note this is the z plane to
+which the shape is linked and not the sub-voxel resolution position of
+your shape. If <code class="docutils literal notranslate"><span class="pre">None</span></code>, the Point will not be linked to any z plane.
+Default is <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p></li>
+<li><p><strong>c</strong> (<em>int</em><em>, </em><em>optional</em>) – The channel index to which the shape is linked.
+If None, the shape will not be linked to any channel. Default is
+<code class="docutils literal notranslate"><span class="pre">None</span></code>.</p></li>
+<li><p><strong>t</strong> (<em>int</em><em>, </em><em>optional</em>) – The time frame to which the shape is linked.
+If <code class="docutils literal notranslate"><span class="pre">None</span></code>, the shape will not be linked to any time frame.
+Default is <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p></li>
+<li><p><strong>label</strong> (<em>str</em><em>, </em><em>optional</em>) – The label of the shape. Default is <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt id="ezomero.rois.Rectangle">
+<em class="property">class </em><code class="sig-prename descclassname">ezomero.rois.</code><code class="sig-name descname">Rectangle</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">x</span><span class="p">:</span> <span class="n">float</span></em>, <em class="sig-param"><span class="n">y</span><span class="p">:</span> <span class="n">float</span></em>, <em class="sig-param"><span class="n">width</span><span class="p">:</span> <span class="n">float</span></em>, <em class="sig-param"><span class="n">height</span><span class="p">:</span> <span class="n">float</span></em>, <em class="sig-param"><span class="n">z</span><span class="p">:</span> <span class="n">Optional<span class="p">[</span>int<span class="p">]</span></span> <span class="o">=</span> <span class="default_value">None</span></em>, <em class="sig-param"><span class="n">c</span><span class="p">:</span> <span class="n">Optional<span class="p">[</span>int<span class="p">]</span></span> <span class="o">=</span> <span class="default_value">None</span></em>, <em class="sig-param"><span class="n">t</span><span class="p">:</span> <span class="n">Optional<span class="p">[</span>int<span class="p">]</span></span> <span class="o">=</span> <span class="default_value">None</span></em>, <em class="sig-param"><span class="n">label</span><span class="p">:</span> <span class="n">Optional<span class="p">[</span>str<span class="p">]</span></span> <span class="o">=</span> <span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#ezomero.rois.Rectangle" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>A dataclass used to create an OMERO rectangle.</p>
+<p>A dataclass used to represent a Rectangle shape and create an OMERO
+equivalent. This dataclass is frozen and should not be modified after
+instantiation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>x</strong> (<em>float</em>) – The x axis position of the rectangle shape in pixels.</p></li>
+<li><p><strong>y</strong> (<em>float</em>) – The y axis position of the rectangle shape in pixels.</p></li>
+<li><p><strong>width</strong> (<em>float</em>) – The width (x axis) of the rectangle shape in pixels.</p></li>
+<li><p><strong>height</strong> (<em>float</em>) – The height (y axis) of the rectangle shape in pixels.</p></li>
+<li><p><strong>z</strong> (<em>int</em><em>, </em><em>optional</em>) – The z position of the shape in pixels. Note this is the z plane to
+which the shape is linked and not the sub-voxel resolution position of
+your shape. If <code class="docutils literal notranslate"><span class="pre">None</span></code>, the Point will not be linked to any z plane.
+Default is <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p></li>
+<li><p><strong>c</strong> (<em>int</em><em>, </em><em>optional</em>) – The channel index to which the shape is linked.
+If None, the shape will not be linked to any channel. Default is
+<code class="docutils literal notranslate"><span class="pre">None</span></code>.</p></li>
+<li><p><strong>t</strong> (<em>int</em><em>, </em><em>optional</em>) – The time frame to which the shape is linked.
+If <code class="docutils literal notranslate"><span class="pre">None</span></code>, the shape will not be linked to any time frame.
+Default is <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p></li>
+<li><p><strong>label</strong> (<em>str</em><em>, </em><em>optional</em>) – The label of the shape. Default is <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
 <div class="section" id="module-ezomero">
 <span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-ezomero" title="Permalink to this headline">¶</a></h2>
 <dl class="py function">
@@ -132,6 +287,61 @@ in OMERO may share the same filename (e.g., image.tif).</p>
 <p class="rubric">Examples</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">im_ids</span> <span class="o">=</span> <span class="n">get_image_ids</span><span class="p">(</span><span class="n">conn</span><span class="p">,</span> <span class="n">dataset</span><span class="o">=</span><span class="mi">303</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">im_ids</span> <span class="o">=</span> <span class="n">filter_by_filename</span><span class="p">(</span><span class="n">conn</span><span class="p">,</span> <span class="n">im_ids</span><span class="p">,</span> <span class="s2">&quot;feb_2020.tif&quot;</span><span class="p">)]</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt id="ezomero.get_file_annotation">
+<code class="sig-prename descclassname">ezomero.</code><code class="sig-name descname">get_file_annotation</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">conn</span></em>, <em class="sig-param"><span class="n">file_ann_id</span></em>, <em class="sig-param"><span class="n">folder_path</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">across_groups</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="headerlink" href="#ezomero.get_file_annotation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the value of a map annotation object</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>conn</strong> (<code class="docutils literal notranslate"><span class="pre">omero.gateway.BlitzGateway</span></code> object) – OMERO connection.</p></li>
+<li><p><strong>file_ann_id</strong> (<em>int</em>) – ID of map annotation to get.</p></li>
+<li><p><strong>folder_path</strong> (<em>str</em>) – Path where file annotation will be saved. Defaults to local script
+directory.</p></li>
+<li><p><strong>across_groups</strong> (<em>bool</em><em>, </em><em>optional</em>) – Defines cross-group behavior of function - set to
+<code class="docutils literal notranslate"><span class="pre">False</span></code> to disable it.</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">get_file_annotation</span><span class="p">(</span><span class="n">conn</span><span class="p">,</span> <span class="n">folder_path</span><span class="o">=</span><span class="s1">&#39;/home/user/Downloads&#39;</span><span class="p">,</span><span class="mi">62</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt id="ezomero.get_file_annotation_ids">
+<code class="sig-prename descclassname">ezomero.</code><code class="sig-name descname">get_file_annotation_ids</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">conn</span></em>, <em class="sig-param"><span class="n">object_type</span></em>, <em class="sig-param"><span class="n">object_id</span></em>, <em class="sig-param"><span class="n">ns</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">across_groups</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="headerlink" href="#ezomero.get_file_annotation_ids" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get IDs of map annotations associated with an object</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>conn</strong> (<code class="docutils literal notranslate"><span class="pre">omero.gateway.BlitzGateway</span></code> object) – OMERO connection.</p></li>
+<li><p><strong>object_type</strong> (<em>str</em>) – OMERO object type, passed to <code class="docutils literal notranslate"><span class="pre">BlitzGateway.getObject</span></code></p></li>
+<li><p><strong>object_id</strong> (<em>int</em>) – ID of object of <code class="docutils literal notranslate"><span class="pre">object_type</span></code>.</p></li>
+<li><p><strong>ns</strong> (<em>str</em>) – Namespace with which to filter results</p></li>
+<li><p><strong>across_groups</strong> (<em>bool</em><em>, </em><em>optional</em>) – Defines cross-group behavior of function - set to
+<code class="docutils literal notranslate"><span class="pre">False</span></code> to disable it.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>file_ann_ids</strong></p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>list of ints</p>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<p># Return IDs of all file annotations belonging to an image:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">file_ann_ids</span> <span class="o">=</span> <span class="n">get_file_annotation_ids</span><span class="p">(</span><span class="n">conn</span><span class="p">,</span> <span class="s1">&#39;Image&#39;</span><span class="p">,</span> <span class="mi">42</span><span class="p">)</span>
+</pre></div>
+</div>
+<p># Return IDs of file annotations with namespace “test” linked to a Dataset:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">file_ann_ids</span> <span class="o">=</span> <span class="n">get_file_annotation_ids</span><span class="p">(</span><span class="n">conn</span><span class="p">,</span> <span class="s1">&#39;Dataset&#39;</span><span class="p">,</span> <span class="mi">16</span><span class="p">,</span> <span class="n">ns</span><span class="o">=</span><span class="s1">&#39;test&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
 </dd></dl>
@@ -458,6 +668,45 @@ specified, the Dataset will be orphaned.</p></li>
 </dd></dl>
 
 <dl class="py function">
+<dt id="ezomero.post_file_annotation">
+<code class="sig-prename descclassname">ezomero.</code><code class="sig-name descname">post_file_annotation</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">conn</span></em>, <em class="sig-param"><span class="n">object_type</span></em>, <em class="sig-param"><span class="n">object_id</span></em>, <em class="sig-param"><span class="n">file_path</span></em>, <em class="sig-param"><span class="n">ns</span></em>, <em class="sig-param"><span class="n">mimetype</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">description</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">across_groups</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="headerlink" href="#ezomero.post_file_annotation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create new FileAnnotation and link to images.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>conn</strong> (<code class="docutils literal notranslate"><span class="pre">omero.gateway.BlitzGateway</span></code> object) – OMERO connection.</p></li>
+<li><p><strong>object_type</strong> (<em>str</em>) – OMERO object type, passed to <code class="docutils literal notranslate"><span class="pre">BlitzGateway.getObjects</span></code></p></li>
+<li><p><strong>object_ids</strong> (<em>int</em>) – ID of object to which the new MapAnnotation will be linked.</p></li>
+<li><p><strong>file_path</strong> (<em>string</em>) – local path to file to be added as FileAnnotation</p></li>
+<li><p><strong>ns</strong> (<em>str</em>) – Namespace for the FileAnnotation</p></li>
+<li><p><strong>mimetype</strong> (<em>str</em>) – String of the form ‘type/subtype’, usable for a MIME content-type
+header.</p></li>
+<li><p><strong>description</strong> (<em>str</em>) – File description to be added to FileAnnotation</p></li>
+<li><p><strong>across_groups</strong> (<em>bool</em><em>, </em><em>optional</em>) – Defines cross-group behavior of function - set to
+<code class="docutils literal notranslate"><span class="pre">False</span></code> to disable it.</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>All keys and values are converted to strings before saving in OMERO.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p><strong>file_ann_id</strong> – IDs of newly created MapAnnotation</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>int</p>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">ns</span> <span class="o">=</span> <span class="s1">&#39;jax.org/jax/example/namespace&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">path</span> <span class="o">=</span> <span class="s1">&#39;/home/user/Downloads/file_ann.txt&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">post_file_annotation</span><span class="p">(</span><span class="n">conn</span><span class="p">,</span> <span class="s2">&quot;Image&quot;</span><span class="p">,</span> <span class="mi">56</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">ns</span><span class="p">)</span>
+<span class="go">234</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py function">
 <dt id="ezomero.post_image">
 <code class="sig-prename descclassname">ezomero.</code><code class="sig-name descname">post_image</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">conn</span></em>, <em class="sig-param"><span class="n">image</span></em>, <em class="sig-param"><span class="n">image_name</span></em>, <em class="sig-param"><span class="n">description</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">dataset_id</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">source_image_id</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">channel_list</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">across_groups</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="headerlink" href="#ezomero.post_image" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create a new OMERO image from numpy array.</p>
@@ -560,6 +809,55 @@ be changed using <code class="docutils literal notranslate"><span class="pre">co
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">project_id</span> <span class="o">=</span> <span class="n">post_project</span><span class="p">(</span><span class="n">conn</span><span class="p">,</span> <span class="s2">&quot;My New Project&quot;</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">project_id</span><span class="p">)</span>
 <span class="go">238</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt id="ezomero.post_roi">
+<code class="sig-prename descclassname">ezomero.</code><code class="sig-name descname">post_roi</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">conn</span></em>, <em class="sig-param"><span class="n">image_id</span></em>, <em class="sig-param"><span class="n">shapes</span></em>, <em class="sig-param"><span class="n">name</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">description</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">fill_color</span><span class="o">=</span><span class="default_value">(10, 10, 10, 10)</span></em>, <em class="sig-param"><span class="n">stroke_color</span><span class="o">=</span><span class="default_value">(255, 255, 255, 255)</span></em>, <em class="sig-param"><span class="n">stroke_width</span><span class="o">=</span><span class="default_value">1</span></em><span class="sig-paren">)</span><a class="headerlink" href="#ezomero.post_roi" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create new ROI from a list of shapes and link to an image.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>conn</strong> (<code class="docutils literal notranslate"><span class="pre">omero.gateway.BlitzGateway</span></code> object) – OMERO connection.</p></li>
+<li><p><strong>image_id</strong> (<em>int</em>) – IDs of the image to which the new ROI will be linked.</p></li>
+<li><p><strong>shapes</strong> (<em>list of shapes</em>) – List of shape objects associated with the new ROI.</p></li>
+<li><p><strong>name</strong> (<em>str</em><em>, </em><em>optional</em>) – Name for the new ROI.</p></li>
+<li><p><strong>description</strong> (<em>str</em><em>, </em><em>optional</em>) – Description of the new ROI.</p></li>
+<li><p><strong>fill_color</strong> (<em>tuple of int</em><em>, </em><em>optional</em>) – The color fill of the shape. Color is specified as a a tuple containing
+4 integers from 0 to 255, representing red, green, blue and alpha
+levels. Default is (10, 10, 10, 10).</p></li>
+<li><p><strong>stroke_color</strong> (<em>tuple of int</em><em>, </em><em>optional</em>) – The color of the shape edge. Color is specified as a a tuple containing
+4 integers from 0 to 255, representing red, green, blue and alpha
+levels. Default is (255, 255, 255, 255).</p></li>
+<li><p><strong>stroke_width</strong> (<em>int</em><em>, </em><em>optional</em>) – The width of the shape stroke in pixels. Default is 1.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>ROI_id</strong> – ID of newly created ROI</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">shapes</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">point</span> <span class="o">=</span> <span class="n">Point</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="mf">30.6</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="mf">80.4</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">shapes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">point</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">rectangle</span> <span class="o">=</span> <span class="n">Rectangle</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="mf">50.0</span><span class="p">,</span>
+<span class="go">                          y=51.3,</span>
+<span class="go">                          width=90,</span>
+<span class="go">                          height=40,</span>
+<span class="go">                          z=3,</span>
+<span class="go">                          label=&#39;The place&#39;)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">shapes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">rectangle</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">post_roi</span><span class="p">(</span><span class="n">conn</span><span class="p">,</span> <span class="mi">23</span><span class="p">,</span> <span class="n">shapes</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;My Cell&#39;</span><span class="p">,</span>
+<span class="go">             description=&#39;Very important&#39;,</span>
+<span class="go">             fill_color=(255, 10, 10, 150),</span>
+<span class="go">             stroke_color=(255, 0, 0, 0),</span>
+<span class="go">             stroke_width=2)</span>
+<span class="go">234</span>
 </pre></div>
 </div>
 </dd></dl>
