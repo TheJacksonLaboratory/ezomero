@@ -3,14 +3,19 @@ import logging
 import os
 import functools
 import inspect
+import mimetypes
 import numpy as np
 from getpass import getpass
 from omero.gateway import BlitzGateway
-from omero.gateway import MapAnnotationWrapper, DatasetWrapper, ProjectWrapper
+from omero.gateway import MapAnnotationWrapper, FileAnnotationWrapper
+from omero.gateway import ProjectWrapper, DatasetWrapper
 from omero.model import MapAnnotationI, DatasetI, ProjectI, ProjectDatasetLinkI
 from omero.model import DatasetImageLinkI, ImageI, ExperimenterI
-from omero.rtypes import rlong, rstring
+from omero.model import RoiI, PointI, LineI, RectangleI, EllipseI
+from omero.model import PolygonI, LengthI, enums
+from omero.rtypes import rlong, rstring, rint, rdouble
 from omero.sys import Parameters
+from ezomero.rois import Point, Line, Rectangle, Ellipse, Polygon
 from pathlib import Path
 
 
@@ -53,13 +58,13 @@ def do_across_groups(f):
     def wrapper(*args, **kwargs):
         defaults = get_default_args(f)
         do_across_groups = False
-        #test if user is overriding default
+        # test if user is overriding default
         if 'across_groups' in kwargs:
-            #if they are, respect user settings
+            # if they are, respect user settings
             if kwargs['across_groups']:
                 do_across_groups = True
         else:
-            #else, respect default
+            # else, respect default
             if defaults['across_groups']:
                 do_across_groups = True
         if do_across_groups:
@@ -327,6 +332,78 @@ def post_map_annotation(conn, object_type, object_id, kv_dict, ns,
     return map_ann.getId()
 
 
+@do_across_groups
+def post_file_annotation(conn, object_type, object_id, file_path, ns,
+                         mimetype=None, description=None, across_groups=True):
+    """Create new FileAnnotation and link to images.
+
+    Parameters
+    ----------
+    conn : ``omero.gateway.BlitzGateway`` object
+        OMERO connection.
+    object_type : str
+       OMERO object type, passed to ``BlitzGateway.getObjects``
+    object_ids : int
+        ID of object to which the new MapAnnotation will be linked.
+    file_path : string
+        local path to file to be added as FileAnnotation
+    ns : str
+        Namespace for the FileAnnotation
+    mimetype : str
+        String of the form 'type/subtype', usable for a MIME content-type
+        header.
+    description : str
+        File description to be added to FileAnnotation
+    across_groups : bool, optional
+        Defines cross-group behavior of function - set to
+        ``False`` to disable it.
+
+    Notes
+    -----
+    All keys and values are converted to strings before saving in OMERO.
+
+    Returns
+    -------
+    file_ann_id : int
+        IDs of newly created MapAnnotation
+
+    Examples
+    --------
+    >>> ns = 'jax.org/jax/example/namespace'
+    >>> path = '/home/user/Downloads/file_ann.txt'
+    >>> post_file_annotation(conn, "Image", 56, path, ns)
+    234
+    """
+
+    if type(file_path) is not str:
+        raise TypeError('file_path must be of type `str`')
+
+    obj = None
+    if object_id is not None:
+        if type(object_id) is not int:
+            raise TypeError('object_ids must be integer')
+        obj = conn.getObject(object_type, object_id)
+        if obj is not None:
+            ret = set_group(conn, obj.getDetails().group.id.val)
+            if ret is False:
+                logging.warning('Cannot change into group '
+                                f'where object {object_id} is.')
+                return None
+        else:
+            logging.warning(f'Object {object_id} could not be found '
+                            '(check if you have permissions to it)')
+            return None
+    else:
+        raise TypeError('Object ID cannot be empty')
+    if not mimetype:
+        mimetype = mimetypes.guess_type(file_path)
+    file_ann = conn.createFileAnnfromLocalFile(
+        file_path, mimetype=mimetype, ns=ns, desc=description)
+    obj.linkAnnotation(file_ann)
+
+    return file_ann.getId()
+
+
 def post_project(conn, project_name, description=None):
     """Create a new project.
 
@@ -367,6 +444,137 @@ def post_project(conn, project_name, description=None):
         project.setDescription(description)
     project.save()
     return project.getId()
+
+
+def post_roi(conn, image_id, shapes, name=None, description=None,
+             fill_color=(10, 10, 10, 10), stroke_color=(255, 255, 255, 255),
+             stroke_width=1):
+    """Create new ROI from a list of shapes and link to an image.
+
+    Parameters
+    ----------
+    conn : ``omero.gateway.BlitzGateway`` object
+        OMERO connection.
+    image_id : int
+        IDs of the image to which the new ROI will be linked.
+    shapes : list of shapes
+        List of shape objects associated with the new ROI.
+    name : str, optional
+        Name for the new ROI.
+    description : str, optional
+        Description of the new ROI.
+    fill_color: tuple of int, optional
+        The color fill of the shape. Color is specified as a a tuple containing
+        4 integers from 0 to 255, representing red, green, blue and alpha
+        levels. Default is (10, 10, 10, 10).
+    stroke_color: tuple of int, optional
+        The color of the shape edge. Color is specified as a a tuple containing
+        4 integers from 0 to 255, representing red, green, blue and alpha
+        levels. Default is (255, 255, 255, 255).
+    stroke_width: int, optional
+        The width of the shape stroke in pixels. Default is 1.
+
+
+    Returns
+    -------
+    ROI_id : int
+        ID of newly created ROI
+
+    Examples
+    --------
+    >>> shapes = list()
+    >>> point = Point(x=30.6, y=80.4)
+    >>> shapes.append(point)
+    >>> rectangle = Rectangle(x=50.0,
+                              y=51.3,
+                              width=90,
+                              height=40,
+                              z=3,
+                              label='The place')
+    >>> shapes.append(rectangle)
+    >>> post_roi(conn, 23, shapes, name='My Cell',
+                 description='Very important',
+                 fill_color=(255, 10, 10, 150),
+                 stroke_color=(255, 0, 0, 0),
+                 stroke_width=2)
+    234
+    """
+    roi = RoiI()
+    if name is not None:
+        roi.setName(rstring(name))
+    if description is not None:
+        roi.setDescription(rstring(description))
+    for shape in shapes:
+        roi.addShape(_shape_to_omero_shape(shape, fill_color, stroke_color,
+                                           stroke_width))
+    image = conn.getObject('Image', image_id)
+    roi.setImage(image._obj)
+    roi = conn.getUpdateService().saveAndReturnObject(roi)
+    return roi.getId().getValue()
+
+
+def _shape_to_omero_shape(shape, fill_color, stroke_color, stroke_width):
+    """ Helper function to convert ezomero shapes into omero shapes"""
+    if isinstance(shape, Point):
+        omero_shape = PointI()
+        omero_shape.x = rdouble(shape.x)
+        omero_shape.y = rdouble(shape.y)
+    elif isinstance(shape, Line):
+        omero_shape = LineI()
+        omero_shape.x1 = rdouble(shape.x1)
+        omero_shape.x2 = rdouble(shape.x2)
+        omero_shape.y1 = rdouble(shape.y1)
+        omero_shape.y2 = rdouble(shape.y2)
+    elif isinstance(shape, Rectangle):
+        omero_shape = RectangleI()
+        omero_shape.x = rdouble(shape.x)
+        omero_shape.y = rdouble(shape.y)
+        omero_shape.width = rdouble(shape.width)
+        omero_shape.height = rdouble(shape.height)
+    elif isinstance(shape, Ellipse):
+        omero_shape = EllipseI()
+        omero_shape.x = rdouble(shape.x)
+        omero_shape.y = rdouble(shape.y)
+        omero_shape.radiusX = rdouble(shape.x_rad)
+        omero_shape.radiusY = rdouble(shape.y_rad)
+    elif isinstance(shape, Polygon):
+        omero_shape = PolygonI()
+        points_str = "".join("".join([str(x), ',', str(y), ', ']) for x, y in shape.points)[:-2]
+        omero_shape.points = rstring(points_str)
+    else:
+        err = 'The shape passed for the roi is not a valid shape type'
+        raise TypeError(err)
+
+    if shape.z is not None:
+        omero_shape.theZ = rint(shape.z)
+    if shape.c is not None:
+        omero_shape.theC = rint(shape.c)
+    if shape.t is not None:
+        omero_shape.theT = rint(shape.t)
+    if shape.label is not None:
+        omero_shape.setTextValue(rstring(shape.label))
+    omero_shape.setFillColor(rint(_rgba_to_int(fill_color)))
+    omero_shape.setStrokeColor(rint(_rgba_to_int(stroke_color)))
+    omero_shape.setStrokeWidth(LengthI(stroke_width, enums.UnitsLength.PIXEL))
+
+    return omero_shape
+
+
+def _rgba_to_int(color: tuple):
+    """ Helper function returning the color as an Integer in RGBA encoding """
+    try:
+        r, g, b, a = color
+    except ValueError as e:
+        raise e('The format for the shape color is not addequate')
+    r = r << 24
+    g = g << 16
+    b = b << 8
+    a = int(a * 255)
+    rgba_int = sum([r, g, b, a])
+    if rgba_int > (2**31-1):  # convert to signed 32-bit int
+        rgba_int = rgba_int - 2**32
+
+    return rgba_int
 
 
 # gets
@@ -660,6 +868,48 @@ def get_map_annotation_ids(conn, object_type, object_id, ns=None,
 
 
 @do_across_groups
+def get_file_annotation_ids(conn, object_type, object_id, ns=None,
+                            across_groups=True):
+    """Get IDs of map annotations associated with an object
+
+    Parameters
+    ----------
+    conn : ``omero.gateway.BlitzGateway`` object
+        OMERO connection.
+    object_type : str
+        OMERO object type, passed to ``BlitzGateway.getObject``
+    object_id : int
+        ID of object of ``object_type``.
+    ns : str
+        Namespace with which to filter results
+    across_groups : bool, optional
+        Defines cross-group behavior of function - set to
+        ``False`` to disable it.
+
+    Returns
+    -------
+    file_ann_ids : list of ints
+
+    Examples
+    --------
+    # Return IDs of all file annotations belonging to an image:
+
+    >>> file_ann_ids = get_file_annotation_ids(conn, 'Image', 42)
+
+    # Return IDs of file annotations with namespace "test" linked to a Dataset:
+
+    >>> file_ann_ids = get_file_annotation_ids(conn, 'Dataset', 16, ns='test')
+    """
+
+    target_object = conn.getObject(object_type, object_id)
+    file_ann_ids = []
+    for ann in target_object.listAnnotations(ns):
+        if isinstance(ann, FileAnnotationWrapper):
+            file_ann_ids.append(ann.getId())
+    return file_ann_ids
+
+
+@do_across_groups
 def get_map_annotation(conn, map_ann_id, across_groups=True):
     """Get the value of a map annotation object
 
@@ -685,6 +935,40 @@ def get_map_annotation(conn, map_ann_id, across_groups=True):
     {'testkey': 'testvalue', 'testkey2': 'testvalue2'}
     """
     return dict(conn.getObject('MapAnnotation', map_ann_id).getValue())
+
+
+@do_across_groups
+def get_file_annotation(conn, file_ann_id, folder_path=None,
+                        across_groups=True):
+    """Get the value of a map annotation object
+
+    Parameters
+    ----------
+    conn : ``omero.gateway.BlitzGateway`` object
+        OMERO connection.
+    file_ann_id : int
+        ID of map annotation to get.
+    folder_path : str
+        Path where file annotation will be saved. Defaults to local script
+        directory.
+    across_groups : bool, optional
+        Defines cross-group behavior of function - set to
+        ``False`` to disable it.
+
+
+    Examples
+    --------
+    >>> get_file_annotation(conn, folder_path='/home/user/Downloads',62)
+    """
+
+    if not folder_path or not os.path.exists(folder_path):
+        path = os.path.dirname(__file__)
+    ann = conn.getObject('FileAnnotation', file_ann_id)
+    file_path = os.path.join(path, ann.getFile().getName())
+    with open(str(file_path), 'wb') as f:
+        for chunk in ann.getFileInChunks():
+            f.write(chunk)
+    return file_path
 
 
 def get_group_id(conn, group_name):
@@ -729,7 +1013,6 @@ def get_user_id(conn, user_name):
         OMERO connection.
     user_name : str
         Name of the user for which an ID is to be returned.
-    
 
     Returns
     -------

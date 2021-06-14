@@ -27,11 +27,16 @@ author = 'Research IT, The Jackson Laboratory'
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
-extensions = [
-'sphinx.ext.autodoc',
-'sphinx.ext.napoleon',
-'sphinx.ext.githubpages'
-]
+extensions = ['sphinx.ext.autodoc',
+              'sphinx.ext.napoleon',
+              'sphinx.ext.githubpages']
+
+# This line is to fix an issue with autodoc and napolean double-counting
+# dataclass attributes.
+autodoc_default_options = {'exclude-members': ('c, z, t, x1, y1, x2,'
+                                               ' y2, x, y, width, x_rad,'
+                                               ' y_rad, points, label,'
+                                               ' height')}
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
