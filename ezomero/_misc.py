@@ -92,9 +92,9 @@ def link_datasets_to_project(conn, dataset_ids, project_id):
     ----------
     conn : ``omero.gateway.BlitzGateway`` object
         OMERO connection.
-    im_ids : list of int
+    dataset_ids : list of int
         List of OMERO Dataset Ids.
-    dataset_id : int
+    project_id : int
         Id of Project to which Datasets will be linked.
     """
     user_id = _get_current_user(conn)
