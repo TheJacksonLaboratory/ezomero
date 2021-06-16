@@ -956,6 +956,9 @@ def get_file_annotation(conn, file_ann_id, folder_path=None,
         Defines cross-group behavior of function - set to
         ``False`` to disable it.
 
+    Returns
+    -------
+    file_path : path to the created file
 
     Examples
     --------
