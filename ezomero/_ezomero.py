@@ -15,6 +15,7 @@ from omero.model import RoiI, PointI, LineI, RectangleI, EllipseI
 from omero.model import PolygonI, LengthI, enums
 from omero.rtypes import rlong, rstring, rint, rdouble
 from omero.sys import Parameters
+from omero import ApiUsageException
 from ezomero.rois import Point, Line, Rectangle, Ellipse, Polygon
 from pathlib import Path
 
@@ -870,7 +871,7 @@ def get_map_annotation_ids(conn, object_type, object_id, ns=None,
 @do_across_groups
 def get_file_annotation_ids(conn, object_type, object_id, ns=None,
                             across_groups=True):
-    """Get IDs of map annotations associated with an object
+    """Get IDs of file annotations associated with an object
 
     Parameters
     ----------
@@ -940,7 +941,7 @@ def get_map_annotation(conn, map_ann_id, across_groups=True):
 @do_across_groups
 def get_file_annotation(conn, file_ann_id, folder_path=None,
                         across_groups=True):
-    """Get the value of a map annotation object
+    """Get the value of a file annotation object
 
     Parameters
     ----------
@@ -955,16 +956,20 @@ def get_file_annotation(conn, file_ann_id, folder_path=None,
         Defines cross-group behavior of function - set to
         ``False`` to disable it.
 
+    Returns
+    -------
+    file_path : string
+        The path to the created file
 
     Examples
     --------
-    >>> get_file_annotation(conn, folder_path='/home/user/Downloads',62)
+    >>> get_file_annotation(conn, 62, folder_path='/home/user/Downloads')
     """
 
     if not folder_path or not os.path.exists(folder_path):
-        path = os.path.dirname(__file__)
+        folder_path = os.path.dirname(__file__)
     ann = conn.getObject('FileAnnotation', file_ann_id)
-    file_path = os.path.join(path, ann.getFile().getName())
+    file_path = os.path.join(folder_path, ann.getFile().getName())
     with open(str(file_path), 'wb') as f:
         for chunk in ann.getFileInChunks():
             f.write(chunk)
@@ -996,9 +1001,11 @@ def get_group_id(conn, group_name):
     if type(group_name) is not str:
         raise TypeError('OMERO group name must be a string')
 
-    for g in conn.listGroups():
-        if g.getName() == group_name:
-            return g.getId()
+    try:
+        g = conn.c.sf.getAdminService().lookupGroup(group_name)
+        return g.id.val
+    except ApiUsageException:
+        pass
     return None
 
 
