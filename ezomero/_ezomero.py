@@ -870,7 +870,7 @@ def get_map_annotation_ids(conn, object_type, object_id, ns=None,
 @do_across_groups
 def get_file_annotation_ids(conn, object_type, object_id, ns=None,
                             across_groups=True):
-    """Get IDs of map annotations associated with an object
+    """Get IDs of file annotations associated with an object
 
     Parameters
     ----------
@@ -940,7 +940,7 @@ def get_map_annotation(conn, map_ann_id, across_groups=True):
 @do_across_groups
 def get_file_annotation(conn, file_ann_id, folder_path=None,
                         across_groups=True):
-    """Get the value of a map annotation object
+    """Get the value of a file annotation object
 
     Parameters
     ----------
