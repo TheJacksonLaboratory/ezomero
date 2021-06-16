@@ -958,13 +958,13 @@ def get_file_annotation(conn, file_ann_id, folder_path=None,
 
     Examples
     --------
-    >>> get_file_annotation(conn, folder_path='/home/user/Downloads',62)
+    >>> get_file_annotation(conn, 62, folder_path='/home/user/Downloads')
     """
 
     if not folder_path or not os.path.exists(folder_path):
-        path = os.path.dirname(__file__)
+        folder_path = os.path.dirname(__file__)
     ann = conn.getObject('FileAnnotation', file_ann_id)
-    file_path = os.path.join(path, ann.getFile().getName())
+    file_path = os.path.join(folder_path, ann.getFile().getName())
     with open(str(file_path), 'wb') as f:
         for chunk in ann.getFileInChunks():
             f.write(chunk)
