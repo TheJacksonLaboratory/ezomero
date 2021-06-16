@@ -389,8 +389,8 @@ def get_file_annotation(conn, file_ann_id, folder_path=None,
 
     Returns
     -------
-    file_path : string
-        The path to the created file
+    file_path : str
+        The path to the created file.
 
     Examples
     --------
