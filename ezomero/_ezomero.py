@@ -15,6 +15,7 @@ from omero.model import RoiI, PointI, LineI, RectangleI, EllipseI
 from omero.model import PolygonI, LengthI, enums
 from omero.rtypes import rlong, rstring, rint, rdouble
 from omero.sys import Parameters
+from omero import ApiUsageException
 from ezomero.rois import Point, Line, Rectangle, Ellipse, Polygon
 from pathlib import Path
 
@@ -996,9 +997,11 @@ def get_group_id(conn, group_name):
     if type(group_name) is not str:
         raise TypeError('OMERO group name must be a string')
 
-    for g in conn.listGroups():
-        if g.getName() == group_name:
-            return g.getId()
+    try:
+        g = conn.c.sf.getAdminService().lookupGroup(group_name)
+        return g.id.val
+    except ApiUsageException:
+        pass
     return None
 
 
