@@ -199,5 +199,5 @@ successfully passes all tests. To do so,
 Bugs
 ----
 
-Please `report bugs on GitHub <https://github.com/TheJacksonLaboratory/ezomero/issues>`_.
+Please [report bugs on GitHub](https://github.com/TheJacksonLaboratory/ezomero/issues).
 
