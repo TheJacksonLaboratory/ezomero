@@ -1,13 +1,31 @@
 How to contribute to ezomero
 =================================
 
-Developing Open Source is great fun!  Join us on the ![image.sc forums] (https://forum.image.sc) and tell us
+Developing Open Source is great fun!  Join us on the ![image.sc forums](https://forum.image.sc) and tell us
 which of the following challenges you'd like to solve.
 
 * Mentoring is available for those new to scientific programming in Python.
 * If you're looking for something to implement or to fix, you can browse the
   ![open issues on GitHub](https://github.com/TheJacksonLaboratory/ezomero/issues?q=is%3Aopen).
 * The technical detail of the development process is summed up below.
+
+
+Stylistic Guidelines
+--------------------
+
+* Functions should strive to, whenever possible, have arguments and returns in common Python types, or in numpy/scipy types. No passing OMERO objects back and forth!
+
+* If there is a function from the base ![OMERO-py API](https://downloads.openmicroscopy.org/omero/5.6.3/api/python/) that does something, we do not need to duplicate it. Wrapping OMERO-py functions for simpler input/output is fine.
+
+* Think twice before adding dependencies. Do you need to? Can you do the same thing with base types and/or numpy?
+
+* Keep things simple. ezomero is not supposed to be a fully-featured OMERO API; it is explicitly designed to be an easy-to-use API. If your function is not easy to use, it probably does not fit here.
+
+* Set up your editor to remove trailing whitespace.  Follow ![PEP08](https://www.python.org/dev/peps/pep-0008/).  Check code with pyflakes / flake8.
+
+* Use relative module imports, i.e. ``from ._misc import xyz`` rather than
+  ``from ezomero._misc import xyz``.
+  
   
 Development process
 -------------------
@@ -16,21 +34,20 @@ Here's the long and short of it:
 
 1. If you are a first-time contributor:
 
-   * Go to `https://github.com/TheJacksonLaboratory/ezomero
-     <https://github.com/TheJacksonLaboratory/ezomero>`_ and click the
+   * Go to ![https://github.com/TheJacksonLaboratory/ezomero](https://github.com/TheJacksonLaboratory/ezomero) and click the
      "fork" button to create your own copy of the project.
 
-   * Clone the project to your local computer::
+   * Clone the project to your local computer:
 
-      git clone https://github.com/your-username/ezomero.git
+      `git clone https://github.com/your-username/ezomero.git`
 
-   * Change the directory::
+   * Change the directory:
 
-      cd ezomero
+      `cd ezomero`
 
-   * Add the upstream repository::
+   * Add the upstream repository:
 
-      git remote add upstream https://github.com/TheJacksonLaboratory/ezomero.git
+      `git remote add upstream https://github.com/TheJacksonLaboratory/ezomero.git`
 
    * Now, you have remote repositories named:
 
@@ -40,16 +57,16 @@ Here's the long and short of it:
 
 2. Develop your contribution:
 
-   * Pull the latest changes from upstream::
+   * Pull the latest changes from upstream:
 
-      git checkout main
-      git pull upstream main
+      `git checkout main`
+      `git pull upstream main`
 
    * Create a branch for the feature you want to work on. Since the
      branch name will appear in the merge message, use a sensible name
-     such as 'add-retrieve-tags'::
+     such as 'add-retrieve-tags':
 
-      git checkout -b add-retrieve-tags
+      `git checkout -b add-retrieve-tags`
 
    * Commit locally as you progress (``git add`` and ``git commit``)
 
@@ -60,8 +77,7 @@ Here's the long and short of it:
       git push origin add-retrieve-tags
 
    * Enter your GitHub username and password (repeat contributors or advanced
-     users can remove this step by `connecting to GitHub with SSH
-     <https://help.github.com/en/github/authenticating-to-github/connecting-to-github-with-ssh>`_).
+     users can remove this step by ![connecting to GitHub with SSH](https://help.github.com/en/github/authenticating-to-github/connecting-to-github-with-ssh)).
 
    * Go to GitHub. The new branch will show up with a green Pull Request
      button - click it.
@@ -83,7 +99,7 @@ Here's the long and short of it:
      and commit. As soon as those changes are pushed up (to the same branch as
      before) the pull request will update automatically.
 
-   * `Github Actions <https://github.com/features/actions>`__, running a 
+   * ![Github Actions](https://github.com/features/actions), running a 
      continuous integration service, is triggered after each Pull Request update 
      to build the code and run unit tests of your branch. The tests must pass 
      before your PR can be merged. If they fail, you can find out why by clicking 
@@ -96,7 +112,7 @@ Here's the long and short of it:
    If your change introduces any API modifications, please let us know - we
    need to re-generate the docs!
 
-.. note::
+Note:
 
    To reviewers: if it is not obvious from the PR description, add a short
    explanation of what a branch did to the merge message and, if closing a
@@ -107,24 +123,26 @@ Divergence between ``upstream main`` and your feature branch
 ------------------------------------------------------------
 
 If GitHub indicates that the branch of your Pull Request can no longer
-be merged automatically, merge the main branch into yours::
+be merged automatically, merge the main branch into yours:
 
-   git fetch upstream main
-   git merge upstream/main
+   `git fetch upstream main`
+   `git merge upstream/main`
 
 If any conflicts occur, they need to be fixed before continuing.  See
-which files are in conflict using::
+which files are in conflict using:
 
-   git status
+   `git status`
 
-Which displays a message like::
+Which displays a message like:
 
+```
    Unmerged paths:
      (use "git add <file>..." to mark resolution)
 
      both modified:   file_with_conflict.txt
+ ```
 
-Inside the conflicted file, you'll find sections like these::
+Inside the conflicted file, you'll find sections like these:
 
    ```
    <<<<<<< HEAD
@@ -135,128 +153,47 @@ Inside the conflicted file, you'll find sections like these::
    ```
 
 Choose one version of the text that should be kept, and delete the
-rest::
+rest:
 
+   ```
    The way the text looks in your branch
+   ```
 
-Now, add the fixed file::
+Now, add the fixed file:
 
-   git add file_with_conflict.txt
+   `git add file_with_conflict.txt`
 
-Once you've fixed all merge conflicts, do::
+Once you've fixed all merge conflicts, do:
 
-   git commit
+   `git commit`
 
 
 Build environment setup
 -----------------------
 
-Your local Python environment should have the packages specified in 
+Your local Python environment should have the packages specified in ![requirements.txt](https://github.com/TheJacksonLaboratory/ezomero/blob/main/requirements.txt). That, and a local clone of the repo, is all you need to start writing code for ezomero.
 
 Guidelines
 ----------
 
-* All code should have tests (see `test coverage`_ below for more details).
+* All code should have tests (see `test coverage` below for more details).
 * All code should be documented, to the same
-  `standard <https://numpydoc.readthedocs.io/en/latest/format.html#docstring-standard>`_ as NumPy and SciPy.
-
-Stylistic Guidelines
---------------------
-
-* Set up your editor to remove trailing whitespace.  Follow `PEP08
-  <https://www.python.org/dev/peps/pep-0008/>`__.  Check code with pyflakes / flake8.
-
-* Use numpy data types instead of strings (``np.uint8`` instead of
-  ``"uint8"``).
-
-* Use the following import conventions::
-
-   import numpy as np
-   import matplotlib.pyplot as plt
-   from scipy import ndimage as ndi
-
-   # only in Cython code
-   cimport numpy as cnp
-   cnp.import_array()
-
-* When documenting array parameters, use ``image : (M, N) ndarray``
-  and then refer to ``M`` and ``N`` in the docstring, if necessary.
-
-* Refer to array dimensions as (plane), row, column, not as x, y, z. See
-  :ref:`Coordinate conventions <numpy-images-coordinate-conventions>`
-  in the user guide for more information.
-
-* Functions should support all input image dtypes.  Use utility functions such
-  as ``img_as_float`` to help convert to an appropriate type.  The output
-  format can be whatever is most efficient.  This allows us to string together
-  several functions into a pipeline, e.g.::
-
-   hough(canny(my_image))
-
-* Use ``Py_ssize_t`` as data type for all indexing, shape and size variables
-  in C/C++ and Cython code.
-
-* Use relative module imports, i.e. ``from .._shared import xyz`` rather than
-  ``from skimage._shared import xyz``.
-
-* Wrap Cython code in a pure Python function, which defines the API. This
-  improves compatibility with code introspection tools, which are often not
-  aware of Cython code.
-
-* For Cython functions, release the GIL whenever possible, using
-  ``with nogil:``.
-
-
-Testing
--------
-
-See the testing section of the Installation guide.
-
-Test coverage
--------------
-
-Tests for a module should ideally cover all code in that module,
-i.e., statement coverage should be at 100%.
-
-To measure the test coverage, install
-`pytest-cov <https://pytest-cov.readthedocs.io/en/latest/>`__
-(using ``pip install pytest-cov``) and then run::
-
-  $ make coverage
-
-This will print a report with one line for each file in `skimage`,
-detailing the test coverage::
-
-  Name                                             Stmts   Exec  Cover   Missing
-  ------------------------------------------------------------------------------
-  skimage/color/colorconv                             77     77   100%
-  skimage/filter/__init__                              1      1   100%
-  ...
+  ![standard](https://numpydoc.readthedocs.io/en/latest/format.html#docstring-standard) as NumPy and SciPy.
 
 
 Testing your fork locally
 -------------------------------------------
 
-Travis-CI checks all unit tests in the project to prevent breakage.
+Github Actions checks all unit tests in the project to prevent breakage. It will run whenever you submit a PR.
 
-Before sending a pull request, you may want to check that Travis-CI
+Before sending a pull request, you may want to check that your local fork 
 successfully passes all tests. To do so,
 
-* Go to `Travis-CI <https://travis-ci.org/>`__ and follow the Sign In link at
-  the top
+* You will need ![docker-compose](https://docs.docker.com/compose/), and you will need ![pytest](https://docs.pytest.org/en/6.2.x/) on your local Python environment.
 
-* Go to your `profile page <https://travis-ci.org/profile>`__ and switch on
-  your scikit-image fork
+* Go to your local fork folder and run `docker-compose -f tests/docker-compose.yml up -d`. This will start a local OMERO server that will be used for testing.
 
-It corresponds to steps one and two in
-`Travis-CI documentation <https://docs.travis-ci.com/user/tutorial/#to-get-started-with-travis-ci-using-github>`__
-(Step three is already done in scikit-image).
-
-Thus, as soon as you push your code to your fork, it will trigger Travis-CI,
-and you will receive an email notification when the process is done.
-
-Every time Travis is triggered, it also calls on `Codecov
-<https://codecov.io>`_ to inspect the current test overage.
+* Now, just run `pytest tests/`. 
 
 
 Bugs
