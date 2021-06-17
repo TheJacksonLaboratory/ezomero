@@ -1,12 +1,12 @@
 How to contribute to ezomero
 =================================
 
-Developing Open Source is great fun!  Join us on the ![image.sc forums](https://forum.image.sc) and tell us
+Developing Open Source is great fun!  Join us on the [image.sc forums](https://forum.image.sc) and tell us
 which of the following challenges you'd like to solve.
 
 * Mentoring is available for those new to scientific programming in Python.
 * If you're looking for something to implement or to fix, you can browse the
-  ![open issues on GitHub](https://github.com/TheJacksonLaboratory/ezomero/issues?q=is%3Aopen).
+  [open issues on GitHub](https://github.com/TheJacksonLaboratory/ezomero/issues?q=is%3Aopen).
 * The technical detail of the development process is summed up below.
 
 
@@ -15,13 +15,13 @@ Stylistic Guidelines
 
 * Functions should strive to, whenever possible, have arguments and returns in common Python types, or in numpy/scipy types. No passing OMERO objects back and forth!
 
-* If there is a function from the base ![OMERO-py API](https://downloads.openmicroscopy.org/omero/5.6.3/api/python/) that does something, we do not need to duplicate it. Wrapping OMERO-py functions for simpler input/output is fine.
+* If there is a function from the base [OMERO-py API](https://downloads.openmicroscopy.org/omero/5.6.3/api/python/) that does something, we do not need to duplicate it. Wrapping OMERO-py functions for simpler input/output is fine.
 
 * Think twice before adding dependencies. Do you need to? Can you do the same thing with base types and/or numpy?
 
 * Keep things simple. ezomero is not supposed to be a fully-featured OMERO API; it is explicitly designed to be an easy-to-use API. If your function is not easy to use, it probably does not fit here.
 
-* Set up your editor to remove trailing whitespace.  Follow ![PEP08](https://www.python.org/dev/peps/pep-0008/).  Check code with pyflakes / flake8.
+* Set up your editor to remove trailing whitespace.  Follow [PEP08](https://www.python.org/dev/peps/pep-0008/).  Check code with pyflakes / flake8.
 
 * Use relative module imports, i.e. ``from ._misc import xyz`` rather than
   ``from ezomero._misc import xyz``.
@@ -34,7 +34,7 @@ Here's the long and short of it:
 
 1. If you are a first-time contributor:
 
-   * Go to ![https://github.com/TheJacksonLaboratory/ezomero](https://github.com/TheJacksonLaboratory/ezomero) and click the
+   * Go to [https://github.com/TheJacksonLaboratory/ezomero](https://github.com/TheJacksonLaboratory/ezomero) and click the
      "fork" button to create your own copy of the project.
 
    * Clone the project to your local computer:
@@ -77,7 +77,7 @@ Here's the long and short of it:
       git push origin add-retrieve-tags
 
    * Enter your GitHub username and password (repeat contributors or advanced
-     users can remove this step by ![connecting to GitHub with SSH](https://help.github.com/en/github/authenticating-to-github/connecting-to-github-with-ssh)).
+     users can remove this step by [connecting to GitHub with SSH](https://help.github.com/en/github/authenticating-to-github/connecting-to-github-with-ssh)).
 
    * Go to GitHub. The new branch will show up with a green Pull Request
      button - click it.
@@ -99,7 +99,7 @@ Here's the long and short of it:
      and commit. As soon as those changes are pushed up (to the same branch as
      before) the pull request will update automatically.
 
-   * ![Github Actions](https://github.com/features/actions), running a 
+   * [Github Actions](https://github.com/features/actions), running a 
      continuous integration service, is triggered after each Pull Request update 
      to build the code and run unit tests of your branch. The tests must pass 
      before your PR can be merged. If they fail, you can find out why by clicking 
@@ -171,14 +171,14 @@ Once you've fixed all merge conflicts, do:
 Build environment setup
 -----------------------
 
-Your local Python environment should have the packages specified in ![requirements.txt](https://github.com/TheJacksonLaboratory/ezomero/blob/main/requirements.txt). That, and a local clone of the repo, is all you need to start writing code for ezomero.
+Your local Python environment should have the packages specified in [requirements.txt](https://github.com/TheJacksonLaboratory/ezomero/blob/main/requirements.txt). That, and a local clone of the repo, is all you need to start writing code for ezomero.
 
 Guidelines
 ----------
 
 * All code should have tests (see `test coverage` below for more details).
 * All code should be documented, to the same
-  ![standard](https://numpydoc.readthedocs.io/en/latest/format.html#docstring-standard) as NumPy and SciPy.
+  [standard](https://numpydoc.readthedocs.io/en/latest/format.html#docstring-standard) as NumPy and SciPy.
 
 
 Testing your fork locally
@@ -189,7 +189,7 @@ Github Actions checks all unit tests in the project to prevent breakage. It will
 Before sending a pull request, you may want to check that your local fork 
 successfully passes all tests. To do so,
 
-* You will need ![docker-compose](https://docs.docker.com/compose/), and you will need ![pytest](https://docs.pytest.org/en/6.2.x/) on your local Python environment.
+* You will need [docker-compose](https://docs.docker.com/compose/), and you will need [pytest](https://docs.pytest.org/en/6.2.x/) on your local Python environment.
 
 * Go to your local fork folder and run `docker-compose -f tests/docker-compose.yml up -d`. This will start a local OMERO server that will be used for testing.
 
