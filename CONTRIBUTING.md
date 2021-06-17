@@ -1,20 +1,14 @@
-.. _howto_contribute:
-
 How to contribute to ezomero
 =================================
 
-Developing Open Source is great fun!  Join us on the `image.sc forums <https://forum.image.sc>`_ and tell us
+Developing Open Source is great fun!  Join us on the ![image.sc forums] (https://forum.image.sc) and tell us
 which of the following challenges you'd like to solve.
 
 * Mentoring is available for those new to scientific programming in Python.
 * If you're looking for something to implement or to fix, you can browse the
-  `open issues on GitHub <https://github.com/TheJacksonLaboratory/ezomero/issues?q=is%3Aopen>`__.
-* The technical detail of the `development process`_ is summed up below.
+  ![open issues on GitHub](https://github.com/TheJacksonLaboratory/ezomero/issues?q=is%3Aopen).
+* The technical detail of the development process is summed up below.
   
-
-.. contents::
-   :local:
-
 Development process
 -------------------
 
@@ -132,11 +126,13 @@ Which displays a message like::
 
 Inside the conflicted file, you'll find sections like these::
 
+   ```
    <<<<<<< HEAD
    The way the text looks in your branch
    =======
    The way the text looks in the main branch
    >>>>>>> main
+   ```
 
 Choose one version of the text that should be kept, and delete the
 rest::
@@ -151,17 +147,11 @@ Once you've fixed all merge conflicts, do::
 
    git commit
 
-.. note::
-
-   Advanced Git users are encouraged to `rebase instead of merge
-   <https://scikit-image.org/docs/dev/gitwash/development_workflow.html#rebasing-on-trunk>`__,
-   but we squash and merge most PRs either way.
 
 Build environment setup
 -----------------------
 
-Please refer to :ref:`installing-scikit-image` for development installation
-instructions.
+Your local Python environment should have the packages specified in 
 
 Guidelines
 ----------
