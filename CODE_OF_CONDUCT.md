@@ -118,24 +118,8 @@ Currently, the core developers are:
 - Erick Ratamero <erick.ratamero@jax.org>
 
 <!-- We need to think about what to do about this bit! We probably don't
-want a whole committee for now, but we need a way for reporting stuff>
+want a whole committee for now, but we need a way for reporting stuff-->
 
-<!-- You can report issues to the ezomero Code of Conduct committee, at
-<skimage-conduct@groups.io>. Currently, the committee consists of:
-
-- Emmanuelle Gouillart <emmanuelle.gouillard@normalesup.org> (chair)
-- Carol Willing <willingc@gmail.com>
-- François Boulogne <devel@sciunto.org>
-- Egor Panfilov <egor.v.panfilov@gmail.com>
-
-If your report involves any members of the committee, or if they feel they have
-a conflict of interest in handling it, then they will recuse themselves from
-considering your report. Alternatively, if for any reason you feel
-uncomfortable making a report to the committee, then you can also contact:
-
-- Any member of the {ref}`scikit-image Steering Council <governance>`, or
-- Senior [NumFOCUS staff](https://numfocus.org/code-of-conduct#persons-responsible): 
-  <conduct@numfocus.org>.-->
 
 
 Incident reporting resolution & Code of Conduct enforcement
@@ -169,6 +153,7 @@ Endnotes
 We are thankful to the groups behind the following documents, from which we
 drew content and inspiration:
 
+- [scikit-image Code of Conduct](https://github.com/scikit-image/scikit-image/blob/main/doc/source/conduct/code_of_conduct.md)
 - [The SciPy project](https://www.scipy.org/)
 - [The Apache Foundation Code of Conduct](https://www.apache.org/foundation/policies/conduct.html)
 - [The Contributor Covenant](https://www.contributor-covenant.org/version/1/4/code-of-conduct)

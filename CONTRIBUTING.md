@@ -15,7 +15,7 @@ Stylistic Guidelines
 
 * Functions should strive to, whenever possible, have arguments and returns in common Python types, or in numpy/scipy types. No passing OMERO objects back and forth!
 
-* If there is a function from the base [OMERO-py API](https://downloads.openmicroscopy.org/omero/5.6.3/api/python/) that does something, we do not need to duplicate it. Wrapping OMERO-py functions for simpler input/output is fine.
+* If there is a function from the base [OMERO-py API](https://downloads.openmicroscopy.org/omero/5.6.3/api/python/) that does something (e.g., return an `omero.gateway.ImageWrapper` or similar from a `conn.getObject`), we do not need to duplicate it. Wrapping OMERO-py functions for simpler input/output is fine.
 
 * Think twice before adding dependencies. Do you need to? Can you do the same thing with base types and/or numpy?
 
@@ -76,8 +76,7 @@ Here's the long and short of it:
 
       git push origin add-retrieve-tags
 
-   * Enter your GitHub username and password (repeat contributors or advanced
-     users can remove this step by [connecting to GitHub with SSH](https://help.github.com/en/github/authenticating-to-github/connecting-to-github-with-ssh)).
+   * Enter your GitHub username and password (or [connect to GitHub with SSH](https://help.github.com/en/github/authenticating-to-github/connecting-to-github-with-ssh) - password authenticating via git without an access token and will be discontinued by Aug 13, 2021).
 
    * Go to GitHub. The new branch will show up with a green Pull Request
      button - click it.
