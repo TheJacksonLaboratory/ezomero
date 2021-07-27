@@ -407,7 +407,7 @@ def test_get_image(conn, project_structure, users_groups):
 def test_get_tag_and_tag_ids(conn, project_structure):
     image_info = project_structure[2]
     im_id = image_info[0][1]
-    
+ 
     tag_ann = TagAnnotationWrapper(conn)
     tag_ann.setValue('test_tag')
     tag_ann.save()
@@ -416,7 +416,7 @@ def test_get_tag_and_tag_ids(conn, project_structure):
     im = conn.getObject('Image', im_id)
     im.linkAnnotation(tag_ann)
 
-    tag_id_from_im = ezomero.get_tag_ids('Image', im_id)[0]
+    tag_id_from_im = ezomero.get_tag_ids(conn, 'Image', im_id)[0]
 
     assert tag_id_from_im == tag_id
 
@@ -425,6 +425,11 @@ def test_get_tag_and_tag_ids(conn, project_structure):
     # Need to finish this
     assert tag_text == 'test_tag'
 
+    conn.deleteObjects("Annotation",
+                       [tag_id],
+                       deleteAnns=True,
+                       deleteChildren=True,
+                       wait=True)
 
 def test_get_image_ids(conn, project_structure, screen_structure,
                        users_groups):
