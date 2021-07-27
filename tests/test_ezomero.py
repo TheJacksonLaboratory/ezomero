@@ -59,14 +59,16 @@ def test_post_dataset(conn, project_structure, users_groups, timestamp):
     current_conn.close()
     assert did5 is None
 
-    # Dataset in cross-group project, valid permissions, across_groups flag unset
+    # Dataset in cross-group project, valid permissions
+    # across_groups flag unset
     username = users_groups[1][0][0]  # test_user1
     groupname = users_groups[0][0][0]   # test_group_1
     current_conn = conn.suConn(username, groupname)
     ds_test_name6 = 'test_post_dataset6_' + timestamp
     project_info = project_structure[0]
     pid = project_info[3][1]  # proj3 (in test_group_2)
-    did6 = ezomero.post_dataset(current_conn, ds_test_name6, project_id=pid, across_groups=False)
+    did6 = ezomero.post_dataset(current_conn, ds_test_name6, project_id=pid,
+                                across_groups=False)
     current_conn.close()
     assert did6 is None
 
@@ -74,7 +76,8 @@ def test_post_dataset(conn, project_structure, users_groups, timestamp):
                        deleteChildren=True, wait=True)
 
 
-def test_post_image(conn, project_structure, users_groups, timestamp, image_fixture):
+def test_post_image(conn, project_structure, users_groups, timestamp,
+                    image_fixture):
     dataset_info = project_structure[1]
     did = dataset_info[0][1]
     # Post image in dataset
@@ -160,7 +163,8 @@ def test_post_get_map_annotation(conn, project_structure, users_groups):
     groupname = users_groups[0][0][0]  # test_group_1
     current_conn = conn.suConn(username, groupname)
     im_id3 = image_info[2][1]  # im2, in test_group_2
-    map_ann_id3 = ezomero.post_map_annotation(current_conn, "Image", im_id3, kv, ns)
+    map_ann_id3 = ezomero.post_map_annotation(current_conn, "Image", im_id3,
+                                              kv, ns)
     kv_pairs3 = ezomero.get_map_annotation(current_conn, map_ann_id3)
     assert kv_pairs3["key2"] == "value2"
     current_conn.close()
@@ -170,7 +174,8 @@ def test_post_get_map_annotation(conn, project_structure, users_groups):
     groupname = users_groups[0][1][0]  # test_group_2
     current_conn = conn.suConn(username, groupname)
     im_id4 = image_info[1][1]  # im1(in test_group_1)
-    map_ann_id4 = ezomero.post_map_annotation(current_conn, "Image", im_id4, kv, ns)
+    map_ann_id4 = ezomero.post_map_annotation(current_conn, "Image", im_id4,
+                                              kv, ns)
     assert map_ann_id4 is None
     current_conn.close()
 
@@ -179,20 +184,23 @@ def test_post_get_map_annotation(conn, project_structure, users_groups):
     groupname = users_groups[0][0][0]  # test_group_1
     current_conn = conn.suConn(username, groupname)
     im_id6 = image_info[2][1]  # im2, in test_group_2
-    map_ann_id6 = ezomero.post_map_annotation(current_conn, "Image", im_id6, kv, ns, across_groups=False)
+    map_ann_id6 = ezomero.post_map_annotation(current_conn, "Image", im_id6,
+                                              kv, ns, across_groups=False)
     assert map_ann_id6 is None
     current_conn.close()
 
-    conn.deleteObjects("Annotation", [map_ann_id, map_ann_id3], deleteAnns=True,
-                       deleteChildren=True, wait=True)
+    conn.deleteObjects("Annotation", [map_ann_id, map_ann_id3],
+                       deleteAnns=True, deleteChildren=True, wait=True)
 
 
-def test_post_get_file_annotation(conn, project_structure, users_groups, tmp_path):
+def test_post_get_file_annotation(conn, project_structure, users_groups,
+                                  tmp_path):
 
     image_info = project_structure[2]
     im_id = image_info[0][1]
-    # This test both ezomero.post_file_annotation and ezomero.get_file_annotation
 
+    # This test both ezomero.post_file_annotation and
+    # ezomero.get_file_annotation
     d = tmp_path / "input"
     d.mkdir()
     file_path = d / "hello.txt"
@@ -200,14 +208,16 @@ def test_post_get_file_annotation(conn, project_structure, users_groups, tmp_pat
     file_ann = str(file_path)
 
     ns = "jax.org/omeroutils/tests/v0"
-    file_ann_id = ezomero.post_file_annotation(conn, "Image", im_id, file_ann, ns)
+    file_ann_id = ezomero.post_file_annotation(conn, "Image", im_id, file_ann,
+                                               ns)
     return_ann = ezomero.get_file_annotation(conn, file_ann_id)
     assert filecmp.cmp(return_ann, file_ann)
     os.remove(return_ann)
 
     # Test posting to non-existing object
     im_id2 = 999999999
-    file_ann_id2 = ezomero.post_file_annotation(conn, "Image", im_id2, file_ann, ns)
+    file_ann_id2 = ezomero.post_file_annotation(conn, "Image", im_id2,
+                                                file_ann, ns)
     assert file_ann_id2 is None
 
     # Test posting cross-group
@@ -215,7 +225,8 @@ def test_post_get_file_annotation(conn, project_structure, users_groups, tmp_pat
     groupname = users_groups[0][0][0]  # test_group_1
     current_conn = conn.suConn(username, groupname)
     im_id3 = image_info[2][1]  # im2, in test_group_2
-    file_ann_id3 = ezomero.post_file_annotation(current_conn, "Image", im_id3, file_ann, ns)
+    file_ann_id3 = ezomero.post_file_annotation(current_conn, "Image", im_id3,
+                                                file_ann, ns)
     return_ann3 = ezomero.get_file_annotation(current_conn, file_ann_id3)
     assert filecmp.cmp(return_ann3, file_ann)
     os.remove(return_ann3)
@@ -226,7 +237,8 @@ def test_post_get_file_annotation(conn, project_structure, users_groups, tmp_pat
     groupname = users_groups[0][1][0]  # test_group_2
     current_conn = conn.suConn(username, groupname)
     im_id4 = image_info[1][1]  # im1(in test_group_1)
-    file_ann_id4 = ezomero.post_file_annotation(current_conn, "Image", im_id4, file_ann, ns)
+    file_ann_id4 = ezomero.post_file_annotation(current_conn, "Image", im_id4,
+                                                file_ann, ns)
     assert file_ann_id4 is None
     current_conn.close()
 
@@ -235,12 +247,14 @@ def test_post_get_file_annotation(conn, project_structure, users_groups, tmp_pat
     groupname = users_groups[0][0][0]  # test_group_1
     current_conn = conn.suConn(username, groupname)
     im_id5 = image_info[2][1]  # im2, in test_group_2
-    file_ann_id5 = ezomero.post_file_annotation(current_conn, "Image", im_id5, file_ann, ns, across_groups=False)
+    file_ann_id5 = ezomero.post_file_annotation(current_conn, "Image", im_id5,
+                                                file_ann, ns,
+                                                across_groups=False)
     assert file_ann_id5 is None
     current_conn.close()
 
-    conn.deleteObjects("Annotation", [file_ann_id, file_ann_id3], deleteAnns=True,
-                       deleteChildren=True, wait=True)
+    conn.deleteObjects("Annotation", [file_ann_id, file_ann_id3],
+                       deleteAnns=True, deleteChildren=True, wait=True)
 
 
 def test_post_roi(conn, project_structure, roi_fixture, users_groups):
@@ -396,7 +410,8 @@ def test_get_tag_ids(conn, project_structure):
     assert False
 
 
-def test_get_image_ids(conn, project_structure, screen_structure, users_groups):
+def test_get_image_ids(conn, project_structure, screen_structure,
+                       users_groups):
 
     dataset_info = project_structure[1]
     main_ds_id = dataset_info[0][1]
@@ -438,7 +453,8 @@ def test_get_image_ids(conn, project_structure, screen_structure, users_groups):
     groupname = users_groups[0][0][0]  # test_group_1
     current_conn = conn.suConn(username, groupname)
     main_ds_id4 = dataset_info[4][1]
-    im_ids4 = ezomero.get_image_ids(current_conn, dataset=main_ds_id4, across_groups=False)
+    im_ids4 = ezomero.get_image_ids(current_conn, dataset=main_ds_id4,
+                                    across_groups=False)
     assert len(im_ids4) == 0
     current_conn.close()
 
@@ -480,11 +496,15 @@ def test_get_file_annotation_ids(conn, project_structure, tmp_path):
     file_path.write_text("hello world!")
     file_ann = str(file_path)
     ns = "jax.org/omeroutils/tests/v0"
-    file_ann_id = ezomero.post_file_annotation(conn, "Image", im_id, file_ann, ns)
-    file_ann_id2 = ezomero.post_file_annotation(conn, "Image", im_id, file_ann, ns)
-    file_ann_id3 = ezomero.post_file_annotation(conn, "Image", im_id, file_ann, ns)
+    file_ann_id = ezomero.post_file_annotation(conn, "Image", im_id,
+                                               file_ann, ns)
+    file_ann_id2 = ezomero.post_file_annotation(conn, "Image", im_id,
+                                                file_ann, ns)
+    file_ann_id3 = ezomero.post_file_annotation(conn, "Image", im_id,
+                                                file_ann, ns)
     ns2 = "different namespace"
-    file_ann_id4 = ezomero.post_file_annotation(conn, "Image", im_id, file_ann, ns2)
+    file_ann_id4 = ezomero.post_file_annotation(conn, "Image", im_id,
+                                                file_ann, ns2)
     file_ann_ids = ezomero.get_file_annotation_ids(conn, "Image", im_id, ns=ns)
 
     good_ids = [file_ann_id, file_ann_id2, file_ann_id3]
@@ -552,7 +572,8 @@ def test_put_map_annotation(conn, project_structure, users_groups):
     groupname = users_groups[0][0][0]  # test_group_1
     current_conn = conn.suConn(username, groupname)
     im_id2 = image_info[2][1]  # im2, in test_group_2
-    map_ann_id2 = ezomero.post_map_annotation(current_conn, "Image", im_id2, kv, ns)
+    map_ann_id2 = ezomero.post_map_annotation(current_conn, "Image", im_id2,
+                                              kv, ns)
     print(map_ann_id2)
     kv = {"key1": "changed1",
           "key2": "value2"}
@@ -568,12 +589,14 @@ def test_put_map_annotation(conn, project_structure, users_groups):
     groupname = users_groups[0][0][0]  # test_group_1
     current_conn = conn.suConn(username, groupname)
     im_id3 = image_info[2][1]  # im2, in test_group_2
-    map_ann_id3 = ezomero.post_map_annotation(current_conn, "Image", im_id3, kv, ns)
+    map_ann_id3 = ezomero.post_map_annotation(current_conn, "Image", im_id3,
+                                              kv, ns)
     print(map_ann_id3)
     kv_changed = {"key1": "changed1",
                   "key2": "value2"}
     with pytest.raises(ValueError):
-        ezomero.put_map_annotation(current_conn, map_ann_id3, kv_changed, across_groups=False)
+        ezomero.put_map_annotation(current_conn, map_ann_id3, kv_changed,
+                                   across_groups=False)
     kv_pairs = ezomero.get_map_annotation(current_conn, map_ann_id3)
     assert kv_pairs['key1'] == kv['key1']
     current_conn.close()
