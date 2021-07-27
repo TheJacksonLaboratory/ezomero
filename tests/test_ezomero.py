@@ -3,6 +3,7 @@ import numpy as np
 import ezomero
 import filecmp
 import os
+from omero.gateway import TagAnnotationWrapper
 
 
 def test_omero_connection(conn, omero_params):
@@ -403,11 +404,26 @@ def test_get_image(conn, project_structure, users_groups):
     assert im_arr.shape == (3, 3, 11, 10, 4)
 
 
-def test_get_tag_ids(conn, project_structure):
+def test_get_tag_and_tag_ids(conn, project_structure):
     image_info = project_structure[2]
     im_id = image_info[0][1]
+    
+    tag_ann = TagAnnotationWrapper(conn)
+    tag_ann.setValue('test_tag')
+    tag_ann.save()
+    tag_id = tag_ann.getId()
+
+    im = conn.getObject('Image', im_id)
+    im.linkAnnotation(tag_ann)
+
+    tag_id_from_im = ezomero.get_tag_ids('Image', im_id)[0]
+
+    assert tag_id_from_im == tag_id
+
+    tag_text = ezomero.get_tag(conn, tag_id)
+
     # Need to finish this
-    assert False
+    assert tag_text == 'test_tag'
 
 
 def test_get_image_ids(conn, project_structure, screen_structure,
