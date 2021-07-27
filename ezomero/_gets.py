@@ -4,7 +4,7 @@ import numpy as np
 from ._ezomero import do_across_groups
 from omero.gateway import FileAnnotationWrapper
 from omero import ApiUsageException
-from omero.model import MapAnnotationI
+from omero.model import MapAnnotationI, TagAnnotationI
 from omero.rtypes import rlong
 from omero.sys import Parameters
 
@@ -300,6 +300,48 @@ def get_map_annotation_ids(conn, object_type, object_id, ns=None,
 
 
 @do_across_groups
+def get_tag_ids(conn, object_type, object_id, ns=None,
+                across_groups=True):
+    """Get IDs of tag annotations associated with an object
+
+    Parameters
+    ----------
+    conn : ``omero.gateway.BlitzGateway`` object
+        OMERO connection.
+    object_type : str
+        OMERO object type, passed to ``BlitzGateway.getObject``
+    object_id : int
+        ID of object of ``object_type``.
+    ns : str
+        Namespace with which to filter results
+    across_groups : bool, optional
+        Defines cross-group behavior of function - set to
+        ``False`` to disable it.
+
+    Returns
+    -------
+    tag_ids : list of ints
+
+    Examples
+    --------
+    # Return IDs of all tags linked to an image:
+
+    >>> tag_ids = get_tag_ids(conn, 'Image', 42)
+
+    # Return IDs of tags with namespace "test" linked to a Dataset:
+
+    >>> tag_ids = get_tag_ids(conn, 'Dataset', 16, ns='test')
+    """
+
+    target_object = conn.getObject(object_type, object_id)
+    tag_ids = []
+    for ann in target_object.listAnnotations(ns):
+        if ann.OMERO_TYPE is TagAnnotationI:
+            tag_ids.append(ann.getId())
+    return tag_ids
+
+
+@do_across_groups
 def get_file_annotation_ids(conn, object_type, object_id, ns=None,
                             across_groups=True):
     """Get IDs of file annotations associated with an object
@@ -324,7 +366,7 @@ def get_file_annotation_ids(conn, object_type, object_id, ns=None,
 
     Examples
     --------
-    # Return IDs of all file annotations belonging to an image:
+    # Return IDs of all file annotations linked to an image:
 
     >>> file_ann_ids = get_file_annotation_ids(conn, 'Image', 42)
 
@@ -367,6 +409,34 @@ def get_map_annotation(conn, map_ann_id, across_groups=True):
     {'testkey': 'testvalue', 'testkey2': 'testvalue2'}
     """
     return dict(conn.getObject('MapAnnotation', map_ann_id).getValue())
+
+
+@do_across_groups
+def get_tag(conn, tag_id, across_groups=True):
+    """Get the value of a tag annotation object
+
+    Parameters
+    ----------
+    conn : ``omero.gateway.BlitzGateway`` object
+        OMERO connection.
+    tag_id : int
+        ID of tag annotation to get.
+    across_groups : bool, optional
+        Defines cross-group behavior of function - set to
+        ``False`` to disable it.
+
+    Returns
+    -------
+    tag : str
+        The value of the specified tag annotation object.
+
+    Examples
+    --------
+    >>> tag = get_tag(conn, 62)
+    >>> print(tag)
+    This_is_a_tag
+    """
+    return conn.getObject('TagAnnotation', tag_id).getValue()
 
 
 @do_across_groups
