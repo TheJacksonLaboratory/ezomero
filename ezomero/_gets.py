@@ -262,7 +262,6 @@ def get_image_ids(conn, project=None, dataset=None, plate=None, well=None,
             params,
             conn.SERVICE_OPTS
             )
-        #stuff goes here
     elif well is not None:
         if not isinstance(well, int):
             raise TypeError('Well ID must be integer')

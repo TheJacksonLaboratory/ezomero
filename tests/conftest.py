@@ -235,14 +235,7 @@ def project_structure(conn, timestamp, image_fixture, users_groups,
                                         },
                                         {
                                             'name': f'proj2_{timestamp}',
-                                            'datasets': [
-                                                {
-                                                    'name': '',
-                                                    'images': [
-
-                                                    ]
-                                                }
-                                            ]
+                                            'datasets': []
                                         }
                                     ]
                                 },
@@ -255,14 +248,15 @@ def project_structure(conn, timestamp, image_fixture, users_groups,
                                                 {
                                                     'name': f'ds2_{timestamp}',
                                                     'images': [
+                                                        f'im2_{timestamp}'
 
                                                     ]
                                                 },
                                                 {
                                                     'name': f'ds3_{timestamp}',
                                                     'images': [
-                                                        f'im2_{timestamp}',
-                                                        f'im3_{timestamp}'
+                                                        f'im3_{timestamp}',
+                                                        f'im4_{timestamp}'
                                                     ]
                                                 }
                                             ]
@@ -283,7 +277,7 @@ def project_structure(conn, timestamp, image_fixture, users_groups,
                                                 {
                                                     'name': f'ds4_{timestamp}',
                                                     'images': [
-                                                        f'im4_{timestamp}'
+                                                        f'im5_{timestamp}'
                                                     ]
                                                 }
                                             ]
@@ -310,8 +304,8 @@ def project_structure(conn, timestamp, image_fixture, users_groups,
                                                 {
                                                     'name': f'ds6_{timestamp}',
                                                     'images': [
-                                                        f'im5_{timestamp}',
-                                                        f'im6_{timestamp}'
+                                                        f'im6_{timestamp}',
+                                                        f'im7_{timestamp}'
                                                     ]
                                                 }
                                             ]
@@ -392,22 +386,38 @@ def screen_structure(conn, timestamp, image_fixture):
     link.setChild(PlateI(plate_id, False))
     update_service.saveObject(link)
 
-    # Create Well
+    # Create Well (row 1, col 1)
     well = WellI()
     well.setPlate(PlateI(plate_id, False))
     well.setColumn(rint(1))
     well.setRow(rint(1))
     well.setPlate(PlateI(plate_id, False))
 
-    # Create Well Sample with Image
+    # Create another Well (row 2, col 2)
+    well2 = WellI()
+    well2.setPlate(PlateI(plate_id, False))
+    well2.setColumn(rint(2))
+    well2.setRow(rint(2))
+    well2.setPlate(PlateI(plate_id, False))
+
+    # Create Well Sample with Image for both wells
     ws = WellSampleI()
     im_id1 = ezomero.post_image(conn, image_fixture, "well image")
     ws.setImage(ImageI(im_id1, False))
     well.addWellSample(ws)
-    well_obj = update_service.saveAndReturnObject(well)
-    well_id = well_obj.getId().getValue()
 
-    yield [plate_id, well_id, im_id1, screen_id]
+    ws2 = WellSampleI()
+    im_id2 = ezomero.post_image(conn, image_fixture, "well image2")
+    ws2.setImage(ImageI(im_id2, False))
+    well2.addWellSample(ws2)
+
+    well_obj = update_service.saveAndReturnObject(well)
+    well2_obj = update_service.saveAndReturnObject(well2)
+
+    well_id = well_obj.getId().getValue()
+    well2_id = well2_obj.getId().getValue()
+
+    yield [plate_id, well_id, im_id1, screen_id, well2_id, im_id2]
     current_group = conn.getGroupFromContext().getId()
     conn.SERVICE_OPTS.setOmeroGroup(-1)
     conn.deleteObjects("Screen", [screen_id], deleteAnns=True,
