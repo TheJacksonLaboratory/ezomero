@@ -167,7 +167,139 @@ def get_image(conn, image_id, no_pixels=False, start_coords=None,
 
 
 @do_across_groups
-def get_image_ids(conn, dataset=None, well=None, across_groups=True):
+def get_image_ids(conn, project=None, dataset=None, plate=None, well=None,
+                  filters=None, across_groups=True):
+    """Return a list of image ids based on image container
+
+    If no container is specified, function will return orphans.
+
+    Parameters
+    ----------
+    conn : ``omero.gateway.BlitzGateway`` object
+        OMERO connection.
+    project : int, optional
+        ID of Project from which to return image IDs. This will return IDs of
+        all images contained in all child Datasets of the specified Project.
+    dataset : int, optional
+        ID of Dataset from which to return image IDs.
+    plate : int, optional
+        ID of Plate from which to return image IDs. This will return IDs of
+        all images contained in all Wells belonging to the specified Plate.
+    well : int, optional
+        ID of Well from which to return image IDs.
+    across_groups : bool, optional
+        Defines cross-group behavior of function - set to
+        ``False`` to disable it.
+
+    Returns
+    -------
+    im_ids : list of ints
+        List of image IDs contained in the specified container.
+
+    Notes
+    -----
+    User and group information comes from the `conn` object. Be sure to use
+    ``ezomero.set_group`` to specify group prior to passing
+    the `conn` object to this function.
+
+    Only one of Project, Dataset, Plate, or Well can be specified. If none of
+    those are specified, orphaned images are returned.
+
+    Examples
+    --------
+    # Return orphaned images:
+
+    >>> orphans = get_image_ids(conn)
+
+    # Return IDs of all images from Dataset with ID 448:
+
+    >>> ds_ims = get_image_ids(conn, dataset=448)
+    """
+    # Need to change this to check if more than one of
+    # Project, Dataset, Plate, Well are specified
+    if (dataset is not None) & (well is not None):
+        raise Exception('Dataset and Well can not both be specified')
+
+    q = conn.getQueryService()
+    params = Parameters()
+
+    if project is not None:
+        if not isinstance(project, int):
+            raise TypeError('Project ID must be integer')
+        params.map = {"project": rlong(project)}
+        results = q.projection(
+            "SELECT i.id FROM Project p"
+            " JOIN p.datasetLinks pdl"
+            " JOIN pdl.child d"
+            " JOIN d.imageLinks dil"
+            " JOIN dil.child i"
+            " WHERE p.id=:project",
+            params,
+            conn.SERVICE_OPTS
+            )
+    elif dataset is not None:
+        if not isinstance(dataset, int):
+            raise TypeError('Dataset ID must be integer')
+        params.map = {"dataset": rlong(dataset)}
+        results = q.projection(
+            "SELECT i.id FROM Dataset d"
+            " JOIN d.imageLinks dil"
+            " JOIN dil.child i"
+            " WHERE d.id=:dataset",
+            params,
+            conn.SERVICE_OPTS
+            )
+    elif plate is not None:
+        if not isinstance(plate, int):
+            raise TypeError('Plate ID must be integer')
+        params.map = {"plate": rlong(plate)}
+        results = q.projection(
+            "SELECT i.id FROM Plate pl"
+            " JOIN pl.wells w"
+            " JOIN w.wellSamples ws"
+            " JOIN ws.image i"
+            " WHERE pl.id=:plate",
+            params,
+            conn.SERVICE_OPTS
+            )
+        #stuff goes here
+    elif well is not None:
+        if not isinstance(well, int):
+            raise TypeError('Well ID must be integer')
+        params.map = {"well": rlong(well)}
+        results = q.projection(
+            "SELECT i.id FROM Well w"
+            " JOIN w.wellSamples ws"
+            " JOIN ws.image i"
+            " WHERE w.id=:well",
+            params,
+            conn.SERVICE_OPTS
+            )
+    elif ((well is None) &
+          (dataset is None) &
+          (project is None) &
+          (plate is None)):
+        results = q.projection(
+            "SELECT i.id FROM Image i"
+            " WHERE NOT EXISTS ("
+            " SELECT dil FROM DatasetImageLink dil"
+            " WHERE dil.child=i.id"
+            " )"
+            " AND NOT EXISTS ("
+            " SELECT ws from WellSample ws"
+            " WHERE ws.image=i.id"
+            " )",
+            params,
+            conn.SERVICE_OPTS
+            )
+    else:
+        results = []
+
+    return [r[0].val for r in results]
+
+
+@do_across_groups
+def get_image_ids_old(conn, dataset=None, well=None, across_groups=True):
     """Return a list of image ids based on image container
 
     If neither dataset nor well is specified, function will return orphans.
