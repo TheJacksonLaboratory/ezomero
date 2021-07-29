@@ -1,3 +1,4 @@
+from attr import dataclass
 import pytest
 import numpy as np
 import ezomero
@@ -497,6 +498,21 @@ def test_get_image_ids(conn, project_structure, screen_structure,
     plate_im_id2 = screen_structure[5]
     plate_im_ids = ezomero.get_image_ids(conn, plate=plate_id)
     assert set(plate_im_ids) == set([plate_im_id1, plate_im_id2])
+
+
+def test_get_image_ids_params(conn):
+    with pytest.raises(ValueError):
+        _ = ezomero.get_image_ids(conn, project=1, plate=2)
+    with pytest.raises(ValueError):
+        _ = ezomero.get_image_ids(conn, dataset=1, well=2)
+    with pytest.raises(TypeError):
+        _ = ezomero.get_image_ids(conn, dataset='test')
+    with pytest.raises(TypeError):
+        _ = ezomero.get_image_ids(conn, project='test')
+    with pytest.raises(TypeError):
+        _ = ezomero.get_image_ids(conn, well='test')
+    with pytest.raises(TypeError):
+        _ = ezomero.get_image_ids(conn, plate='test')
 
 
 def test_get_map_annotation_ids(conn, project_structure):

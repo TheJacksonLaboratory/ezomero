@@ -217,14 +217,13 @@ def get_image_ids(conn, project=None, dataset=None, plate=None, well=None,
 
     >>> ds_ims = get_image_ids(conn, dataset=448)
     """
-    # Need a test for this next chunk
     arg_counter = 0
     for arg in [project, dataset, plate, well]:
         if arg is not None:
             arg_counter += 1
     if arg_counter > 1:
-        raise Exception('Only one of Project/Dataset/Plate/Well'
-                        ' can be specified')
+        raise ValueError('Only one of Project/Dataset/Plate/Well'
+                         ' can be specified')
 
     q = conn.getQueryService()
     params = Parameters()
