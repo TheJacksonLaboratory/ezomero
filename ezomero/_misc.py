@@ -128,7 +128,9 @@ def filter_by_kv(conn, im_ids, key, value, across_groups=True):
     params.map = {"key": rstring(key),
                   "value": rstring(value)}
     results = q.projection(
-        "SELECT ann.id FROM MapAnnotation ann"
+        "SELECT i.id FROM Image i"
+        " JOIN i.annotationLinks al"
+        " JOIN al.child ann"
         " JOIN ann.mapValue as nv"
         " WHERE nv.name = :key"
         " AND nv.value = :value",
@@ -136,26 +138,8 @@ def filter_by_kv(conn, im_ids, key, value, across_groups=True):
         conn.SERVICE_OPTS
         )
 
-    ann_ids = [r[0].val for r in results]
+    im_id_matches = [r[0].val for r in results]
 
-    if len(ann_ids) == 0:
-        return []
-
-    image_ids = []
-    for ann_id in ann_ids:
-        q = conn.getQueryService()
-        params = Parameters()
-        params.map = {"ann_id": rlong(ann_id)}
-        results = q.projection(
-            "SELECT i.id FROM Image i"
-            " JOIN i.annotationLinks al"
-            " JOIN al.child a"
-            " WHERE a.id=:ann_id",
-            params,
-            conn.SERVICE_OPTS
-            )
-        image_ids += [r[0].val for r in results]
-    im_id_matches = list(set(image_ids))
     return list(set(im_ids) & set(im_id_matches))
 
 
