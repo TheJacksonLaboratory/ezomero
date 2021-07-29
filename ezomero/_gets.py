@@ -168,7 +168,7 @@ def get_image(conn, image_id, no_pixels=False, start_coords=None,
 
 @do_across_groups
 def get_image_ids(conn, project=None, dataset=None, plate=None, well=None,
-                  filters=None, across_groups=True):
+                  across_groups=True):
     """Return a list of image ids based on image container
 
     If no container is specified, function will return orphans.
@@ -187,8 +187,6 @@ def get_image_ids(conn, project=None, dataset=None, plate=None, well=None,
         all images contained in all Wells belonging to the specified Plate.
     well : int, optional
         ID of Well from which to return image IDs.
-    filters : dict, optional
-        Refine query based on filters. See Notes below for implemented filters.
     across_groups : bool, optional
         Defines cross-group behavior of function - set to
         ``False`` to disable it.
@@ -299,11 +297,7 @@ def get_image_ids(conn, project=None, dataset=None, plate=None, well=None,
     else:
         results = []
 
-    final_result = [r[0].val for r in results]
-    # Start filtering here!
-    if filters is not None:
-        pass
-    return final_result
+    return [r[0].val for r in results]
 
 
 @do_across_groups
