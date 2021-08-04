@@ -2,10 +2,13 @@ import ezomero
 from omero.gateway import TagAnnotationWrapper
 
 
-def test_filter_by_tag_value(conn, project_structure):
+def test_filter_by_tag_value(conn, project_structure, users_groups):
     proj3_id = project_structure[0][3][1]
     im3_id = project_structure[2][3][1]
+    group2_id = users_groups[0][1][1]
 
+    current_group = conn.getGroupFromContext().getId()
+    conn.SERVICE_OPTS.setOmeroGroup(group2_id)
     tag_ann = TagAnnotationWrapper(conn)
     tag_ann.setValue('test_tag_filter')
     tag_ann.save()
@@ -26,3 +29,4 @@ def test_filter_by_tag_value(conn, project_structure):
                        deleteAnns=True,
                        deleteChildren=True,
                        wait=True)
+    conn.SERVICE_OPTS.setOmeroGroup(current_group)
