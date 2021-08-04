@@ -1,6 +1,6 @@
 from ._ezomero import do_across_groups
 from omero.sys import Parameters
-from omero.rtypes import rstring, rlong
+from omero.rtypes import rstring
 from omero.model import DatasetImageLinkI, ImageI, ExperimenterI
 from omero.model import DatasetI, ProjectI, ProjectDatasetLinkI
 

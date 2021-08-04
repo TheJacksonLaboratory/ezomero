@@ -423,7 +423,6 @@ def test_get_tag_and_tag_ids(conn, project_structure):
 
     tag_text = ezomero.get_tag(conn, tag_id)
 
-    # Need to finish this
     assert tag_text == 'test_tag'
 
     conn.deleteObjects("Annotation",
