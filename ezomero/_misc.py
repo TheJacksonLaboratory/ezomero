@@ -1,3 +1,4 @@
+from ._ezomero import do_across_groups
 from omero.sys import Parameters
 from omero.rtypes import rstring
 from omero.model import DatasetImageLinkI, ImageI, ExperimenterI
@@ -5,8 +6,9 @@ from omero.model import DatasetI, ProjectI, ProjectDatasetLinkI
 
 
 # filters
-def filter_by_filename(conn, im_ids, imported_filename):
-    """Filter list of image ids by originalFile name
+@do_across_groups
+def filter_by_filename(conn, im_ids, imported_filename, across_groups=True):
+    """Filter list of image ids by originalFile name.
 
     Sometimes we know the filename of an image that has been imported into
     OMERO but not necessarily the image ID. This is frequently the case when
@@ -23,6 +25,9 @@ def filter_by_filename(conn, im_ids, imported_filename):
     imported_filename : str
         The full filename (with extension) of the file whose OMERO image
         we are looking for. NOT the path of the image.
+    across_groups : bool, optional
+        Defines cross-group behavior of function - set to
+        ``False`` to disable it.
 
     Returns
     -------
@@ -54,6 +59,85 @@ def filter_by_filename(conn, im_ids, imported_filename):
         params,
         conn.SERVICE_OPTS
         )
+    im_id_matches = [r[0].val for r in results]
+
+    return list(set(im_ids) & set(im_id_matches))
+
+
+@do_across_groups
+def filter_by_tag_value(conn, im_ids, tag_value, across_groups=True):
+    """Filter list of image ids by textValue of a TagAnnotation.
+
+    Parameters
+    ----------
+    conn : ``omero.gateway.BlitzGateway`` object
+        OMERO connection.
+    im_ids : list of int
+        List of OMERO image IDs.
+    tag_value : str
+        Value of tag to filter on.
+    across_groups : bool, optional
+        Defines cross-group behavior of function - set to
+        ``False`` to disable it.
+
+    Returns
+    -------
+    filtered_im_ids : list of int
+    """
+    q = conn.getQueryService()
+    params = Parameters()
+    params.map = {"tagvalue": rstring(tag_value)}
+    results = q.projection(
+        "SELECT i.id FROM Image i"
+        " JOIN i.annotationLinks al"
+        " JOIN al.child a"
+        " WHERE a.textValue=:tagvalue"
+        " AND TYPE(a)=TagAnnotation",
+        params,
+        conn.SERVICE_OPTS
+        )
+    im_id_matches = [r[0].val for r in results]
+    return list(set(im_ids) & set(im_id_matches))
+
+
+@do_across_groups
+def filter_by_kv(conn, im_ids, key, value, across_groups=True):
+    """Filter list of image ids by a key-value pair of a MapAnnotation.
+
+    Parameters
+    ----------
+    conn : ``omero.gateway.BlitzGateway`` object
+        OMERO connection.
+    im_ids : list of int
+        List of OMERO image IDs.
+    key : str
+        Key to filter on.
+    value : str
+        Value to filter on.
+    across_groups : bool, optional
+        Defines cross-group behavior of function - set to
+        ``False`` to disable it.
+
+    Returns
+    -------
+    filtered_im_ids : list of int
+    """
+
+    q = conn.getQueryService()
+    params = Parameters()
+    params.map = {"key": rstring(key),
+                  "value": rstring(value)}
+    results = q.projection(
+        "SELECT i.id FROM Image i"
+        " JOIN i.annotationLinks al"
+        " JOIN al.child ann"
+        " JOIN ann.mapValue as nv"
+        " WHERE nv.name = :key"
+        " AND nv.value = :value",
+        params,
+        conn.SERVICE_OPTS
+        )
+
     im_id_matches = [r[0].val for r in results]
 
     return list(set(im_ids) & set(im_id_matches))

@@ -1,3 +1,4 @@
+from attr import dataclass
 import pytest
 import numpy as np
 import ezomero
@@ -407,7 +408,7 @@ def test_get_image(conn, project_structure, users_groups):
 def test_get_tag_and_tag_ids(conn, project_structure):
     image_info = project_structure[2]
     im_id = image_info[0][1]
- 
+
     tag_ann = TagAnnotationWrapper(conn)
     tag_ann.setValue('test_tag')
     tag_ann.save()
@@ -422,7 +423,6 @@ def test_get_tag_and_tag_ids(conn, project_structure):
 
     tag_text = ezomero.get_tag(conn, tag_id)
 
-    # Need to finish this
     assert tag_text == 'test_tag'
 
     conn.deleteObjects("Annotation",
@@ -431,57 +431,87 @@ def test_get_tag_and_tag_ids(conn, project_structure):
                        deleteChildren=True,
                        wait=True)
 
+
 def test_get_image_ids(conn, project_structure, screen_structure,
                        users_groups):
 
+    project_info = project_structure[0]
     dataset_info = project_structure[1]
-    main_ds_id = dataset_info[0][1]
     image_info = project_structure[2]
-    im_id = image_info[0][1]
-    # Based on dataset ID
-    im_ids = ezomero.get_image_ids(conn, dataset=main_ds_id)
-    assert im_ids[0] == im_id
-    assert len(im_ids) == 1
 
-    # Based on well ID
-    well_id = screen_structure[1]
-    im_id1 = screen_structure[2]
-    im_ids = ezomero.get_image_ids(conn, well=well_id)
-    assert im_ids[0] == im_id1
-    assert len(im_ids) == 1
+    # Based on project ID (also tests cross-group)
+    proj3_id = project_info[3][1]
+    im2_id = image_info[2][1]  # im2, belongs to proj3/ds2
+    im3_id = image_info[3][1]  # im3, belongs to proj3/ds3
+    im4_id = image_info[4][1]  # im4, belongs to proj3/ds3
+    proj3_im_ids = ezomero.get_image_ids(conn, project=proj3_id)
+    assert set(proj3_im_ids) == set([im2_id, im3_id, im4_id])
+
+    # Based on dataset ID
+    ds0_id = dataset_info[0][1]  # Belongs to proj0
+    im0_id = image_info[0][1]  # Belongs to ds0
+    ds0_im_ids = ezomero.get_image_ids(conn, dataset=ds0_id)
+    assert set(ds0_im_ids) == set([im0_id])
 
     # test cross-group valid
     username = users_groups[1][0][0]  # test_user1
     groupname = users_groups[0][0][0]  # test_group_1
     current_conn = conn.suConn(username, groupname)
-    main_ds_id2 = dataset_info[4][1]
-    im_id2 = image_info[2][1]  # im2, in test_group_2
-    im_ids2 = ezomero.get_image_ids(current_conn, dataset=main_ds_id2)
-    assert im_ids2[0] == im_id2
-    assert len(im_ids2) == 2
+    ds6_id = dataset_info[6][1]  # dataset 6 in test_group_2
+    im6_id = image_info[6][1]  # im6, in ds6
+    im7_id = image_info[7][1]  # im7, in ds6
+    ds6_im_ids = ezomero.get_image_ids(current_conn, dataset=ds6_id)
+    assert set(ds6_im_ids) == set([im6_id, im7_id])
     current_conn.close()
 
     # test cross-group invalid
     username = users_groups[1][2][0]  # test_user3
-    groupname = users_groups[0][1][0]  # test_group_2
+    groupname = users_groups[0][1][0]  # test_group_2 (test_user3 is mbr)
     current_conn = conn.suConn(username, groupname)
-    main_ds_id3 = dataset_info[1][1]
-    im_ids3 = ezomero.get_image_ids(current_conn, dataset=main_ds_id3)
-    assert len(im_ids3) == 0
+    ds1_id = dataset_info[1][1]  # ds1, in test_group1 (test_user3 not mbr)
+    ds1_im_ids = ezomero.get_image_ids(current_conn, dataset=ds1_id)
+    assert not ds1_im_ids
 
     # test cross-group valid, across_groups unset
     username = users_groups[1][0][0]  # test_user1
     groupname = users_groups[0][0][0]  # test_group_1
     current_conn = conn.suConn(username, groupname)
-    main_ds_id4 = dataset_info[4][1]
-    im_ids4 = ezomero.get_image_ids(current_conn, dataset=main_ds_id4,
-                                    across_groups=False)
-    assert len(im_ids4) == 0
+    ds3_id = dataset_info[3][1]  # ds3 in test_group_2
+    ds3_im_ids = ezomero.get_image_ids(current_conn, dataset=ds3_id,
+                                       across_groups=False)
+    assert not ds3_im_ids
     current_conn.close()
 
     # Return nothing on bad input
-    im_ids5 = ezomero.get_image_ids(conn, dataset=999999)
-    assert len(im_ids5) == 0
+    bad_im_ids = ezomero.get_image_ids(conn, dataset=999999)
+    assert not bad_im_ids
+
+    # Based on well ID
+    well_id = screen_structure[1]
+    plate_im_id1 = screen_structure[2]
+    well_im_ids = ezomero.get_image_ids(conn, well=well_id)
+    assert set(well_im_ids) == set([plate_im_id1])
+
+    # Based on plate ID
+    plate_id = screen_structure[0]
+    plate_im_id2 = screen_structure[5]
+    plate_im_ids = ezomero.get_image_ids(conn, plate=plate_id)
+    assert set(plate_im_ids) == set([plate_im_id1, plate_im_id2])
+
+
+def test_get_image_ids_params(conn):
+    with pytest.raises(ValueError):
+        _ = ezomero.get_image_ids(conn, project=1, plate=2)
+    with pytest.raises(ValueError):
+        _ = ezomero.get_image_ids(conn, dataset=1, well=2)
+    with pytest.raises(TypeError):
+        _ = ezomero.get_image_ids(conn, dataset='test')
+    with pytest.raises(TypeError):
+        _ = ezomero.get_image_ids(conn, project='test')
+    with pytest.raises(TypeError):
+        _ = ezomero.get_image_ids(conn, well='test')
+    with pytest.raises(TypeError):
+        _ = ezomero.get_image_ids(conn, plate='test')
 
 
 def test_get_map_annotation_ids(conn, project_structure):
