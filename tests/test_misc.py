@@ -61,5 +61,8 @@ def test_filter_by_kvpair(conn, project_structure):
     suconn.close()
 
 
-def test_prints(conn):
-    assert True
+def test_prints(conn, project_structure):
+    pid = project_structure[0][0][1]
+    ezomero.print_datasets(conn, project=pid)
+    ezomero.print_projects(conn)
+    ezomero.print_groups(conn)
