@@ -5,7 +5,7 @@ from ._ezomero import do_across_groups
 from omero.gateway import FileAnnotationWrapper
 from omero import ApiUsageException
 from omero.model import MapAnnotationI, TagAnnotationI
-from omero.rtypes import rlong
+from omero.rtypes import rint, rlong
 from omero.sys import Parameters
 
 
@@ -424,6 +424,51 @@ def get_file_annotation_ids(conn, object_type, object_id, ns=None,
         if isinstance(ann, FileAnnotationWrapper):
             file_ann_ids.append(ann.getId())
     return file_ann_ids
+
+
+@do_across_groups
+def get_well_id(conn, plate_id, row, column, across_groups=True):
+    """Get ID of well based on plate ID, row, and column
+
+    Parameters
+    ----------
+    conn : ``omero.gateway.BlitzGateway`` object
+        OMERO connection.
+    plate_id : int
+        ID of plate for which the well ID is needed
+    row : int
+        Row of well (zero-based indexing)
+    column : int
+        Column of well (zero-based indexing)
+
+    Returns
+    -------
+    well_id : int
+        ID of well being queried.
+    """
+    if not isinstance(plate_id, int):
+        raise ValueError('Plate ID must be an integer')
+    if not isinstance(row, int):
+        raise ValueError('Row index must be an integer')
+    if not isinstance(column, int):
+        raise ValueError('Column index must be an integer')
+    q = conn.getQueryService()
+    params = Parameters()
+    params.map = {"plate": rlong(plate_id),
+                  "row": rint(row),
+                  "column": rint(column)}
+    results = q.projection(
+        "SELECT w.id FROM Plate pl"
+        " JOIN pl.wells w"
+        " WHERE pl.id=:plate"
+        " AND w.row=:row"
+        " AND w.column=:column",
+        params,
+        conn.SERVICE_OPTS
+        )
+    if len(results) == 0:
+        return None
+    return [r[0].val for r in results][0]
 
 
 @do_across_groups
