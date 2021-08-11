@@ -437,9 +437,9 @@ def get_well_id(conn, plate_id, row, column, across_groups=True):
     plate_id : int
         ID of plate for which the well ID is needed
     row : int
-        Row of well (0-indexed)
+        Row of well (zero-based indexing)
     column : int
-        Column of well (0-indexed)
+        Column of well (zero-based indexing)
 
     Returns
     -------
@@ -460,6 +460,8 @@ def get_well_id(conn, plate_id, row, column, across_groups=True):
         params,
         conn.SERVICE_OPTS
         )
+    if len(results) == 0:
+        return None
     return [r[0].val for r in results][0]
 
 
