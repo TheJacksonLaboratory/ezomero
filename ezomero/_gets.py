@@ -427,6 +427,43 @@ def get_file_annotation_ids(conn, object_type, object_id, ns=None,
 
 
 @do_across_groups
+def get_well_id(conn, plate_id, row, column, across_groups=True):
+    """Get ID of well based on plate ID, row, and column
+
+    Parameters
+    ----------
+    conn : ``omero.gateway.BlitzGateway`` object
+        OMERO connection.
+    plate_id : int
+        ID of plate for which the well ID is needed
+    row : int
+        Row of well (0-indexed)
+    column : int
+        Column of well (0-indexed)
+
+    Returns
+    -------
+    well_id : int
+        ID of well being queried.
+    """
+    q = conn.getQueryService()
+    params = Parameters()
+    params.map = {"plate": rlong(plate_id),
+                  "row": rlong(row),
+                  "column": rlong(column)}
+    results = q.projection(
+        "SELECT w.id FROM Plate pl"
+        " JOIN pl.wells w"
+        " WHERE pl.id=:plate"
+        " AND w.row=:row"
+        " AND w.column=:column",
+        params,
+        conn.SERVICE_OPTS
+        )
+    return [r[0].val for r in results][0]
+
+
+@do_across_groups
 def get_map_annotation(conn, map_ann_id, across_groups=True):
     """Get the value of a map annotation object
 
