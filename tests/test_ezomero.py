@@ -1,4 +1,3 @@
-from tests.conftest import screen_structure
 from attr import dataclass
 import pytest
 import numpy as np
@@ -575,9 +574,18 @@ def test_get_well_id(conn, screen_structure):
     well2_id = screen_structure[4]
     well_id_result = ezomero.get_well_id(conn, plate_id, row=1, column=1)
     well2_id_result = ezomero.get_well_id(conn, plate_id, row=2, column=2)
-    assert well_id == well2_id_result
+    assert well_id == well_id_result
     assert well2_id == well2_id_result
     assert ezomero.get_well_id(conn, plate_id, row=5, column=9) is None
+
+
+def test_get_well_id_params(conn):
+    with pytest.raises(ValueError):
+        _ = ezomero.get_well_id(conn, "Plate name", row=0, column=0)
+    with pytest.raises(ValueError): 
+        _ = ezomero.get_well_id(conn, 9999, row='A', column=0)
+    with pytest.raises(ValueError):
+        _ = ezomero.get_well_id(conn, 9999, row=0, column='B')
 
 
 def test_get_group_id(conn):

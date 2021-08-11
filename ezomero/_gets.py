@@ -5,7 +5,7 @@ from ._ezomero import do_across_groups
 from omero.gateway import FileAnnotationWrapper
 from omero import ApiUsageException
 from omero.model import MapAnnotationI, TagAnnotationI
-from omero.rtypes import rlong
+from omero.rtypes import rint, rlong
 from omero.sys import Parameters
 
 
@@ -446,11 +446,17 @@ def get_well_id(conn, plate_id, row, column, across_groups=True):
     well_id : int
         ID of well being queried.
     """
+    if not isinstance(plate_id, int):
+        raise ValueError('Plate ID must be an integer')
+    if not isinstance(row, int):
+        raise ValueError('Row index must be an integer')
+    if not isinstance(column, int):
+        raise ValueError('Column index must be an integer')
     q = conn.getQueryService()
     params = Parameters()
     params.map = {"plate": rlong(plate_id),
-                  "row": rlong(row),
-                  "column": rlong(column)}
+                  "row": rint(row),
+                  "column": rint(column)}
     results = q.projection(
         "SELECT w.id FROM Plate pl"
         " JOIN pl.wells w"
