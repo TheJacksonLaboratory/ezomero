@@ -10,7 +10,7 @@ Just `pip install ezomero` and you should be good to go! The repo contains a `re
 
 # Usage
 
-In general, you will need to create a `BlitzGateway` object using `omero-py`, successfully do something like `conn.connect()` and then pass the `conn` object to most of these helper functions along with function-specific parameters.
+In general, you will need to create a `BlitzGateway` object using `ezomero.connect()`, then pass the `conn` object to most of these helper functions along with function-specific parameters.
 
 
 # Documentation
