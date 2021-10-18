@@ -4,8 +4,10 @@ import numpy as np
 from ._ezomero import do_across_groups, set_group
 from ._misc import link_datasets_to_project
 from omero.model import RoiI, PointI, LineI, RectangleI, EllipseI
-from omero.model import PolygonI, LengthI, enums, DatasetI, ProjectI
+from omero.model import PolygonI, LengthI, enums
+from omero.model import DatasetI, ProjectI, ScreenI
 from omero.gateway import ProjectWrapper, DatasetWrapper
+from omero.gateway import ScreenWrapper
 from omero.gateway import MapAnnotationWrapper
 from omero.rtypes import rstring, rint, rdouble
 from .rois import Point, Line, Rectangle, Ellipse, Polygon
@@ -375,6 +377,48 @@ def post_project(conn, project_name, description=None):
         project.setDescription(description)
     project.save()
     return project.getId()
+
+
+def post_screen(conn, screen_name, description=None):
+    """Create a new screen.
+
+    Parameters
+    ----------
+    conn : ``omero.gateway.BlitzGateway`` object
+        OMERO connection.
+    screen_name : str
+        Name of the new object to be created.
+    description : str, optional
+        Description for the new Screen.
+
+    Returns
+    -------
+    screen_id : int
+        Id of the new Screen.
+
+    Notes
+    -----
+    Screen will be created in the Group specified in the connection. Group can
+    be changed using ``conn.SERVICE_OPTS.setOmeroGroup``.
+
+    Examples
+    --------
+    >>> screen_id = post_screen(conn, "My New Screen")
+    >>> print(screen_id)
+    238
+    """
+    if type(screen_name) is not str:
+        raise TypeError('Screen name must be a string')
+
+    if type(description) is not str and description is not None:
+        raise TypeError('Screen description must be a string')
+
+    screen = ScreenWrapper(conn, ScreenI())
+    screen.setName(screen_name)
+    if description is not None:
+        screen.setDescription(description)
+    screen.save()
+    return screen.getId()
 
 
 def post_roi(conn, image_id, shapes, name=None, description=None,
