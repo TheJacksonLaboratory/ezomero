@@ -332,11 +332,13 @@ def test_post_screen(conn, timestamp):
     conn.deleteObjects("Screen", [sid, sid2], deleteAnns=True,
                        deleteChildren=True, wait=True)
 
+
 def test_post_project_type(conn):
     with pytest.raises(TypeError):
         _ = ezomero.post_project(conn, 123)
     with pytest.raises(TypeError):
         _ = ezomero.post_project(conn, '123', description=1245)
+
 
 def test_post_screen_type(conn):
     with pytest.raises(TypeError):
@@ -602,7 +604,7 @@ def test_get_well_id(conn, screen_structure):
 def test_get_well_id_params(conn):
     with pytest.raises(ValueError):
         _ = ezomero.get_well_id(conn, "Plate name", row=0, column=0)
-    with pytest.raises(ValueError): 
+    with pytest.raises(ValueError):
         _ = ezomero.get_well_id(conn, 9999, row='A', column=0)
     with pytest.raises(ValueError):
         _ = ezomero.get_well_id(conn, 9999, row=0, column='B')

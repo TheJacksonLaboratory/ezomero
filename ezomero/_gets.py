@@ -552,7 +552,8 @@ def get_file_annotation(conn, file_ann_id, folder_path=None,
 
     Examples
     --------
-    >>> attch_path = get_file_annotation(conn, 62, folder_path='/home/user/Downloads')
+    >>> attch_path =
+            get_file_annotation(conn, 62, folder_path='/home/user/Downloads')
     >>> print(attch_path)
     '/home/user/Downloads/attachment.txt'
     """

@@ -514,7 +514,8 @@ def _shape_to_omero_shape(shape, fill_color, stroke_color, stroke_width):
         omero_shape.radiusY = rdouble(shape.y_rad)
     elif isinstance(shape, Polygon):
         omero_shape = PolygonI()
-        points_str = "".join("".join([str(x), ',', str(y), ', ']) for x, y in shape.points)[:-2]
+        points_str = "".join("".join([str(x), ',', str(y), ', '])
+                             for x, y in shape.points)[:-2]
         omero_shape.points = rstring(points_str)
     else:
         err = 'The shape passed for the roi is not a valid shape type'
