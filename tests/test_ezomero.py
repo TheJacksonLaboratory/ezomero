@@ -318,11 +318,33 @@ def test_post_project(conn, timestamp):
                        deleteChildren=True, wait=True)
 
 
+def test_post_screen(conn, timestamp):
+    # No description
+    new_screen = "test_post_screen_" + timestamp
+    sid = ezomero.post_screen(conn, new_screen)
+    assert conn.getObject("Screen", sid).getName() == new_screen
+
+    # With description
+    new_screen2 = "test_post_screen2_" + timestamp
+    desc = "Now with a description"
+    sid2 = ezomero.post_screen(conn, new_screen2, description=desc)
+    assert conn.getObject("Screen", sid2).getDescription() == desc
+    conn.deleteObjects("Screen", [sid, sid2], deleteAnns=True,
+                       deleteChildren=True, wait=True)
+
+
 def test_post_project_type(conn):
     with pytest.raises(TypeError):
         _ = ezomero.post_project(conn, 123)
     with pytest.raises(TypeError):
         _ = ezomero.post_project(conn, '123', description=1245)
+
+
+def test_post_screen_type(conn):
+    with pytest.raises(TypeError):
+        _ = ezomero.post_screen(conn, 123)
+    with pytest.raises(TypeError):
+        _ = ezomero.post_screen(conn, '123', description=1245)
 
 
 # Test gets
@@ -582,7 +604,7 @@ def test_get_well_id(conn, screen_structure):
 def test_get_well_id_params(conn):
     with pytest.raises(ValueError):
         _ = ezomero.get_well_id(conn, "Plate name", row=0, column=0)
-    with pytest.raises(ValueError): 
+    with pytest.raises(ValueError):
         _ = ezomero.get_well_id(conn, 9999, row='A', column=0)
     with pytest.raises(ValueError):
         _ = ezomero.get_well_id(conn, 9999, row=0, column='B')
