@@ -3,6 +3,7 @@ from omero.sys import Parameters
 from omero.rtypes import rstring
 from omero.model import DatasetImageLinkI, ImageI, ExperimenterI
 from omero.model import DatasetI, ProjectI, ProjectDatasetLinkI
+from omero.model import PlateI, ScreenI, ScreenPlateLinkI
 
 
 # filters
@@ -186,6 +187,29 @@ def link_datasets_to_project(conn, dataset_ids, project_id):
         link = ProjectDatasetLinkI()
         link.setParent(ProjectI(project_id, False))
         link.setChild(DatasetI(did, False))
+        link.details.owner = ExperimenterI(user_id, False)
+        conn.getUpdateService().saveObject(link, conn.SERVICE_OPTS)
+
+
+def link_plates_to_screen(conn, plate_ids, screen_id):
+    """Link plates to the specified screen.
+
+    Nothing is returned by this function.
+
+    Parameters
+    ----------
+    conn : ``omero.gateway.BlitzGateway`` object
+        OMERO connection.
+    plate_ids : list of int
+        List of OMERO Plate Ids.
+    screen_id : int
+        Id of Screen to which Plate will be linked.
+    """
+    user_id = _get_current_user(conn)
+    for pid in plate_ids:
+        link = ScreenPlateLinkI()
+        link.setParent(ScreenI(screen_id, False))
+        link.setChild(PlateI(pid, False))
         link.details.owner = ExperimenterI(user_id, False)
         conn.getUpdateService().saveObject(link, conn.SERVICE_OPTS)
 
