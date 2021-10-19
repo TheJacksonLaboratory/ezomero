@@ -363,7 +363,9 @@ directory.</p></li>
 </dd>
 </dl>
 <p class="rubric">Examples</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">attch_path</span> <span class="o">=</span> <span class="n">get_file_annotation</span><span class="p">(</span><span class="n">conn</span><span class="p">,</span> <span class="mi">62</span><span class="p">,</span> <span class="n">folder_path</span><span class="o">=</span><span class="s1">&#39;/home/user/Downloads&#39;</span><span class="p">)</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">attch_path</span> <span class="o">=</span> <span class="n">get_file_annotation</span><span class="p">(</span><span class="n">conn</span><span class="p">,</span>
+<span class="gp">... </span>                                 <span class="mi">62</span><span class="p">,</span>
+<span class="gp">... </span>                                 <span class="n">folder_path</span><span class="o">=</span><span class="s1">&#39;/home/user/Downloads&#39;</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">attch_path</span><span class="p">)</span>
 <span class="go">&#39;/home/user/Downloads/attachment.txt&#39;</span>
 </pre></div>
@@ -776,6 +778,22 @@ are absolute.</p>
 </dd></dl>
 
 <dl class="py function">
+<dt id="ezomero.link_plates_to_screen">
+<code class="sig-prename descclassname">ezomero.</code><code class="sig-name descname">link_plates_to_screen</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">conn</span></em>, <em class="sig-param"><span class="n">plate_ids</span></em>, <em class="sig-param"><span class="n">screen_id</span></em><span class="sig-paren">)</span><a class="headerlink" href="#ezomero.link_plates_to_screen" title="Permalink to this definition">¶</a></dt>
+<dd><p>Link plates to the specified screen.</p>
+<p>Nothing is returned by this function.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>conn</strong> (<code class="docutils literal notranslate"><span class="pre">omero.gateway.BlitzGateway</span></code> object) – OMERO connection.</p></li>
+<li><p><strong>plate_ids</strong> (<em>list of int</em>) – List of OMERO Plate Ids.</p></li>
+<li><p><strong>screen_id</strong> (<em>int</em>) – Id of Screen to which Plate will be linked.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
 <dt id="ezomero.post_dataset">
 <code class="sig-prename descclassname">ezomero.</code><code class="sig-name descname">post_dataset</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">conn</span></em>, <em class="sig-param"><span class="n">dataset_name</span></em>, <em class="sig-param"><span class="n">project_id</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">description</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">across_groups</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="headerlink" href="#ezomero.post_dataset" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create a new dataset.</p>
@@ -1003,6 +1021,36 @@ levels. Default is (255, 255, 255, 255).</p></li>
 <span class="go">             stroke_color=(255, 0, 0, 0),</span>
 <span class="go">             stroke_width=2)</span>
 <span class="go">234</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt id="ezomero.post_screen">
+<code class="sig-prename descclassname">ezomero.</code><code class="sig-name descname">post_screen</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">conn</span></em>, <em class="sig-param"><span class="n">screen_name</span></em>, <em class="sig-param"><span class="n">description</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#ezomero.post_screen" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a new screen.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>conn</strong> (<code class="docutils literal notranslate"><span class="pre">omero.gateway.BlitzGateway</span></code> object) – OMERO connection.</p></li>
+<li><p><strong>screen_name</strong> (<em>str</em>) – Name of the new object to be created.</p></li>
+<li><p><strong>description</strong> (<em>str</em><em>, </em><em>optional</em>) – Description for the new Screen.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>screen_id</strong> – Id of the new Screen.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>Screen will be created in the Group specified in the connection. Group can
+be changed using <code class="docutils literal notranslate"><span class="pre">conn.SERVICE_OPTS.setOmeroGroup</span></code>.</p>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">screen_id</span> <span class="o">=</span> <span class="n">post_screen</span><span class="p">(</span><span class="n">conn</span><span class="p">,</span> <span class="s2">&quot;My New Screen&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">screen_id</span><span class="p">)</span>
+<span class="go">238</span>
 </pre></div>
 </div>
 </dd></dl>
