@@ -495,7 +495,8 @@ def get_roi_ids(conn, image_id, across_groups=True):
     >>> roi_ids = get_roi_ids(conn, 42)
 
     """
-
+    if not isinstance(image_id, int):
+        raise TypeError('Image ID must be an integer')
     roi_ids = []
     roi_svc = conn.getRoiService()
     roi_list = roi_svc.findByImage(image_id, None)
@@ -528,6 +529,8 @@ def get_shape_ids(conn, roi_id, across_groups=True):
     >>> shape_ids = get_shape_ids(conn, 4222)
 
     """
+    if not isinstance(roi_id, int):
+        raise TypeError('ROI ID must be an integer')
     q = conn.getQueryService()
     params = Parameters()
     params.map = {"roi": rlong(roi_id)}
