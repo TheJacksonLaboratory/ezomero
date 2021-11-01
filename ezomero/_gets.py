@@ -470,6 +470,77 @@ def get_well_id(conn, plate_id, row, column, across_groups=True):
         return None
     return [r[0].val for r in results][0]
 
+@do_across_groups
+def get_roi_ids(conn, image_id, across_groups=True):
+    """Get IDs of ROIs associated with an Image
+
+    Parameters
+    ----------
+    conn : ``omero.gateway.BlitzGateway`` object
+        OMERO connection.
+    image_id : int
+        ID of ``Image``.
+    across_groups : bool, optional
+        Defines cross-group behavior of function - set to
+        ``False`` to disable it.
+
+    Returns
+    -------
+    roi_ids : list of ints
+
+    Examples
+    --------
+    # Return IDs of all ROIs linked to an image:
+
+    >>> roi_ids = get_roi_ids(conn, 42)
+
+    """
+
+    roi_ids = []
+    roi_svc = conn.getRoiService()
+    roi_list = roi_svc.findByImage(image_id, None)
+    for roi in roi_list.rois:
+        roi_ids.append(roi.id.val)
+    return roi_ids
+
+@do_across_groups
+def get_shape_ids(conn, roi_id, across_groups=True):
+    """Get IDs of shapes associated with an ROI
+
+    Parameters
+    ----------
+    conn : ``omero.gateway.BlitzGateway`` object
+        OMERO connection.
+    roi_id : int
+        ID of ``ROI``.
+    across_groups : bool, optional
+        Defines cross-group behavior of function - set to
+        ``False`` to disable it.
+
+    Returns
+    -------
+    shape_ids : list of ints
+
+    Examples
+    --------
+    # Return IDs of all shapes linked to an ROI:
+
+    >>> shape_ids = get_shape_ids(conn, 4222)
+
+    """
+    q = conn.getQueryService()
+    params = Parameters()
+    params.map = {"roi": rlong(roi_id)}
+    results = q.projection(
+        "SELECT s.id FROM Shape s"
+        " WHERE s.roi=:roi",
+        params,
+        conn.SERVICE_OPTS
+        )
+    if len(results) == 0:
+        return None
+    return [r[0].val for r in results]
+
 
 @do_across_groups
 def get_map_annotation(conn, map_ann_id, across_groups=True):
@@ -708,3 +779,32 @@ def get_original_filepaths(conn, image_id, fpath='repo', across_groups=True):
         raise ValueError("Parameter fpath must be 'client' or 'repo'")
 
     return results
+
+
+@do_across_groups
+def get_shape(conn, shape_id, across_groups=True):
+    """Get an ezomero shape object from an OMERO Shape id
+
+    Parameters
+    ----------
+    conn : ``omero.gateway.BlitzGateway`` object
+        OMERO connection.
+    shape_id : int
+        ID of shape to get.
+    across_groups : bool, optional
+        Defines cross-group behavior of function - set to
+        ``False`` to disable it.
+
+    Returns
+    -------
+    shape : obj
+        An object of one of ezomero shape classes
+
+    Examples
+    --------
+    >>> shape = get_shape(conn, 634443)
+    
+    """
+    shape = []
+    
+    return shape
