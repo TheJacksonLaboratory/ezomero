@@ -808,6 +808,8 @@ def get_shape(conn, shape_id, across_groups=True):
     >>> shape = get_shape(conn, 634443)
     
     """
+    if not isinstance(shape_id, int):
+        raise ValueError('Shape ID must be an integer')
     shape = []
     
     return shape
