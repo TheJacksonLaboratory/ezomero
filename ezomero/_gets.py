@@ -1,5 +1,6 @@
 import logging
 import os
+from attr import Attribute
 import numpy as np
 from ._ezomero import do_across_groups
 from omero.gateway import FileAnnotationWrapper
@@ -7,6 +8,8 @@ from omero import ApiUsageException
 from omero.model import MapAnnotationI, TagAnnotationI
 from omero.rtypes import rint, rlong
 from omero.sys import Parameters
+from .rois import Point, Line, Rectangle, Ellipse, Polygon
+
 
 
 # gets
@@ -813,3 +816,84 @@ def get_shape(conn, shape_id, across_groups=True):
     shape = []
     
     return shape
+
+
+def _omero_shape_to_shape(omero_shape, fill_color, stroke_color, stroke_width):
+    """ Helper function to convert ezomero shapes into omero shapes"""
+    shape_type = omero_shape.ice_id().split("::omero::model::")[1]
+    if shape_type == "Point":
+        shape = Point()
+        shape.x = omero_shape.x
+        shape.y = omero_shape.y
+    elif shape_type == "Line":
+        shape = Line()
+        shape.x1 = omero_shape.x1
+        shape.x2 = omero_shape.x2
+        shape.y1 = omero_shape.y1
+        shape.y2 = omero_shape.y2
+    elif shape_type == "Rectangle":
+        shape = Rectangle
+        shape.x = omero_shape.x
+        shape.y = omero_shape.y
+        shape.width = omero_shape.width
+        shape.height = omero_shape.height
+    elif shape_type == "Ellipse":
+        shape = Ellipse()
+        shape.x = omero_shape.x
+        shape.y = omero_shape.y
+        shape.radiusX = omero_shape.x_rad
+        shape.radiusY = omero_shape.y_rad
+    elif shape_type == "Polygon":
+        shape = Polygon()
+        omero_points = shape.points.split()
+        points = []
+        for point in omero_points:
+            coords = point.split(',')
+            points.append((float(coords[0]), float(coords[1])))
+        shape.points = points
+    else:
+        err = 'The shape passed for the roi is not a valid shape type'
+        raise TypeError(err)
+
+    try:
+        z_val = omero_shape.theZ
+        shape.z = z_val
+    except AttributeError:
+        shape.z = None
+    try:
+        c_val = omero_shape.theC
+        shape.c = c_val
+    except AttributeError:
+        shape.c = None
+    try:
+        t_val = omero_shape.theT
+        shape.t = t_val
+    except AttributeError:
+        shape.t = None
+    try:
+        text = omero_shape.textValue
+        shape.label = text
+    except AttributeError:
+        shape.label = None
+    fill_color = _int_to_rgba(omero_shape.getFillColor())
+    stroke_color = _int_to_rgba(omero_shape.getStrokeColor())
+    stroke_width = omero_shape.getStrokeWidth().getValue()
+
+    return shape, fill_color, stroke_color, stroke_width
+
+
+def _int_to_rgba(color: tuple):
+    """ Helper function returning the color as an Integer in RGBA encoding """
+    try:
+        r, g, b, a = color
+    except ValueError as e:
+        raise e('The format for the shape color is not addequate')
+    r = r << 24
+    g = g << 16
+    b = b << 8
+    a = int(a * 255)
+    rgba_int = sum([r, g, b, a])
+    if rgba_int > (2**31-1):  # convert to signed 32-bit int
+        rgba_int = rgba_int - 2**32
+
+    return rgba_int
