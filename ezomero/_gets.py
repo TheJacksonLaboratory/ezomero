@@ -882,18 +882,13 @@ def _omero_shape_to_shape(omero_shape, fill_color, stroke_color, stroke_width):
     return shape, fill_color, stroke_color, stroke_width
 
 
-def _int_to_rgba(color: tuple):
+def _int_to_rgba(omero_val):
     """ Helper function returning the color as an Integer in RGBA encoding """
-    try:
-        r, g, b, a = color
-    except ValueError as e:
-        raise e('The format for the shape color is not addequate')
-    r = r << 24
-    g = g << 16
-    b = b << 8
-    a = int(a * 255)
-    rgba_int = sum([r, g, b, a])
-    if rgba_int > (2**31-1):  # convert to signed 32-bit int
-        rgba_int = rgba_int - 2**32
-
-    return rgba_int
+    if omero_val < 0:
+        omero_val = omero_val + (2**32)
+    r = omero_val >> 24
+    g = omero_val - (r << 24) >> 16
+    b = omero_val - (r << 24) - (g << 16) >> 8
+    a = omero_val - (r << 24) - (g << 16) - (b << 8)
+    a = a / 255
+    return (r, g, b, a)
