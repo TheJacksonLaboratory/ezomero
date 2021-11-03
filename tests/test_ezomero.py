@@ -692,8 +692,6 @@ def test_get_shape_and_get_shape_ids(conn, project_structure, roi_fixture, users
     shape_ids = ezomero.get_shape_ids(conn, roi_id)
     assert len(shape_ids) == len(roi_fixture['shapes'])
     shape, fill, stroke, width = ezomero.get_shape(conn, shape_ids[0])
-    print(roi_fixture['fill_color'], roi_fixture['stroke_color'], roi_fixture['stroke_width'])
-    print(fill, stroke, width)
     assert hasattr(shape, 'label')
     assert fill == roi_fixture['fill_color']
     assert stroke == roi_fixture['stroke_color']
