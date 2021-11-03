@@ -1,6 +1,5 @@
 import logging
 import os
-from attr import Attribute
 import numpy as np
 from ._ezomero import do_across_groups
 from omero.gateway import FileAnnotationWrapper
@@ -9,7 +8,6 @@ from omero.model import MapAnnotationI, TagAnnotationI
 from omero.rtypes import rint, rlong
 from omero.sys import Parameters
 from .rois import Point, Line, Rectangle, Ellipse, Polygon
-
 
 
 # gets
@@ -473,6 +471,7 @@ def get_well_id(conn, plate_id, row, column, across_groups=True):
         return None
     return [r[0].val for r in results][0]
 
+
 @do_across_groups
 def get_roi_ids(conn, image_id, across_groups=True):
     """Get IDs of ROIs associated with an Image
@@ -506,6 +505,7 @@ def get_roi_ids(conn, image_id, across_groups=True):
     for roi in roi_list.rois:
         roi_ids.append(roi.id.val)
     return roi_ids
+
 
 @do_across_groups
 def get_shape_ids(conn, roi_id, across_groups=True):
@@ -809,16 +809,16 @@ def get_shape(conn, shape_id, across_groups=True):
     Examples
     --------
     >>> shape = get_shape(conn, 634443)
-    
+
     """
     if not isinstance(shape_id, int):
         raise ValueError('Shape ID must be an integer')
     shape = []
-    
-    return shape
+    omero_shape = conn.getObject('Shape', shape_id)
+    return _omero_shape_to_shape(omero_shape)
 
 
-def _omero_shape_to_shape(omero_shape, fill_color, stroke_color, stroke_width):
+def _omero_shape_to_shape(omero_shape):
     """ Helper function to convert ezomero shapes into omero shapes"""
     shape_type = omero_shape.ice_id().split("::omero::model::")[1]
     if shape_type == "Point":

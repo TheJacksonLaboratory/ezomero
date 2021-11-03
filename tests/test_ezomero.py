@@ -642,6 +642,40 @@ def test_get_user_id(conn, users_groups):
     current_conn.close()
 
 
+def test_get_roi_ids(conn, project_structure, roi_fixture, users_groups):
+
+    # test input sanitizing
+    with pytest.raises(TypeError):  
+        ezomero.get_roi_ids(conn, '9999')
+
+    # test normal usage
+    image_info = project_structure[2]
+    im_id = image_info[0][1]
+    roi_id = ezomero.post_roi(conn, im_id,
+                              shapes=roi_fixture['shapes'],
+                              name=roi_fixture['name'],
+                              description=roi_fixture['desc'],
+                              fill_color=roi_fixture['fill_color'],
+                              stroke_color=roi_fixture['stroke_color'],
+                              stroke_width=roi_fixture['stroke_width'])
+    return_ids = ezomero.get_roi_ids(conn, im_id)
+    assert roi_id in return_ids
+
+    # Test getting from an invalid cross-group
+    username = users_groups[1][2][0]  # test_user3
+    groupname = users_groups[0][1][0]  # test_group_2
+    current_conn = conn.suConn(username, groupname)
+    empty_ret = ezomero.get_roi_ids(current_conn, im_id)
+    assert empty_ret == []
+    current_conn.close()
+    conn.deleteObjects("Roi", [roi_id], deleteAnns=True,
+                       deleteChildren=True, wait=True)
+
+
+def test_get_shape_and_get_shape_ids(conn, project_structure, roi_fixture):
+    assert True
+
+
 # Test puts
 ###########
 
