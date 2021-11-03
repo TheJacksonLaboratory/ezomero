@@ -75,8 +75,23 @@ def get_image(conn, image_id, no_pixels=False, start_coords=None,
     314
     """
 
+    if start_coords is not None:
+        if type(start_coords) not in (list, tuple):
+            raise TypeError('start_coords must be supplied as list or tuple')
+        if len(start_coords) != 5:
+            raise ValueError('start_coords must have length 5 (XYZCT)')
+        
+    if axis_lengths is not None:
+        if type(axis_lengths) not in (list, tuple):
+            raise TypeError('axis_lengths must be supplied as list of tuple')
+        if len(axis_lengths) != 5:
+            raise ValueError('axis_lengths must have length 5 (XYZCT)')
+    
     if image_id is None:
         raise TypeError('Object ID cannot be empty')
+    if type(image_id) is not int:
+        raise TypeError('Image ID must be an integer')
+    
     pixel_view = None
     image = conn.getObject('Image', image_id)
     if image is None:
@@ -100,15 +115,6 @@ def get_image(conn, image_id, no_pixels=False, start_coords=None,
                         orig_sizes[2] - start_coords[2],  # Z
                         orig_sizes[3] - start_coords[3],  # C
                         orig_sizes[4] - start_coords[4])  # T
-
-    if type(start_coords) not in (list, tuple):
-        raise TypeError('start_coords must be supplied as list or tuple')
-    if type(axis_lengths) not in (list, tuple):
-        raise TypeError('axis_lengths must be supplied as list of tuple')
-    if len(start_coords) != 5:
-        raise ValueError('start_coords must have length 5 (XYZCT)')
-    if len(axis_lengths) != 5:
-        raise ValueError('axis_lengths must have length 5 (XYZCT)')
 
     if no_pixels is False:
         primary_pixels = image.getPrimaryPixels()
@@ -333,6 +339,12 @@ def get_map_annotation_ids(conn, object_type, object_id, ns=None,
 
     >>> map_ann_ids = get_map_annotation_ids(conn, 'Dataset', 16, ns='test')
     """
+    if type(object_type) is not str:
+        raise TypeError('Object type must be a string')
+    if type(object_id) is not int:
+        raise TypeError('Object id must be an integer')
+    if ns is not None and type(ns) is not str:
+        raise TypeError('Namespace must be a string or None')
 
     target_object = conn.getObject(object_type, object_id)
     map_ann_ids = []
@@ -375,6 +387,12 @@ def get_tag_ids(conn, object_type, object_id, ns=None,
 
     >>> tag_ids = get_tag_ids(conn, 'Dataset', 16, ns='test')
     """
+    if type(object_type) is not str:
+        raise TypeError('Object type must be a string')
+    if type(object_id) is not int:
+        raise TypeError('Object id must be an integer')
+    if ns is not None and type(ns) is not str:
+        raise TypeError('Namespace must be a string or None')
 
     target_object = conn.getObject(object_type, object_id)
     tag_ids = []
@@ -417,6 +435,12 @@ def get_file_annotation_ids(conn, object_type, object_id, ns=None,
 
     >>> file_ann_ids = get_file_annotation_ids(conn, 'Dataset', 16, ns='test')
     """
+    if type(object_type) is not str:
+        raise TypeError('Object type must be a string')
+    if type(object_id) is not int:
+        raise TypeError('Object id must be an integer')
+    if ns is not None and type(ns) is not str:
+        raise TypeError('Namespace must be a string or None')
 
     target_object = conn.getObject(object_type, object_id)
     file_ann_ids = []
@@ -447,11 +471,11 @@ def get_well_id(conn, plate_id, row, column, across_groups=True):
         ID of well being queried.
     """
     if not isinstance(plate_id, int):
-        raise ValueError('Plate ID must be an integer')
+        raise TypeError('Plate ID must be an integer')
     if not isinstance(row, int):
-        raise ValueError('Row index must be an integer')
+        raise TypeError('Row index must be an integer')
     if not isinstance(column, int):
-        raise ValueError('Column index must be an integer')
+        raise TypeError('Column index must be an integer')
     q = conn.getQueryService()
     params = Parameters()
     params.map = {"plate": rlong(plate_id),
@@ -496,6 +520,9 @@ def get_map_annotation(conn, map_ann_id, across_groups=True):
     >>> print(ma_dict)
     {'testkey': 'testvalue', 'testkey2': 'testvalue2'}
     """
+    if type(map_ann_id) is not int:
+        raise TypeError('Map annotation ID must be an integer')
+    
     return dict(conn.getObject('MapAnnotation', map_ann_id).getValue())
 
 
@@ -524,6 +551,9 @@ def get_tag(conn, tag_id, across_groups=True):
     >>> print(tag)
     This_is_a_tag
     """
+    if type(tag_id) is not int:
+        raise TypeError('Tag ID must be an integer')
+
     return conn.getObject('TagAnnotation', tag_id).getValue()
 
 
@@ -558,6 +588,8 @@ def get_file_annotation(conn, file_ann_id, folder_path=None,
     >>> print(attch_path)
     '/home/user/Downloads/attachment.txt'
     """
+    if type(file_ann_id) is not int:
+        raise TypeError('File annotation ID must be an integer')
 
     if not folder_path or not os.path.exists(folder_path):
         folder_path = os.path.dirname(__file__)
@@ -676,6 +708,8 @@ def get_original_filepaths(conn, image_id, fpath='repo', across_groups=True):
     >>> get_original_filepaths(conn, 2201, fpath='client')
     ['/client/omero/smith_lab/stack2/PJN17_083_07.ndpi']
     """
+    if type(image_id) is not int:
+        raise TypeError('Image ID must be an integer')
 
     q = conn.getQueryService()
     params = Parameters()

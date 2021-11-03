@@ -47,6 +47,11 @@ def filter_by_filename(conn, im_ids, imported_filename, across_groups=True):
     >>> im_ids = get_image_ids(conn, dataset=303)
     >>> im_ids = filter_by_filename(conn, im_ids, "feb_2020.tif")]
     """
+    if not isinstance(im_ids, list):
+        raise TypeError('Image IDs must be a list of integers')
+
+    if type(imported_filename) is not str:
+        raise TypeError('Imported filename must be a string')
 
     q = conn.getQueryService()
     params = Parameters()
@@ -85,6 +90,12 @@ def filter_by_tag_value(conn, im_ids, tag_value, across_groups=True):
     -------
     filtered_im_ids : list of int
     """
+    if not isinstance(im_ids, list):
+        raise TypeError('Image IDs must be a list of integers')
+
+    if type(tag_value) is not str:
+        raise TypeError('Tag value must be a string')
+
     q = conn.getQueryService()
     params = Parameters()
     params.map = {"tagvalue": rstring(tag_value)}
@@ -123,6 +134,14 @@ def filter_by_kv(conn, im_ids, key, value, across_groups=True):
     -------
     filtered_im_ids : list of int
     """
+    if not isinstance(im_ids, list):
+        raise TypeError('Image IDs must be a list of integers')
+
+    if type(key) is not str:
+        raise TypeError('Key must be a string')
+
+    if type(value) is not str:
+        raise TypeError('Value must be a string')
 
     q = conn.getQueryService()
     params = Parameters()
@@ -159,6 +178,12 @@ def link_images_to_dataset(conn, image_ids, dataset_id):
     dataset_id : int
         Id of dataset to which images will be linked.
     """
+    if not isinstance(image_ids, list):
+        raise TypeError('Image IDs must be a list of integers')
+
+    if type(dataset_id) is not int:
+        raise TypeError('Dataset ID must be an integer')
+
     user_id = _get_current_user(conn)
     for im_id in image_ids:
         link = DatasetImageLinkI()
@@ -182,6 +207,12 @@ def link_datasets_to_project(conn, dataset_ids, project_id):
     project_id : int
         Id of Project to which Datasets will be linked.
     """
+    if not isinstance(dataset_ids, list):
+        raise TypeError('Dataset IDs must be a list of integers')
+
+    if type(project_id) is not int:
+        raise TypeError('Project ID must be an integer')
+
     user_id = _get_current_user(conn)
     for did in dataset_ids:
         link = ProjectDatasetLinkI()
@@ -205,6 +236,12 @@ def link_plates_to_screen(conn, plate_ids, screen_id):
     screen_id : int
         Id of Screen to which Plate will be linked.
     """
+    if not isinstance(plate_ids, list):
+        raise TypeError('Plate IDs must be a list of integers')
+    
+    if type(screen_id) is not int:
+        raise TypeError('Screen ID must be an integer')
+
     user_id = _get_current_user(conn)
     for pid in plate_ids:
         link = ScreenPlateLinkI()
@@ -232,6 +269,9 @@ def print_map_annotation(conn, map_ann_id):
     map_ann_id : int
         Id of the MapAnnotation to be displayed.
     """
+    if type(map_ann_id) is not int:
+        raise TypeError('Map annotation ID must be an integer')
+
     map_ann = conn.getObject('MapAnnotation', map_ann_id)
     print(f'Map Annotation: {map_ann_id}')
     print(f'Namespace: {map_ann.getNs()}')
@@ -289,6 +329,9 @@ def print_datasets(conn, project=None):
         orphans are listed.
     """
     if project is not None:
+        if type(project) is not int:
+            raise TypeError('Project must be an integer')
+
         p = conn.getObject("Project", project)
         datasets = p.listChildren()
         print(f'Datasets in Project \"{p.getName()}\":')
