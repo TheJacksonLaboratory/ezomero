@@ -646,7 +646,7 @@ def test_get_roi_ids(conn, project_structure, roi_fixture, users_groups):
 
     # test input sanitizing
     with pytest.raises(TypeError):  
-        ezomero.get_roi_ids(conn, '9999')
+        _ = ezomero.get_roi_ids(conn, '9999')
 
     # test normal usage
     image_info = project_structure[2]
@@ -672,8 +672,34 @@ def test_get_roi_ids(conn, project_structure, roi_fixture, users_groups):
                        deleteChildren=True, wait=True)
 
 
-def test_get_shape_and_get_shape_ids(conn, project_structure, roi_fixture):
-    assert True
+def test_get_shape_and_get_shape_ids(conn, project_structure, roi_fixture, users_groups):
+    # test input sanitizing
+    with pytest.raises(TypeError):  
+        _ = ezomero.get_shape_ids(conn, '9999')
+    with pytest.raises(TypeError):  
+        _ = ezomero.get_shape(conn, '9999')
+
+    # test normal usage
+    image_info = project_structure[2]
+    im_id = image_info[0][1]
+    roi_id = ezomero.post_roi(conn, im_id,
+                              shapes=roi_fixture['shapes'],
+                              name=roi_fixture['name'],
+                              description=roi_fixture['desc'],
+                              fill_color=roi_fixture['fill_color'],
+                              stroke_color=roi_fixture['stroke_color'],
+                              stroke_width=roi_fixture['stroke_width'])
+    shape_ids = ezomero.get_shape_ids(conn, roi_id)
+    assert len(shape_ids) == len(roi_fixture['shapes'])
+    shape, fill, stroke, width = ezomero.get_shape(conn, shape_ids[0])
+    print(roi_fixture['fill_color'], roi_fixture['stroke_color'], roi_fixture['stroke_width'])
+    print(fill, stroke, width)
+    assert hasattr(shape, 'label')
+    assert fill == roi_fixture['fill_color']
+    assert stroke == roi_fixture['stroke_color']
+    assert width == roi_fixture['stroke_width']
+    conn.deleteObjects("Roi", [roi_id], deleteAnns=True,
+                       deleteChildren=True, wait=True)
 
 
 # Test puts

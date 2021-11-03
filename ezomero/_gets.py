@@ -536,10 +536,10 @@ def get_shape_ids(conn, roi_id, across_groups=True):
         raise TypeError('ROI ID must be an integer')
     q = conn.getQueryService()
     params = Parameters()
-    params.map = {"roi": rlong(roi_id)}
+    params.map = {"roi_id": rlong(roi_id)}
     results = q.projection(
         "SELECT s.id FROM Shape s"
-        " WHERE s.roi=:roi",
+        " WHERE s.roi.id=:roi_id",
         params,
         conn.SERVICE_OPTS
         )
@@ -812,7 +812,7 @@ def get_shape(conn, shape_id, across_groups=True):
 
     """
     if not isinstance(shape_id, int):
-        raise ValueError('Shape ID must be an integer')
+        raise TypeError('Shape ID must be an integer')
     shape = []
     omero_shape = conn.getObject('Shape', shape_id)
     return _omero_shape_to_shape(omero_shape)
@@ -821,60 +821,55 @@ def get_shape(conn, shape_id, across_groups=True):
 def _omero_shape_to_shape(omero_shape):
     """ Helper function to convert ezomero shapes into omero shapes"""
     shape_type = omero_shape.ice_id().split("::omero::model::")[1]
+    try:
+        z_val = omero_shape.theZ
+    except AttributeError:
+        z_val = None
+    try:
+        c_val = omero_shape.theC
+    except AttributeError:
+        c_val = None
+    try:
+        t_val = omero_shape.theT
+    except AttributeError:
+        t_val = None
+    try:
+        text = omero_shape.textValue
+    except AttributeError:
+        text = None
     if shape_type == "Point":
-        shape = Point()
-        shape.x = omero_shape.x
-        shape.y = omero_shape.y
+        x = omero_shape.x
+        y = omero_shape.y
+        shape = Point(x, y, z_val, c_val, t_val, text)
     elif shape_type == "Line":
-        shape = Line()
-        shape.x1 = omero_shape.x1
-        shape.x2 = omero_shape.x2
-        shape.y1 = omero_shape.y1
-        shape.y2 = omero_shape.y2
+        x1 = omero_shape.x1
+        x2 = omero_shape.x2
+        y1 = omero_shape.y1
+        y2 = omero_shape.y2
+        shape = Line(x1, y1, x2, y2, z_val, c_val, t_val, text)
     elif shape_type == "Rectangle":
-        shape = Rectangle
-        shape.x = omero_shape.x
-        shape.y = omero_shape.y
-        shape.width = omero_shape.width
-        shape.height = omero_shape.height
+        x = omero_shape.x
+        y = omero_shape.y
+        width = omero_shape.width
+        height = omero_shape.height
+        shape = Rectangle(x, y, width, height, z_val, c_val, t_val, text)
     elif shape_type == "Ellipse":
-        shape = Ellipse()
-        shape.x = omero_shape.x
-        shape.y = omero_shape.y
-        shape.radiusX = omero_shape.x_rad
-        shape.radiusY = omero_shape.y_rad
+        x = omero_shape.x
+        y = omero_shape.y
+        radiusX = omero_shape.radiusX
+        radiusY = omero_shape.radiusY
+        shape = Ellipse(x, y, radiusX, radiusY, z_val, c_val, t_val, text)
     elif shape_type == "Polygon":
-        shape = Polygon()
-        omero_points = shape.points.split()
+        omero_points = omero_shape.points.split()
         points = []
         for point in omero_points:
             coords = point.split(',')
             points.append((float(coords[0]), float(coords[1])))
-        shape.points = points
+        shape = Polygon(points, z_val, c_val, t_val, text)
     else:
         err = 'The shape passed for the roi is not a valid shape type'
         raise TypeError(err)
 
-    try:
-        z_val = omero_shape.theZ
-        shape.z = z_val
-    except AttributeError:
-        shape.z = None
-    try:
-        c_val = omero_shape.theC
-        shape.c = c_val
-    except AttributeError:
-        shape.c = None
-    try:
-        t_val = omero_shape.theT
-        shape.t = t_val
-    except AttributeError:
-        shape.t = None
-    try:
-        text = omero_shape.textValue
-        shape.label = text
-    except AttributeError:
-        shape.label = None
     fill_color = _int_to_rgba(omero_shape.getFillColor())
     stroke_color = _int_to_rgba(omero_shape.getStrokeColor())
     stroke_width = omero_shape.getStrokeWidth().getValue()
@@ -890,5 +885,4 @@ def _int_to_rgba(omero_val):
     g = omero_val - (r << 24) >> 16
     b = omero_val - (r << 24) - (g << 16) >> 8
     a = omero_val - (r << 24) - (g << 16) - (b << 8)
-    a = a / 255
     return (r, g, b, a)
