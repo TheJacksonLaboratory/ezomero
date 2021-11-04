@@ -7,6 +7,7 @@ from omero import ApiUsageException
 from omero.model import MapAnnotationI, TagAnnotationI
 from omero.rtypes import rint, rlong
 from omero.sys import Parameters
+from .rois import Point, Line, Rectangle, Ellipse, Polygon
 
 
 # gets
@@ -496,6 +497,82 @@ def get_well_id(conn, plate_id, row, column, across_groups=True):
 
 
 @do_across_groups
+def get_roi_ids(conn, image_id, across_groups=True):
+    """Get IDs of ROIs associated with an Image
+
+    Parameters
+    ----------
+    conn : ``omero.gateway.BlitzGateway`` object
+        OMERO connection.
+    image_id : int
+        ID of ``Image``.
+    across_groups : bool, optional
+        Defines cross-group behavior of function - set to
+        ``False`` to disable it.
+
+    Returns
+    -------
+    roi_ids : list of ints
+
+    Examples
+    --------
+    # Return IDs of all ROIs linked to an image:
+
+    >>> roi_ids = get_roi_ids(conn, 42)
+
+    """
+    if not isinstance(image_id, int):
+        raise TypeError('Image ID must be an integer')
+    roi_ids = []
+    roi_svc = conn.getRoiService()
+    roi_list = roi_svc.findByImage(image_id, None)
+    for roi in roi_list.rois:
+        roi_ids.append(roi.id.val)
+    return roi_ids
+
+
+@do_across_groups
+def get_shape_ids(conn, roi_id, across_groups=True):
+    """Get IDs of shapes associated with an ROI
+
+    Parameters
+    ----------
+    conn : ``omero.gateway.BlitzGateway`` object
+        OMERO connection.
+    roi_id : int
+        ID of ``ROI``.
+    across_groups : bool, optional
+        Defines cross-group behavior of function - set to
+        ``False`` to disable it.
+
+    Returns
+    -------
+    shape_ids : list of ints
+
+    Examples
+    --------
+    # Return IDs of all shapes linked to an ROI:
+
+    >>> shape_ids = get_shape_ids(conn, 4222)
+
+    """
+    if not isinstance(roi_id, int):
+        raise TypeError('ROI ID must be an integer')
+    q = conn.getQueryService()
+    params = Parameters()
+    params.map = {"roi_id": rlong(roi_id)}
+    results = q.projection(
+        "SELECT s.id FROM Shape s"
+        " WHERE s.roi.id=:roi_id",
+        params,
+        conn.SERVICE_OPTS
+        )
+    if len(results) == 0:
+        return None
+    return [r[0].val for r in results]
+
+
+@do_across_groups
 def get_map_annotation(conn, map_ann_id, across_groups=True):
     """Get the value of a map annotation object
 
@@ -742,3 +819,108 @@ def get_original_filepaths(conn, image_id, fpath='repo', across_groups=True):
         raise ValueError("Parameter fpath must be 'client' or 'repo'")
 
     return results
+
+
+@do_across_groups
+def get_shape(conn, shape_id, across_groups=True):
+    """Get an ezomero shape object from an OMERO Shape id
+
+    Parameters
+    ----------
+    conn : ``omero.gateway.BlitzGateway`` object
+        OMERO connection.
+    shape_id : int
+        ID of shape to get.
+    across_groups : bool, optional
+        Defines cross-group behavior of function - set to
+        ``False`` to disable it.
+
+    Returns
+    -------
+    shape : obj
+        An object of one of ezomero shape classes
+    fill_color: tuple
+        Tuple of format (r, g, b, a) containing the shape fill color.
+    stroke_color: tuple
+        Tuple of format (r, g, b, a) containing the shape stroke color.
+    stroke_width: float
+        Shape stroke width, in pixels
+    Examples
+    --------
+    >>> shape = get_shape(conn, 634443)
+
+    """
+    if not isinstance(shape_id, int):
+        raise TypeError('Shape ID must be an integer')
+    omero_shape = conn.getObject('Shape', shape_id)
+    return _omero_shape_to_shape(omero_shape)
+
+
+def _omero_shape_to_shape(omero_shape):
+    """ Helper function to convert ezomero shapes into omero shapes"""
+    shape_type = omero_shape.ice_id().split("::omero::model::")[1]
+    try:
+        z_val = omero_shape.theZ
+    except AttributeError:
+        z_val = None
+    try:
+        c_val = omero_shape.theC
+    except AttributeError:
+        c_val = None
+    try:
+        t_val = omero_shape.theT
+    except AttributeError:
+        t_val = None
+    try:
+        text = omero_shape.textValue
+    except AttributeError:
+        text = None
+    if shape_type == "Point":
+        x = omero_shape.x
+        y = omero_shape.y
+        shape = Point(x, y, z_val, c_val, t_val, text)
+    elif shape_type == "Line":
+        x1 = omero_shape.x1
+        x2 = omero_shape.x2
+        y1 = omero_shape.y1
+        y2 = omero_shape.y2
+        shape = Line(x1, y1, x2, y2, z_val, c_val, t_val, text)
+    elif shape_type == "Rectangle":
+        x = omero_shape.x
+        y = omero_shape.y
+        width = omero_shape.width
+        height = omero_shape.height
+        shape = Rectangle(x, y, width, height, z_val, c_val, t_val, text)
+    elif shape_type == "Ellipse":
+        x = omero_shape.x
+        y = omero_shape.y
+        radiusX = omero_shape.radiusX
+        radiusY = omero_shape.radiusY
+        shape = Ellipse(x, y, radiusX, radiusY, z_val, c_val, t_val, text)
+    elif shape_type == "Polygon":
+        omero_points = omero_shape.points.split()
+        points = []
+        for point in omero_points:
+            coords = point.split(',')
+            points.append((float(coords[0]), float(coords[1])))
+        shape = Polygon(points, z_val, c_val, t_val, text)
+    else:
+        err = 'The shape passed for the roi is not a valid shape type'
+        raise TypeError(err)
+
+    fill_color = _int_to_rgba(omero_shape.getFillColor())
+    stroke_color = _int_to_rgba(omero_shape.getStrokeColor())
+    stroke_width = omero_shape.getStrokeWidth().getValue()
+
+    return shape, fill_color, stroke_color, stroke_width
+
+
+def _int_to_rgba(omero_val):
+    """ Helper function returning the color as an Integer in RGBA encoding """
+    if omero_val < 0:
+        omero_val = omero_val + (2**32)
+    r = omero_val >> 24
+    g = omero_val - (r << 24) >> 16
+    b = omero_val - (r << 24) - (g << 16) >> 8
+    a = omero_val - (r << 24) - (g << 16) - (b << 8)
+    return (r, g, b, a)
