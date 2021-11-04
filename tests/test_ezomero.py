@@ -493,6 +493,7 @@ def test_get_image_ids(conn, project_structure, screen_structure,
     ds1_id = dataset_info[1][1]  # ds1, in test_group1 (test_user3 not mbr)
     ds1_im_ids = ezomero.get_image_ids(current_conn, dataset=ds1_id)
     assert not ds1_im_ids
+    current_conn.close()
 
     # test cross-group valid, across_groups unset
     username = users_groups[1][0][0]  # test_user1
@@ -645,7 +646,7 @@ def test_get_user_id(conn, users_groups):
 def test_get_roi_ids(conn, project_structure, roi_fixture, users_groups):
 
     # test input sanitizing
-    with pytest.raises(TypeError):  
+    with pytest.raises(TypeError):
         _ = ezomero.get_roi_ids(conn, '9999')
 
     # test normal usage
@@ -668,15 +669,21 @@ def test_get_roi_ids(conn, project_structure, roi_fixture, users_groups):
     empty_ret = ezomero.get_roi_ids(current_conn, im_id)
     assert empty_ret == []
     current_conn.close()
+
+    # test getting from invalid IDs
+    empty_ret = ezomero.get_roi_ids(conn, 999999999)
+    assert empty_ret == []
+
     conn.deleteObjects("Roi", [roi_id], deleteAnns=True,
                        deleteChildren=True, wait=True)
 
 
-def test_get_shape_and_get_shape_ids(conn, project_structure, roi_fixture, users_groups):
+def test_get_shape_and_get_shape_ids(conn, project_structure,
+                                     roi_fixture, users_groups):
     # test input sanitizing
-    with pytest.raises(TypeError):  
+    with pytest.raises(TypeError):
         _ = ezomero.get_shape_ids(conn, '9999')
-    with pytest.raises(TypeError):  
+    with pytest.raises(TypeError):
         _ = ezomero.get_shape(conn, '9999')
 
     # test normal usage
@@ -696,12 +703,28 @@ def test_get_shape_and_get_shape_ids(conn, project_structure, roi_fixture, users
     assert fill == roi_fixture['fill_color']
     assert stroke == roi_fixture['stroke_color']
     assert width == roi_fixture['stroke_width']
+
+    # Test getting from an invalid cross-group
+    username = users_groups[1][2][0]  # test_user3
+    groupname = users_groups[0][1][0]  # test_group_2
+    current_conn = conn.suConn(username, groupname)
+    empty_ret = ezomero.get_shape_ids(current_conn, roi_id)
+    assert empty_ret is None
+    current_conn.close()
+
+    # test getting from invalid IDs
+    empty_ret = ezomero.get_shape_ids(conn, 999999999)
+    assert empty_ret is None
+    with pytest.raises(AttributeError):
+        _, _, _, _ = ezomero.get_shape(conn, 99999999)
+
     conn.deleteObjects("Roi", [roi_id], deleteAnns=True,
                        deleteChildren=True, wait=True)
 
 
 # Test puts
 ###########
+
 
 def test_put_map_annotation(conn, project_structure, users_groups):
     kv = {"key1": "value1",

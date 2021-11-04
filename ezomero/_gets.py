@@ -813,7 +813,6 @@ def get_shape(conn, shape_id, across_groups=True):
     """
     if not isinstance(shape_id, int):
         raise TypeError('Shape ID must be an integer')
-    shape = []
     omero_shape = conn.getObject('Shape', shape_id)
     return _omero_shape_to_shape(omero_shape)
 
