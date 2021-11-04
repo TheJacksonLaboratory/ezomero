@@ -805,7 +805,12 @@ def get_shape(conn, shape_id, across_groups=True):
     -------
     shape : obj
         An object of one of ezomero shape classes
-
+    fill_color: tuple
+        Tuple of format (r, g, b, a) containing the shape fill color.
+    stroke_color: tuple
+        Tuple of format (r, g, b, a) containing the shape stroke color.
+    stroke_width: float
+        Shape stroke width, in pixels
     Examples
     --------
     >>> shape = get_shape(conn, 634443)
