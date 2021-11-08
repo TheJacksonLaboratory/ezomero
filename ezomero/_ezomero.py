@@ -106,6 +106,9 @@ def put_map_annotation(conn, map_ann_id, kv_dict, ns=None, across_groups=True):
 
     >>> put_map_annotation(conn, 16, new_values, 'test_v2')
     """
+    if type(map_ann_id) is not int:
+        raise TypeError('Map annotation ID must be an integer')
+    
     map_ann = conn.getObject('MapAnnotation', map_ann_id)
     if map_ann is None:
         raise ValueError("MapAnnotation is non-existent or you do not have "
@@ -375,6 +378,9 @@ def set_group(conn, group_id):
     change_status : bool
         Returns `True` if group is changed, otherwise returns `False`.
     """
+    if type(group_id) is not int:
+        raise TypeError('Group ID must be an integer')
+
     user_id = conn.getUser().getId()
     g = conn.getObject("ExperimenterGroup", group_id)
     owners, members = g.groupSummary()

@@ -603,11 +603,11 @@ def test_get_well_id(conn, screen_structure):
 
 
 def test_get_well_id_params(conn):
-    with pytest.raises(ValueError):
+    with pytest.raises(TypeError):
         _ = ezomero.get_well_id(conn, "Plate name", row=0, column=0)
-    with pytest.raises(ValueError):
+    with pytest.raises(TypeError):
         _ = ezomero.get_well_id(conn, 9999, row='A', column=0)
-    with pytest.raises(ValueError):
+    with pytest.raises(TypeError):
         _ = ezomero.get_well_id(conn, 9999, row=0, column='B')
 
 
