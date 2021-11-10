@@ -17,11 +17,18 @@ jobs:
           python -m pip install --upgrade pip
           pip install flake8 pytest
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-      - name: Test with pytest
-        run: |
-          pytest tests/
-      - name: Generate coverage report
+      - name: Test with pytest and generate coverage report
         run: |
           pip install coverage
-          coverage run -m pytest
+          coverage run -m pytest tests/
           coverage report
+      - name: Generate coverage badge
+        run: |
+          pip install coverage-badge
+          coverage-badge -o coverage.svg
+      - name: Commit badge
+        run: |
+          git config --global user.name 'Erick Ratamero'
+          git config --global user.email 'erickmartins@users.noreply.github.com'
+          git commit -am "Automated updating coverage badge"
+          git push
