@@ -25,6 +25,7 @@ jobs:
       - name: Generate coverage badge
         run: |
           pip install coverage-badge
+          rm coverage.svg
           coverage-badge -o coverage.svg
       - name: Commit badge
         run: |
