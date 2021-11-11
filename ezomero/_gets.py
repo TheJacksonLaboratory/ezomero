@@ -284,10 +284,7 @@ def get_image_ids(conn, project=None, dataset=None, plate=None, well=None,
             params,
             conn.SERVICE_OPTS
             )
-    elif ((well is None) &
-          (dataset is None) &
-          (project is None) &
-          (plate is None)):
+    else:
         results = q.projection(
             "SELECT i.id FROM Image i"
             " WHERE NOT EXISTS ("
@@ -301,8 +298,6 @@ def get_image_ids(conn, project=None, dataset=None, plate=None, well=None,
             params,
             conn.SERVICE_OPTS
             )
-    else:
-        results = []
 
     return [r[0].val for r in results]
 
