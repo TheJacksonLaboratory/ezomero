@@ -1,4 +1,3 @@
-from typing import Type
 import ezomero
 import pytest
 from omero.gateway import PlateWrapper
@@ -70,10 +69,10 @@ def test_filter_by_kvpair(conn, project_structure):
     assert set(proj3_kv_only_im_ids) == set([im3_id])
 
     current_conn.deleteObjects("Annotation",
-                         [ma_id],
-                         deleteAnns=True,
-                         deleteChildren=True,
-                         wait=True)
+                               [ma_id],
+                               deleteAnns=True,
+                               deleteChildren=True,
+                               wait=True)
     current_conn.close()
 
 
@@ -112,7 +111,7 @@ def test_set_group(conn, users_groups):
         _ = ezomero.set_group(current_conn, '10')
     new_group = users_groups[0][0][1]  # test_group_1
     ret = ezomero.set_group(current_conn, int(new_group))
-    assert ret == False
+    assert ret is False
     current_conn.close()
 
     username = users_groups[1][0][0]  # test_user1
@@ -120,18 +119,18 @@ def test_set_group(conn, users_groups):
     current_conn = conn.suConn(username, groupname)
     new_group = users_groups[0][1][1]  # test_group_2
     ret = ezomero.set_group(current_conn, int(new_group))
-    assert ret == True
+    assert ret is True
     current_conn.close()
 
 
 def test_link_images_to_dataset(conn, image_fixture):
     ds_id = ezomero.post_dataset(conn, 'test dataset')
     im_id1 = ezomero.post_image(conn,
-                               image_fixture,
-                               'test image')
+                                image_fixture,
+                                'test image')
     im_id2 = ezomero.post_image(conn,
-                               image_fixture,
-                               'test image')
+                                image_fixture,
+                                'test image')
     with pytest.raises(TypeError):
         _ = ezomero.link_images_to_dataset(conn, 10, ds_id)
     with pytest.raises(TypeError):

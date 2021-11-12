@@ -1,7 +1,6 @@
-from typing import Type
 import pytest
 import ezomero
-from pathlib import Path 
+from pathlib import Path
 
 
 def test_connect_params(omero_params, tmp_path, monkeypatch):
@@ -46,7 +45,6 @@ def test_connect_env(omero_params, tmp_path, monkeypatch):
                 "omero_host = fail\n"
                 "omero_port = 9999\n"
                 "omero_secure = True\n")
-    
 
     # test sanitizing input
     with pytest.raises(TypeError):

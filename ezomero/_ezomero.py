@@ -108,7 +108,7 @@ def put_map_annotation(conn, map_ann_id, kv_dict, ns=None, across_groups=True):
     """
     if type(map_ann_id) is not int:
         raise TypeError('Map annotation ID must be an integer')
-    
+
     map_ann = conn.getObject('MapAnnotation', map_ann_id)
     if map_ann is None:
         raise ValueError("MapAnnotation is non-existent or you do not have "
