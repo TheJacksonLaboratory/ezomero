@@ -143,7 +143,7 @@ def post_image(conn, image, image_name, description=None, dataset_id=None,
 
     if dataset_id is not None:
         if type(dataset_id) is not int:
-            raise ValueError("Dataset ID must be an integer")
+            raise TypeError("Dataset ID must be an integer")
         dataset = conn.getObject("Dataset", dataset_id)
         if dataset is not None:
             ret = set_group(conn, dataset.getDetails().group.id.val)

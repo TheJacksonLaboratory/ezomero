@@ -15,6 +15,14 @@ def test_omero_connection(conn, omero_params):
 ############
 def test_post_dataset(conn, project_structure, users_groups, timestamp):
 
+    # testing sanitized inputs
+    with pytest.raises(TypeError):
+        _ = ezomero.post_dataset(conn, 10)
+    with pytest.raises(TypeError):
+        _ = ezomero.post_dataset(conn, "testds", description=10)
+    with pytest.raises(TypeError):
+        _ = ezomero.post_dataset(conn, "testds", project_id='10')
+    
     # Orphaned dataset, with descripion
     ds_test_name = 'test_post_dataset_' + timestamp
     did = ezomero.post_dataset(conn, ds_test_name, description='New test')
@@ -82,6 +90,17 @@ def test_post_image(conn, project_structure, users_groups, timestamp,
                     image_fixture):
     dataset_info = project_structure[1]
     did = dataset_info[0][1]
+
+    # testing sanitized inputs
+    with pytest.raises(TypeError):
+        _ = ezomero.post_image(conn, 'image', 'test')
+    fake_input = np.zeros((200,200), dtype=np.uint8)
+    with pytest.raises(ValueError):
+        _ = ezomero.post_image(conn, fake_input, 'test')
+    with pytest.raises(TypeError):
+        _ = ezomero.post_image(conn, image_fixture, 10)
+    with pytest.raises(TypeError):
+        _ = ezomero.post_image(conn, image_fixture, 'test', dataset_id='10')
     # Post image in dataset
     image_name = 'test_post_image_' + timestamp
     im_id = ezomero.post_image(conn, image_fixture, image_name,
@@ -151,6 +170,15 @@ def test_post_get_map_annotation(conn, project_structure, users_groups):
     kv = {"key1": "value1",
           "key2": "value2"}
     ns = "jax.org/omeroutils/tests/v0"
+
+    # test sanitized input on post
+    with pytest.raises(TypeError):
+        _ = ezomero.post_map_annotation(conn, "Image", im_id, 'test', ns)
+    with pytest.raises(TypeError):
+        _ = ezomero.post_map_annotation(conn, "Image", '10', kv, ns)
+    with pytest.raises(TypeError):
+        _ = ezomero.post_map_annotation(conn, "Image", None, kv, ns)
+
     map_ann_id = ezomero.post_map_annotation(conn, "Image", im_id, kv, ns)
     kv_pairs = ezomero.get_map_annotation(conn, map_ann_id)
     assert kv_pairs["key2"] == "value2"
@@ -210,6 +238,14 @@ def test_post_get_file_annotation(conn, project_structure, users_groups,
     file_ann = str(file_path)
 
     ns = "jax.org/omeroutils/tests/v0"
+    # test sanitized input on post
+    with pytest.raises(TypeError):
+        _ = ezomero.post_file_annotation(conn, "Image", im_id, 10, ns)
+    with pytest.raises(TypeError):
+        _ = ezomero.post_file_annotation(conn, "Image", '10', file_ann, ns)
+    with pytest.raises(TypeError):
+        _ = ezomero.post_file_annotation(conn, "Image", None, file_ann, ns)
+
     file_ann_id = ezomero.post_file_annotation(conn, "Image", im_id, file_ann,
                                                ns)
     return_ann = ezomero.get_file_annotation(conn, file_ann_id)
@@ -262,6 +298,74 @@ def test_post_get_file_annotation(conn, project_structure, users_groups,
 def test_post_roi(conn, project_structure, roi_fixture, users_groups):
     image_info = project_structure[2]
     im_id = image_info[0][1]
+
+    # test sanitized input on post
+    with pytest.raises(TypeError):
+        _ = ezomero.post_roi(conn, '10',
+                              shapes=roi_fixture['shapes'],
+                              name=roi_fixture['name'],
+                              description=roi_fixture['desc'],
+                              fill_color=roi_fixture['fill_color'],
+                              stroke_color=roi_fixture['stroke_color'],
+                              stroke_width=roi_fixture['stroke_width'])
+    with pytest.raises(TypeError):
+        _ = ezomero.post_roi(conn, im_id,
+                              shapes='10',
+                              name=roi_fixture['name'],
+                              description=roi_fixture['desc'],
+                              fill_color=roi_fixture['fill_color'],
+                              stroke_color=roi_fixture['stroke_color'],
+                              stroke_width=roi_fixture['stroke_width'])
+    with pytest.raises(TypeError):
+        _ = ezomero.post_roi(conn, im_id,
+                              shapes=['10'],
+                              name=roi_fixture['name'],
+                              description=roi_fixture['desc'],
+                              fill_color=roi_fixture['fill_color'],
+                              stroke_color=roi_fixture['stroke_color'],
+                              stroke_width=roi_fixture['stroke_width'])
+    with pytest.raises(TypeError):
+        _ = ezomero.post_roi(conn, im_id,
+                              shapes=roi_fixture['shapes'],
+                              name=roi_fixture['name'],
+                              description=roi_fixture['desc'],
+                              fill_color=[10,10,10,10],
+                              stroke_color=roi_fixture['stroke_color'],
+                              stroke_width=roi_fixture['stroke_width'])
+    with pytest.raises(ValueError):
+        _ = ezomero.post_roi(conn, im_id,
+                              shapes=roi_fixture['shapes'],
+                              name=roi_fixture['name'],
+                              description=roi_fixture['desc'],
+                              fill_color=(10,10,10),
+                              stroke_color=roi_fixture['stroke_color'],
+                              stroke_width=roi_fixture['stroke_width'])
+    with pytest.raises(TypeError):
+        _ = ezomero.post_roi(conn, im_id,
+                              shapes=roi_fixture['shapes'],
+                              name=roi_fixture['name'],
+                              description=roi_fixture['desc'],
+                              fill_color=roi_fixture['fill_color'],
+                              stroke_color=[10,10,10,10],
+                              stroke_width=roi_fixture['stroke_width'])
+    with pytest.raises(ValueError):
+        _ = ezomero.post_roi(conn, im_id,
+                              shapes=roi_fixture['shapes'],
+                              name=roi_fixture['name'],
+                              description=roi_fixture['desc'],
+                              fill_color=roi_fixture['fill_color'],
+                              stroke_color=(10,10,10),
+                              stroke_width=roi_fixture['stroke_width'])
+    with pytest.raises(TypeError):
+        _ = ezomero.post_roi(conn, im_id,
+                              shapes=roi_fixture['shapes'],
+                              name=roi_fixture['name'],
+                              description=roi_fixture['desc'],
+                              fill_color=roi_fixture['fill_color'],
+                              stroke_color=roi_fixture['stroke_color'],
+                              stroke_width='width')
+
+# "regular" test
     roi_id = ezomero.post_roi(conn, im_id,
                               shapes=roi_fixture['shapes'],
                               name=roi_fixture['name'],
