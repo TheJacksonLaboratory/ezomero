@@ -1,4 +1,5 @@
 import ezomero
+import pytest
 from omero.gateway import TagAnnotationWrapper
 
 
@@ -66,3 +67,24 @@ def test_prints(conn, project_structure):
     ezomero.print_datasets(conn, project=pid)
     ezomero.print_projects(conn)
     ezomero.print_groups(conn)
+
+
+def test_set_group(conn, users_groups):
+    print(users_groups)
+    username = users_groups[1][2][0]  # test_user3
+    groupname = users_groups[0][1][0]  # test_group_2
+    current_conn = conn.suConn(username, groupname)
+    with pytest.raises(TypeError):
+        _ = ezomero.set_group(current_conn, '10')
+    new_group = users_groups[0][0][1]  # test_group_1
+    ret = ezomero.set_group(current_conn, int(new_group))
+    assert ret == False
+    current_conn.close()
+
+    username = users_groups[1][0][0]  # test_user1
+    groupname = users_groups[0][0][0]  # test_group_1
+    current_conn = conn.suConn(username, groupname)
+    new_group = users_groups[0][1][1]  # test_group_2
+    ret = ezomero.set_group(current_conn, int(new_group))
+    assert ret == True
+    current_conn.close()

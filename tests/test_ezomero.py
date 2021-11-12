@@ -868,3 +868,4 @@ def test_put_map_annotation(conn, project_structure, users_groups):
                        deleteAnns=True,
                        deleteChildren=True,
                        wait=True)
+
