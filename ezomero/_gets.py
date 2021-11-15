@@ -81,18 +81,18 @@ def get_image(conn, image_id, no_pixels=False, start_coords=None,
             raise TypeError('start_coords must be supplied as list or tuple')
         if len(start_coords) != 5:
             raise ValueError('start_coords must have length 5 (XYZCT)')
-        
+
     if axis_lengths is not None:
         if type(axis_lengths) not in (list, tuple):
             raise TypeError('axis_lengths must be supplied as list of tuple')
         if len(axis_lengths) != 5:
             raise ValueError('axis_lengths must have length 5 (XYZCT)')
-    
+
     if image_id is None:
         raise TypeError('Object ID cannot be empty')
     if type(image_id) is not int:
         raise TypeError('Image ID must be an integer')
-    
+
     pixel_view = None
     image = conn.getObject('Image', image_id)
     if image is None:
@@ -284,10 +284,7 @@ def get_image_ids(conn, project=None, dataset=None, plate=None, well=None,
             params,
             conn.SERVICE_OPTS
             )
-    elif ((well is None) &
-          (dataset is None) &
-          (project is None) &
-          (plate is None)):
+    else:
         results = q.projection(
             "SELECT i.id FROM Image i"
             " WHERE NOT EXISTS ("
@@ -301,8 +298,6 @@ def get_image_ids(conn, project=None, dataset=None, plate=None, well=None,
             params,
             conn.SERVICE_OPTS
             )
-    else:
-        results = []
 
     return [r[0].val for r in results]
 
@@ -599,7 +594,7 @@ def get_map_annotation(conn, map_ann_id, across_groups=True):
     """
     if type(map_ann_id) is not int:
         raise TypeError('Map annotation ID must be an integer')
-    
+
     return dict(conn.getObject('MapAnnotation', map_ann_id).getValue())
 
 

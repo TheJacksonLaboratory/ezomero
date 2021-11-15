@@ -238,7 +238,7 @@ def link_plates_to_screen(conn, plate_ids, screen_id):
     """
     if not isinstance(plate_ids, list):
         raise TypeError('Plate IDs must be a list of integers')
-    
+
     if type(screen_id) is not int:
         raise TypeError('Screen ID must be an integer')
 

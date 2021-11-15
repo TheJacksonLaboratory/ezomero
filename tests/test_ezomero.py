@@ -15,6 +15,14 @@ def test_omero_connection(conn, omero_params):
 ############
 def test_post_dataset(conn, project_structure, users_groups, timestamp):
 
+    # testing sanitized inputs
+    with pytest.raises(TypeError):
+        _ = ezomero.post_dataset(conn, 10)
+    with pytest.raises(TypeError):
+        _ = ezomero.post_dataset(conn, "testds", description=10)
+    with pytest.raises(TypeError):
+        _ = ezomero.post_dataset(conn, "testds", project_id='10')
+
     # Orphaned dataset, with descripion
     ds_test_name = 'test_post_dataset_' + timestamp
     did = ezomero.post_dataset(conn, ds_test_name, description='New test')
@@ -82,6 +90,17 @@ def test_post_image(conn, project_structure, users_groups, timestamp,
                     image_fixture):
     dataset_info = project_structure[1]
     did = dataset_info[0][1]
+
+    # testing sanitized inputs
+    with pytest.raises(TypeError):
+        _ = ezomero.post_image(conn, 'image', 'test')
+    fake_input = np.zeros((200, 200), dtype=np.uint8)
+    with pytest.raises(ValueError):
+        _ = ezomero.post_image(conn, fake_input, 'test')
+    with pytest.raises(TypeError):
+        _ = ezomero.post_image(conn, image_fixture, 10)
+    with pytest.raises(TypeError):
+        _ = ezomero.post_image(conn, image_fixture, 'test', dataset_id='10')
     # Post image in dataset
     image_name = 'test_post_image_' + timestamp
     im_id = ezomero.post_image(conn, image_fixture, image_name,
@@ -151,6 +170,15 @@ def test_post_get_map_annotation(conn, project_structure, users_groups):
     kv = {"key1": "value1",
           "key2": "value2"}
     ns = "jax.org/omeroutils/tests/v0"
+
+    # test sanitized input on post
+    with pytest.raises(TypeError):
+        _ = ezomero.post_map_annotation(conn, "Image", im_id, 'test', ns)
+    with pytest.raises(TypeError):
+        _ = ezomero.post_map_annotation(conn, "Image", '10', kv, ns)
+    with pytest.raises(TypeError):
+        _ = ezomero.post_map_annotation(conn, "Image", None, kv, ns)
+
     map_ann_id = ezomero.post_map_annotation(conn, "Image", im_id, kv, ns)
     kv_pairs = ezomero.get_map_annotation(conn, map_ann_id)
     assert kv_pairs["key2"] == "value2"
@@ -210,6 +238,14 @@ def test_post_get_file_annotation(conn, project_structure, users_groups,
     file_ann = str(file_path)
 
     ns = "jax.org/omeroutils/tests/v0"
+    # test sanitized input on post
+    with pytest.raises(TypeError):
+        _ = ezomero.post_file_annotation(conn, "Image", im_id, 10, ns)
+    with pytest.raises(TypeError):
+        _ = ezomero.post_file_annotation(conn, "Image", '10', file_ann, ns)
+    with pytest.raises(TypeError):
+        _ = ezomero.post_file_annotation(conn, "Image", None, file_ann, ns)
+
     file_ann_id = ezomero.post_file_annotation(conn, "Image", im_id, file_ann,
                                                ns)
     return_ann = ezomero.get_file_annotation(conn, file_ann_id)
@@ -262,6 +298,73 @@ def test_post_get_file_annotation(conn, project_structure, users_groups,
 def test_post_roi(conn, project_structure, roi_fixture, users_groups):
     image_info = project_structure[2]
     im_id = image_info[0][1]
+
+    # test sanitized input on post
+    with pytest.raises(TypeError):
+        _ = ezomero.post_roi(conn, '10',
+                             shapes=roi_fixture['shapes'],
+                             name=roi_fixture['name'],
+                             description=roi_fixture['desc'],
+                             fill_color=roi_fixture['fill_color'],
+                             stroke_color=roi_fixture['stroke_color'],
+                             stroke_width=roi_fixture['stroke_width'])
+    with pytest.raises(TypeError):
+        _ = ezomero.post_roi(conn, im_id,
+                             shapes='10',
+                             name=roi_fixture['name'],
+                             description=roi_fixture['desc'],
+                             fill_color=roi_fixture['fill_color'],
+                             stroke_color=roi_fixture['stroke_color'],
+                             stroke_width=roi_fixture['stroke_width'])
+    with pytest.raises(TypeError):
+        _ = ezomero.post_roi(conn, im_id,
+                             shapes=['10'],
+                             name=roi_fixture['name'],
+                             description=roi_fixture['desc'],
+                             fill_color=roi_fixture['fill_color'],
+                             stroke_color=roi_fixture['stroke_color'],
+                             stroke_width=roi_fixture['stroke_width'])
+    with pytest.raises(TypeError):
+        _ = ezomero.post_roi(conn, im_id,
+                             shapes=roi_fixture['shapes'],
+                             name=roi_fixture['name'],
+                             description=roi_fixture['desc'],
+                             fill_color=[10, 10, 10, 10],
+                             stroke_color=roi_fixture['stroke_color'],
+                             stroke_width=roi_fixture['stroke_width'])
+    with pytest.raises(ValueError):
+        _ = ezomero.post_roi(conn, im_id,
+                             shapes=roi_fixture['shapes'],
+                             name=roi_fixture['name'],
+                             description=roi_fixture['desc'],
+                             fill_color=(10, 10, 10),
+                             stroke_color=roi_fixture['stroke_color'],
+                             stroke_width=roi_fixture['stroke_width'])
+    with pytest.raises(TypeError):
+        _ = ezomero.post_roi(conn, im_id,
+                             shapes=roi_fixture['shapes'],
+                             name=roi_fixture['name'],
+                             description=roi_fixture['desc'],
+                             fill_color=roi_fixture['fill_color'],
+                             stroke_color=[10, 10, 10, 10],
+                             stroke_width=roi_fixture['stroke_width'])
+    with pytest.raises(ValueError):
+        _ = ezomero.post_roi(conn, im_id,
+                             shapes=roi_fixture['shapes'],
+                             name=roi_fixture['name'],
+                             description=roi_fixture['desc'],
+                             fill_color=roi_fixture['fill_color'],
+                             stroke_color=(10, 10, 10),
+                             stroke_width=roi_fixture['stroke_width'])
+    with pytest.raises(TypeError):
+        _ = ezomero.post_roi(conn, im_id,
+                             shapes=roi_fixture['shapes'],
+                             name=roi_fixture['name'],
+                             description=roi_fixture['desc'],
+                             fill_color=roi_fixture['fill_color'],
+                             stroke_color=roi_fixture['stroke_color'],
+                             stroke_width='width')
+# "regular" test
     roi_id = ezomero.post_roi(conn, im_id,
                               shapes=roi_fixture['shapes'],
                               name=roi_fixture['name'],
@@ -353,6 +456,21 @@ def test_post_screen_type(conn):
 def test_get_image(conn, project_structure, users_groups):
     image_info = project_structure[2]
     im_id = image_info[0][1]
+    # test input sanitizing
+    with pytest.raises(TypeError):
+        _, _ = ezomero.get_image(conn, im_id, start_coords=1)
+    with pytest.raises(ValueError):
+        _, _ = ezomero.get_image(conn, im_id,
+                                 start_coords=[0, 0, 0])
+    with pytest.raises(TypeError):
+        _, _ = ezomero.get_image(conn, im_id, axis_lengths=1)
+    with pytest.raises(ValueError):
+        _, _ = ezomero.get_image(conn, im_id,
+                                 axis_lengths=[0, 0, 0])
+    with pytest.raises(TypeError):
+        _, _ = ezomero.get_image(conn, None)
+    with pytest.raises(TypeError):
+        _, _ = ezomero.get_image(conn, '1')
     # test default
     im, im_arr = ezomero.get_image(conn, im_id)
     assert im.getId() == im_id
@@ -430,15 +548,21 @@ def test_get_image(conn, project_structure, users_groups):
 def test_get_tag_and_tag_ids(conn, project_structure):
     image_info = project_structure[2]
     im_id = image_info[0][1]
-
     tag_ann = TagAnnotationWrapper(conn)
     tag_ann.setValue('test_tag')
     tag_ann.save()
     tag_id = tag_ann.getId()
-
     im = conn.getObject('Image', im_id)
     im.linkAnnotation(tag_ann)
-
+    # Test sanitizing inputs
+    with pytest.raises(TypeError):
+        _ = ezomero.get_tag_ids(conn, 10, 10)
+    with pytest.raises(TypeError):
+        _ = ezomero.get_tag_ids(conn, 'Image', '10')
+    with pytest.raises(TypeError):
+        _ = ezomero.get_tag_ids(conn, 'Image', 10, ns=10)
+    with pytest.raises(TypeError):
+        _ = ezomero.get_tag(conn, '10')
     tag_id_from_im = ezomero.get_tag_ids(conn, 'Image', im_id)[0]
 
     assert tag_id_from_im == tag_id
@@ -460,6 +584,10 @@ def test_get_image_ids(conn, project_structure, screen_structure,
     project_info = project_structure[0]
     dataset_info = project_structure[1]
     image_info = project_structure[2]
+
+    # Test orphans (we should create orphans!)
+    orphan_ids = ezomero.get_image_ids(conn)
+    assert orphan_ids == []
 
     # Based on project ID (also tests cross-group)
     proj3_id = project_info[3][1]
@@ -537,12 +665,21 @@ def test_get_image_ids_params(conn):
         _ = ezomero.get_image_ids(conn, plate='test')
 
 
-def test_get_map_annotation_ids(conn, project_structure):
+def test_get_map_annotation_and_ids(conn, project_structure):
     kv = {"key1": "value1",
           "key2": "value2"}
     ns = "jax.org/omeroutils/tests/v0"
     image_info = project_structure[2]
     im_id = image_info[0][1]
+
+    # Test sanitizing inputs
+    with pytest.raises(TypeError):
+        _ = ezomero.get_map_annotation_ids(conn, 10, 10)
+    with pytest.raises(TypeError):
+        _ = ezomero.get_map_annotation_ids(conn, 'Image', '10')
+    with pytest.raises(TypeError):
+        _ = ezomero.get_map_annotation_ids(conn, 'Image', 10, ns=10)
+
     map_ann_id = ezomero.post_map_annotation(conn, "Image", im_id, kv, ns)
     map_ann_id2 = ezomero.post_map_annotation(conn, "Image", im_id, kv, ns)
     map_ann_id3 = ezomero.post_map_annotation(conn, "Image", im_id, kv, ns)
@@ -553,6 +690,12 @@ def test_get_map_annotation_ids(conn, project_structure):
     good_ids = [map_ann_id, map_ann_id2, map_ann_id3]
     assert all([mid in map_ann_ids for mid in good_ids])
     assert map_ann_id4 not in map_ann_ids
+
+    # Test sanitizing input
+    with pytest.raises(TypeError):
+        _ = ezomero.get_map_annotation(conn, '10')
+    mpann = ezomero.get_map_annotation(conn, map_ann_ids[0])
+    assert mpann == kv
     conn.deleteObjects("Annotation",
                        [map_ann_id, map_ann_id2, map_ann_id3, map_ann_id4],
                        deleteAnns=True,
@@ -560,7 +703,7 @@ def test_get_map_annotation_ids(conn, project_structure):
                        wait=True)
 
 
-def test_get_file_annotation_ids(conn, project_structure, tmp_path):
+def test_get_file_annotation_and_ids(conn, project_structure, tmp_path):
     image_info = project_structure[2]
     im_id = image_info[0][1]
 
@@ -579,11 +722,24 @@ def test_get_file_annotation_ids(conn, project_structure, tmp_path):
     ns2 = "different namespace"
     file_ann_id4 = ezomero.post_file_annotation(conn, "Image", im_id,
                                                 file_ann, ns2)
+
+    # Test sanitizing inputs
+    with pytest.raises(TypeError):
+        _ = ezomero.get_file_annotation_ids(conn, 10, 10)
+    with pytest.raises(TypeError):
+        _ = ezomero.get_file_annotation_ids(conn, 'Image', '10')
+    with pytest.raises(TypeError):
+        _ = ezomero.get_file_annotation_ids(conn, 'Image', 10, ns=10)
+    with pytest.raises(TypeError):
+        _ = ezomero.get_file_annotation(conn, '10')
     file_ann_ids = ezomero.get_file_annotation_ids(conn, "Image", im_id, ns=ns)
 
     good_ids = [file_ann_id, file_ann_id2, file_ann_id3]
     assert all([mid in file_ann_ids for mid in good_ids])
     assert file_ann_id4 not in file_ann_ids
+    fann = ezomero.get_file_annotation(conn, file_ann_ids[0],
+                                       folder_path='/tmp/')
+    assert fann == '/tmp/hello.txt'
     conn.deleteObjects("Annotation",
                        [file_ann_id, file_ann_id2, file_ann_id3, file_ann_id4],
                        deleteAnns=True,
@@ -618,6 +774,10 @@ def test_get_group_id(conn):
     assert gid == 1
     gid = ezomero.get_group_id(conn, 'guest')
     assert gid == 2
+    with pytest.raises(TypeError):
+        _ = ezomero.get_group_id(conn, 10)
+    gid = ezomero.get_group_id(conn, 'fake_group')
+    assert gid is None
 
 
 def test_get_user_id(conn, users_groups):
@@ -631,6 +791,10 @@ def test_get_user_id(conn, users_groups):
     # test invalid input
     user = ezomero.get_user_id(conn, "9999999999")
     assert user is None
+
+    # test sanitizing input
+    with pytest.raises(TypeError):
+        _ = ezomero.get_user_id(conn, 10)
 
     # test cross-group
     username = users_groups[1][0][0]  # test_user1
@@ -698,11 +862,12 @@ def test_get_shape_and_get_shape_ids(conn, project_structure,
                               stroke_width=roi_fixture['stroke_width'])
     shape_ids = ezomero.get_shape_ids(conn, roi_id)
     assert len(shape_ids) == len(roi_fixture['shapes'])
-    shape, fill, stroke, width = ezomero.get_shape(conn, shape_ids[0])
-    assert hasattr(shape, 'label')
-    assert fill == roi_fixture['fill_color']
-    assert stroke == roi_fixture['stroke_color']
-    assert width == roi_fixture['stroke_width']
+    for i in range(len(shape_ids)):
+        shape, fill, stroke, width = ezomero.get_shape(conn, shape_ids[i])
+        assert hasattr(shape, 'label')
+        assert fill == roi_fixture['fill_color']
+        assert stroke == roi_fixture['stroke_color']
+        assert width == roi_fixture['stroke_width']
 
     # Test getting from an invalid cross-group
     username = users_groups[1][2][0]  # test_user3
@@ -722,6 +887,22 @@ def test_get_shape_and_get_shape_ids(conn, project_structure,
                        deleteChildren=True, wait=True)
 
 
+def test_get_original_filepaths(conn, project_structure):
+    # we should probably build a way to test this...
+    image_info = project_structure[2]
+    im_id = image_info[0][1]
+
+    # test sanitizing input
+    with pytest.raises(TypeError):
+        _ = ezomero.get_original_filepaths(conn, '10')
+    with pytest.raises(ValueError):
+        _ = ezomero.get_original_filepaths(conn, 10, fpath=10)
+
+    opath = ezomero.get_original_filepaths(conn, im_id)
+    assert opath == []
+    opath = ezomero.get_original_filepaths(conn, im_id, fpath='client')
+    assert opath == []
+
 # Test puts
 ###########
 
@@ -730,6 +911,13 @@ def test_put_map_annotation(conn, project_structure, users_groups):
     kv = {"key1": "value1",
           "key2": "value2"}
     ns = "jax.org/omeroutils/tests/v0"
+
+    # test sanitized input
+    with pytest.raises(TypeError):
+        _ = ezomero.put_map_annotation(conn, '10', kv)
+    with pytest.raises(ValueError):
+        _ = ezomero.put_map_annotation(conn, 99999999, kv)
+
     image_info = project_structure[2]
     im_id = image_info[0][1]
     map_ann_id = ezomero.post_map_annotation(conn, "Image", im_id, kv, ns)

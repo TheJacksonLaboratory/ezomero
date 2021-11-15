@@ -1,4 +1,6 @@
+import pytest
 import ezomero
+from pathlib import Path
 
 
 def test_connect_params(omero_params, tmp_path, monkeypatch):
@@ -43,12 +45,28 @@ def test_connect_env(omero_params, tmp_path, monkeypatch):
                 "omero_host = fail\n"
                 "omero_port = 9999\n"
                 "omero_secure = True\n")
-    conf_path = tmp_path / '.ezomero'
+
+    # test sanitizing input
+    with pytest.raises(TypeError):
+        conn = ezomero.connect(config_path=100)
+    with pytest.raises(ValueError):
+        conn = ezomero.connect(group='', secure='dunno')
+
+    conf_path = Path.home() / '.ezomero'
     conf_path.write_text(conf_txt)
 
+    # test no input to config path defaulting to home
+    conn = ezomero.connect(group='')
+    assert conn.getUser().getName() == user
+    conn.close()
+
+    conf_path = tmp_path / '.ezomero'
+    conf_path.write_text(conf_txt)
     conn = ezomero.connect(group='', config_path=str(tmp_path))
     assert conn.getUser().getName() == user
     conn.close()
+    conn = ezomero.connect(user='fake_user')
+    assert conn is None
 
 
 def test_connect_config(omero_params, tmp_path):

@@ -143,7 +143,7 @@ def post_image(conn, image, image_name, description=None, dataset_id=None,
 
     if dataset_id is not None:
         if type(dataset_id) is not int:
-            raise ValueError("Dataset ID must be an integer")
+            raise TypeError("Dataset ID must be an integer")
         dataset = conn.getObject("Dataset", dataset_id)
         if dataset is not None:
             ret = set_group(conn, dataset.getDetails().group.id.val)
@@ -477,10 +477,10 @@ def post_roi(conn, image_id, shapes, name=None, description=None,
 
     if type(image_id) is not int:
         raise TypeError('Image ID must be an integer')
-    
+
     if not isinstance(shapes, list):
         raise TypeError('Shapes must be a list')
-    
+
     if not isinstance(fill_color, tuple):
         raise TypeError('Fill color must be a tuple')
     if len(fill_color) != 4:
@@ -493,7 +493,7 @@ def post_roi(conn, image_id, shapes, name=None, description=None,
 
     if type(stroke_width) is not int:
         raise TypeError('Stroke width must be an integer')
-    
+
     roi = RoiI()
     if name is not None:
         roi.setName(rstring(name))
