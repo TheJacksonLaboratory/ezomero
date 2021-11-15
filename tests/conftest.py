@@ -1,5 +1,6 @@
 import os
 import pytest
+import subprocess
 import numpy as np
 from datetime import datetime
 import ezomero
@@ -13,6 +14,7 @@ from omero.plugins.sessions import SessionsControl
 from omero.plugins.user import UserControl
 from omero.plugins.group import GroupControl
 from omero.rtypes import rint
+
 
 # Settings for OMERO
 DEFAULT_OMERO_USER = "root"
@@ -169,16 +171,16 @@ def pyramid_fixture(conn, omero_params):
     user = omero_params[0]
     host = omero_params[2]
     port = str(omero_params[3])
-    cli = CLI()
-    cli.register('sessions', SessionsControl, 'test')
-    cli.register('user', UserControl, 'test')
-    cli.register('group', GroupControl, 'test')
-    cli.invoke(['import',
-                'data/test_pyramid.ome.tiff'
+    imp_cmd = ['omero', 'import', 'tests/data/test_pyramid.ome.tif',
                 '-k', session_uuid,
                 '-u', user,
                 '-s', host,
-                '-p', port])
+                '-p', port]
+    process = subprocess.Popen(imp_cmd,
+                               stdout=subprocess.PIPE,
+                               stderr=subprocess.PIPE)
+    stdoutval, stderrval = process.communicate()
+
 
 @pytest.fixture(scope='session')
 def roi_fixture():

@@ -585,9 +585,9 @@ def test_get_image_ids(conn, project_structure, screen_structure,
     dataset_info = project_structure[1]
     image_info = project_structure[2]
 
-    # Test orphans (we should create orphans!)
+    # Test orphans (should return at least 1 pyramid)
     orphan_ids = ezomero.get_image_ids(conn)
-    assert len(orphan_ids) == 1
+    assert len(orphan_ids) >= 1
 
     # Based on project ID (also tests cross-group)
     proj3_id = project_info[3][1]
