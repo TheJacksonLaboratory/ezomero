@@ -579,7 +579,7 @@ def test_get_tag_and_tag_ids(conn, project_structure):
 
 
 def test_get_image_ids(conn, project_structure, screen_structure,
-                       users_groups):
+                       users_groups, pyramid_fixture):
 
     project_info = project_structure[0]
     dataset_info = project_structure[1]
@@ -587,7 +587,7 @@ def test_get_image_ids(conn, project_structure, screen_structure,
 
     # Test orphans (we should create orphans!)
     orphan_ids = ezomero.get_image_ids(conn)
-    assert orphan_ids == []
+    assert len(orphan_ids) == 1
 
     # Based on project ID (also tests cross-group)
     proj3_id = project_info[3][1]
@@ -902,6 +902,13 @@ def test_get_original_filepaths(conn, project_structure):
     assert opath == []
     opath = ezomero.get_original_filepaths(conn, im_id, fpath='client')
     assert opath == []
+
+
+def test_get_pyramid_levels(conn, pyramid_fixture):
+    im_id = ezomero.get_image_ids(conn)[-1]
+    lvls = ezomero.get_pyramid_levels(conn, im_id)
+    assert lvls == 3
+
 
 # Test puts
 ###########

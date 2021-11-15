@@ -815,6 +815,39 @@ def get_original_filepaths(conn, image_id, fpath='repo', across_groups=True):
 
     return results
 
+@do_across_groups
+def get_pyramid_levels(conn, image_id, across_groups=True):
+    """Get number of pyramid levels associated with an Image
+
+    Parameters
+    ----------
+    conn : ``omero.gateway.BlitzGateway`` object
+        OMERO connection.
+    image_id : int
+        ID of ``Image``.
+    across_groups : bool, optional
+        Defines cross-group behavior of function - set to
+        ``False`` to disable it.
+
+    Returns
+    -------
+    levels : int
+        Number of pyramidal levels available for this image.
+
+    Examples
+    --------
+    # Return pyramid levels associated to an image:
+
+    >>> lvls = get_pyramid_levels(conn, 42)
+    3
+
+    """
+    image = conn.getObject("image", image_id)
+    pix = image._conn.c.sf.createRawPixelsStore()
+    pid = image.getPixelsId()
+    pix.setPixelsId(pid, False)
+    level_list = pix.getResolutionDescriptions()
+    return len(level_list)
 
 @do_across_groups
 def get_shape(conn, shape_id, across_groups=True):

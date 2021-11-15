@@ -163,6 +163,22 @@ def image_fixture():
     test_image[101:200, 101:201, :, 2, :] = 255
     return test_image
 
+@pytest.fixture(scope='session')
+def pyramid_fixture(conn, omero_params):
+    session_uuid = conn.getSession().getUuid().val
+    user = omero_params[0]
+    host = omero_params[2]
+    port = str(omero_params[3])
+    cli = CLI()
+    cli.register('sessions', SessionsControl, 'test')
+    cli.register('user', UserControl, 'test')
+    cli.register('group', GroupControl, 'test')
+    cli.invoke(['import',
+                'data/test_pyramid.ome.tiff'
+                '-k', session_uuid,
+                '-u', user,
+                '-s', host,
+                '-p', port])
 
 @pytest.fixture(scope='session')
 def roi_fixture():
