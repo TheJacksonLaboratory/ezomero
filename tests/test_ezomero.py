@@ -907,7 +907,8 @@ def test_get_original_filepaths(conn, project_structure):
 def test_get_pyramid_levels(conn, pyramid_fixture):
     im_id = ezomero.get_image_ids(conn)[-1]
     lvls = ezomero.get_pyramid_levels(conn, im_id)
-    assert lvls == 3
+    assert len(lvls) == 3
+    assert lvls[0] == (16,16)
 
 
 # Test puts
