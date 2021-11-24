@@ -7,13 +7,15 @@ from omero import ApiUsageException
 from omero.model import MapAnnotationI, TagAnnotationI
 from omero.rtypes import rint, rlong
 from omero.sys import Parameters
+from omero.model import enums as omero_enums
 from .rois import Point, Line, Rectangle, Ellipse, Polygon
 
 
 # gets
 @do_across_groups
 def get_image(conn, image_id, no_pixels=False, start_coords=None,
-              axis_lengths=None, xyzct=False, pad=False, across_groups=True):
+              axis_lengths=None, xyzct=False, pad=False,
+              pyramid_level=None, across_groups=True):
     """Get omero image object along with pixels as a numpy array.
 
     Parameters
@@ -40,6 +42,11 @@ def get_image(conn, image_id, no_pixels=False, start_coords=None,
         If `axis_lengths` values would result in out-of-bounds indices, pad
         pixel array with zeros. Otherwise, such an operation will raise an
         exception. Ignored if `no_pixels` is True.
+    pyramid_level : int, optional
+        If image has multiple pyramid levels and this argument is set, pixels
+        are returned at the chosen resolution level, and all other arguments
+        apply to that level as well. We follow the usual convention of `0` as
+        full-resolution.
     across_groups : bool, optional
         Defines cross-group behavior of function - set to
         ``False`` to disable it.
@@ -93,6 +100,10 @@ def get_image(conn, image_id, no_pixels=False, start_coords=None,
     if type(image_id) is not int:
         raise TypeError('Image ID must be an integer')
 
+    if pyramid_level is not None:
+        if type(pyramid_level) is not int:
+            raise TypeError('pyramid_level must be an int')
+
     pixel_view = None
     image = conn.getObject('Image', image_id)
     if image is None:
@@ -107,69 +118,167 @@ def get_image(conn, image_id, no_pixels=False, start_coords=None,
     pixels_dtype = image.getPixelsType()
     orig_sizes = [size_x, size_y, size_z, size_c, size_t]
 
-    if start_coords is None:
-        start_coords = (0, 0, 0, 0, 0)
-
-    if axis_lengths is None:
-        axis_lengths = (orig_sizes[0] - start_coords[0],  # X
-                        orig_sizes[1] - start_coords[1],  # Y
-                        orig_sizes[2] - start_coords[2],  # Z
-                        orig_sizes[3] - start_coords[3],  # C
-                        orig_sizes[4] - start_coords[4])  # T
-
     if no_pixels is False:
-        primary_pixels = image.getPrimaryPixels()
-        reordered_sizes = [axis_lengths[4],
-                           axis_lengths[2],
-                           axis_lengths[1],
-                           axis_lengths[0],
-                           axis_lengths[3]]
-        pixels = np.zeros(reordered_sizes, dtype=pixels_dtype)
+
+        # check if we are getting full-res or pyramid level
+        if pyramid_level is None or pyramid_level == 0:
+            # full-res image - can use original sizes
+            if start_coords is None:
+                start_coords = (0, 0, 0, 0, 0)
+
+            if axis_lengths is None:
+                axis_lengths = (orig_sizes[0] - start_coords[0],  # X
+                                orig_sizes[1] - start_coords[1],  # Y
+                                orig_sizes[2] - start_coords[2],  # Z
+                                orig_sizes[3] - start_coords[3],  # C
+                                orig_sizes[4] - start_coords[4])  # T
+
+            primary_pixels = image.getPrimaryPixels()
+            reordered_sizes = [axis_lengths[4],
+                               axis_lengths[2],
+                               axis_lengths[1],
+                               axis_lengths[0],
+                               axis_lengths[3]]
+            pixels = np.zeros(reordered_sizes, dtype=pixels_dtype)
+
+            # get pixels
 
         # check here if you need to trim the axis_lengths, trim if necessary
-        overhangs = [(al + sc) - osz
-                     for al, sc, osz
-                     in zip(axis_lengths,
-                            start_coords,
-                            orig_sizes)]
-        overhangs = [np.max((0, o)) for o in overhangs]
-        if any([x > 0 for x in overhangs]) & (pad is False):
-            raise IndexError('Attempting to access out-of-bounds pixel. '
-                             'Either adjust axis_lengths or use pad=True')
+            overhangs = [(al + sc) - osz
+                         for al, sc, osz
+                         in zip(axis_lengths,
+                                start_coords,
+                                orig_sizes)]
+            overhangs = [np.max((0, o)) for o in overhangs]
+            if any([x > 0 for x in overhangs]) & (pad is False):
+                raise IndexError('Attempting to access out-of-bounds pixel. '
+                                 'Either adjust axis_lengths or use pad=True')
 
-        axis_lengths = [al - oh for al, oh in zip(axis_lengths, overhangs)]
+            axis_lengths = [al - oh for al, oh in zip(axis_lengths, overhangs)]
+            zct_list = []
+            for z in range(start_coords[2],
+                           start_coords[2] + axis_lengths[2]):
+                for c in range(start_coords[3],
+                               start_coords[3] + axis_lengths[3]):
+                    for t in range(start_coords[4],
+                                   start_coords[4] + axis_lengths[4]):
+                        zct_list.append((z, c, t))
 
-        # get pixels
-        zct_list = []
-        for z in range(start_coords[2],
-                       start_coords[2] + axis_lengths[2]):
-            for c in range(start_coords[3],
-                           start_coords[3] + axis_lengths[3]):
-                for t in range(start_coords[4],
-                               start_coords[4] + axis_lengths[4]):
-                    zct_list.append((z, c, t))
+            if reordered_sizes == [size_t, size_z, size_y, size_x, size_c]:
+                plane_gen = primary_pixels.getPlanes(zct_list)
+            else:
+                tile = (start_coords[0], start_coords[1],
+                        axis_lengths[0], axis_lengths[1])
+                zct_list = [list(zct) for zct in zct_list]
+                for zct in zct_list:
+                    zct.append(tile)
+                plane_gen = primary_pixels.getTiles(zct_list)
 
-        if reordered_sizes == [size_t, size_z, size_y, size_x, size_c]:
-            plane_gen = primary_pixels.getPlanes(zct_list)
+            for i, plane in enumerate(plane_gen):
+                zct_coords = zct_list[i]
+                z = zct_coords[0] - start_coords[2]
+                c = zct_coords[1] - start_coords[3]
+                t = zct_coords[2] - start_coords[4]
+                pixels[t, z, :axis_lengths[1], :axis_lengths[0], c] = plane
+
+            if xyzct is True:
+                pixel_view = np.moveaxis(pixels,
+                                         [0, 1, 2, 3, 4],
+                                         [4, 2, 1, 0, 3])
+            else:
+                pixel_view = pixels
+
         else:
-            tile = (start_coords[0], start_coords[1],
-                    axis_lengths[0], axis_lengths[1])
-            zct_list = [list(zct) for zct in zct_list]
-            for zct in zct_list:
-                zct.append(tile)
-            plane_gen = primary_pixels.getTiles(zct_list)
+            # get specific pyramid level
+            PIXEL_TYPES = {
+                            omero_enums.PixelsTypeint8: np.int8,
+                            omero_enums.PixelsTypeuint8: np.uint8,
+                            omero_enums.PixelsTypeint16: np.int16,
+                            omero_enums.PixelsTypeuint16: np.uint16,
+                            omero_enums.PixelsTypeint32: np.int32,
+                            omero_enums.PixelsTypeuint32: np.uint32,
+                            omero_enums.PixelsTypefloat: np.float32,
+                            omero_enums.PixelsTypedouble: np.float64,
+                          }
+            pix = image._conn.c.sf.createRawPixelsStore()
+            pid = image.getPixelsId()
+            pix.setPixelsId(pid, False)
+            res_levels = [(r.sizeX, r.sizeY)
+                          for r in pix.getResolutionDescriptions()]
+            pix.setResolutionLevel((len(res_levels) - pyramid_level - 1))
+            size_w, size_h = res_levels[pyramid_level]
+            orig_sizes = [size_w, size_h, size_z, size_c, size_t]
+            if start_coords is None:
+                start_coords = (0, 0, 0, 0, 0)
 
-        for i, plane in enumerate(plane_gen):
-            zct_coords = zct_list[i]
-            z = zct_coords[0] - start_coords[2]
-            c = zct_coords[1] - start_coords[3]
-            t = zct_coords[2] - start_coords[4]
-            pixels[t, z, :axis_lengths[1], :axis_lengths[0], c] = plane
+            if axis_lengths is None:
+                axis_lengths = (size_w - start_coords[0],  # X
+                                size_h - start_coords[1],  # Y
+                                orig_sizes[2] - start_coords[2],  # Z
+                                orig_sizes[3] - start_coords[3],  # C
+                                orig_sizes[4] - start_coords[4])  # T
+            primary_pixels = image.getPrimaryPixels()
+            reordered_sizes = [axis_lengths[4],
+                               axis_lengths[2],
+                               axis_lengths[1],
+                               axis_lengths[0],
+                               axis_lengths[3]]
+            pixels = np.zeros(reordered_sizes, dtype=pixels_dtype)
+    # check here if you need to trim the axis_lengths, trim if necessary
+            overhangs = [(al + sc) - osz
+                         for al, sc, osz
+                         in zip(axis_lengths,
+                                start_coords,
+                                orig_sizes)]
+            overhangs = [np.max((0, o)) for o in overhangs]
+            if any([x > 0 for x in overhangs]) & (pad is False):
+                raise IndexError('Attempting to access out-of-bounds pixel. '
+                                 'Either adjust axis_lengths or use pad=True')
+            axis_lengths = [al - oh for al, oh in zip(axis_lengths, overhangs)]
+            # get pixels
+            zct_list = []
+            for z in range(start_coords[2],
+                           start_coords[2] + axis_lengths[2]):
+                for c in range(start_coords[3],
+                               start_coords[3] + axis_lengths[3]):
+                    for t in range(start_coords[4],
+                                   start_coords[4] + axis_lengths[4]):
+                        zct_list.append((z, c, t))
 
-        if xyzct is True:
-            pixel_view = np.moveaxis(pixels, [0, 1, 2, 3, 4], [4, 2, 1, 0, 3])
-        else:
-            pixel_view = pixels
+            dtype = PIXEL_TYPES.get(primary_pixels.getPixelsType().value, None)
+            if reordered_sizes == [size_t, size_z, size_h, size_w, size_c]:
+                # getting whole plane
+                plane_gen = []
+                for zct in zct_list:
+                    byte_plane = pix.getPlane(*zct)
+                    plane = np.frombuffer(byte_plane, dtype=dtype)
+                    plane = plane.reshape((size_h, size_w))
+                    plane_gen.append(plane)
+
+            else:
+                plane_gen = []
+                tile = (start_coords[0], start_coords[1],
+                        axis_lengths[0], axis_lengths[1])
+                for zct in zct_list:
+                    this_tile = pix.getTile(*zct, *tile)
+                    this_tile = np.frombuffer(this_tile, dtype=dtype)
+                    this_tile = this_tile.reshape((tile[3], tile[2]))
+                    plane_gen.append(this_tile)
+
+            for i, plane in enumerate(plane_gen):
+                zct_coords = zct_list[i]
+                z = zct_coords[0] - start_coords[2]
+                c = zct_coords[1] - start_coords[3]
+                t = zct_coords[2] - start_coords[4]
+                pixels[t, z, :axis_lengths[1], :axis_lengths[0], c] = plane
+
+            if xyzct is True:
+                pixel_view = np.moveaxis(pixels,
+                                         [0, 1, 2, 3, 4],
+                                         [4, 2, 1, 0, 3])
+            else:
+                pixel_view = pixels
+            pix.close()
     return (image, pixel_view)
 
 
@@ -814,6 +923,43 @@ def get_original_filepaths(conn, image_id, fpath='repo', across_groups=True):
         raise ValueError("Parameter fpath must be 'client' or 'repo'")
 
     return results
+
+
+@do_across_groups
+def get_pyramid_levels(conn, image_id, across_groups=True):
+    """Get number of pyramid levels associated with an Image
+
+    Parameters
+    ----------
+    conn : ``omero.gateway.BlitzGateway`` object
+        OMERO connection.
+    image_id : int
+        ID of ``Image``.
+    across_groups : bool, optional
+        Defines cross-group behavior of function - set to
+        ``False`` to disable it.
+
+    Returns
+    -------
+    levels : list of tuples
+        Pyramidal levels available for this image, with number of
+        pixels for X and Y axes.
+
+    Examples
+    --------
+    # Return pyramid levels associated to an image:
+
+    >>> lvls = get_pyramid_levels(conn, 42)
+    [(2048, 1600), (1024, 800), (512, 400), (256, 200)]
+
+    """
+    image = conn.getObject("image", image_id)
+    pix = image._conn.c.sf.createRawPixelsStore()
+    pid = image.getPixelsId()
+    pix.setPixelsId(pid, False)
+    levels = [(r.sizeX, r.sizeY) for r in pix.getResolutionDescriptions()]
+    pix.close()
+    return levels
 
 
 @do_across_groups

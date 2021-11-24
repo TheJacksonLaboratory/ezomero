@@ -1,5 +1,5 @@
-name: Run Tests
-on: [push, pull_request]
+name: Run Tests on push
+on: push
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -34,3 +34,4 @@ jobs:
           git add coverage.svg
           git commit --allow-empty -am "Automated updating coverage badge"
           git push
+
