@@ -935,7 +935,7 @@ def test_get_pyramid_levels(conn, pyramid_fixture):
     im_id = ezomero.get_image_ids(conn)[-1]
     lvls = ezomero.get_pyramid_levels(conn, im_id)
     assert len(lvls) == 3
-    assert lvls[0] == (16,16)
+    assert lvls[0] == (16, 16)
 
 
 # Test puts
