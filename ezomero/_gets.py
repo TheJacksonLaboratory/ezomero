@@ -156,7 +156,6 @@ def get_image(conn, image_id, no_pixels=False, start_coords=None,
                                 'Either adjust axis_lengths or use pad=True')
 
             axis_lengths = [al - oh for al, oh in zip(axis_lengths, overhangs)]
-
             zct_list = []
             for z in range(start_coords[2],
                         start_coords[2] + axis_lengths[2]):
@@ -206,7 +205,7 @@ def get_image(conn, image_id, no_pixels=False, start_coords=None,
             res_levels = [(r.sizeX, r.sizeY) for r in pix.getResolutionDescriptions()]
             pix.setResolutionLevel((len(res_levels) - pyramid_level - 1))
             size_w, size_h = res_levels[pyramid_level]
-
+            orig_sizes = [size_w, size_h, size_z, size_c, size_t]
             if start_coords is None:
                 start_coords = (0, 0, 0, 0, 0)
 
@@ -216,7 +215,6 @@ def get_image(conn, image_id, no_pixels=False, start_coords=None,
                                 orig_sizes[2] - start_coords[2],  # Z
                                 orig_sizes[3] - start_coords[3],  # C
                                 orig_sizes[4] - start_coords[4])  # T
-
             primary_pixels = image.getPrimaryPixels()
             reordered_sizes = [axis_lengths[4],
                             axis_lengths[2],
@@ -235,7 +233,6 @@ def get_image(conn, image_id, no_pixels=False, start_coords=None,
             if any([x > 0 for x in overhangs]) & (pad is False):
                 raise IndexError('Attempting to access out-of-bounds pixel. '
                                 'Either adjust axis_lengths or use pad=True')
-
             axis_lengths = [al - oh for al, oh in zip(axis_lengths, overhangs)]
             # get pixels
             zct_list = []

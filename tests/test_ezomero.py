@@ -453,9 +453,10 @@ def test_post_screen_type(conn):
 # Test gets
 ###########
 
-def test_get_image(conn, project_structure, users_groups):
+def test_get_image(conn, project_structure, users_groups, pyramid_fixture):
     image_info = project_structure[2]
     im_id = image_info[0][1]
+    pyr_id = ezomero.get_image_ids(conn)[-1]
     # test input sanitizing
     with pytest.raises(TypeError):
         _, _ = ezomero.get_image(conn, im_id, start_coords=1)
@@ -471,10 +472,18 @@ def test_get_image(conn, project_structure, users_groups):
         _, _ = ezomero.get_image(conn, None)
     with pytest.raises(TypeError):
         _, _ = ezomero.get_image(conn, '1')
+    with pytest.raises(TypeError):
+        _, _ = ezomero.get_image(conn, im_id, pyramid_level='1')
+
     # test default
     im, im_arr = ezomero.get_image(conn, im_id)
     assert im.getId() == im_id
     assert im_arr.shape == (1, 20, 201, 200, 3)
+    assert im.getPixelsType() == im_arr.dtype
+    im, im_arr = ezomero.get_image(conn, pyr_id,
+                                   pyramid_level=2)
+    assert im.getId() == pyr_id
+    assert im_arr.shape == (1, 1, 4, 4, 1)
     assert im.getPixelsType() == im_arr.dtype
 
     # test non-existent id
@@ -518,6 +527,9 @@ def test_get_image(conn, project_structure, users_groups):
     # test xyzct
     im, im_arr = ezomero.get_image(conn, im_id, xyzct=True)
     assert im_arr.shape == (200, 201, 20, 3, 1)
+    im, im_arr = ezomero.get_image(conn, pyr_id, xyzct=True,
+                                   pyramid_level=1)
+    assert im_arr.shape == (8, 8, 1, 1, 1)
 
     # test no pixels
     im, im_arr = ezomero.get_image(conn, im_id, no_pixels=True)
@@ -529,6 +541,11 @@ def test_get_image(conn, project_structure, users_groups):
                                        start_coords=(195, 195, 18, 0, 0),
                                        axis_lengths=(10, 10, 3, 4, 3),
                                        pad=False)
+    with pytest.raises(IndexError):
+        im, im_arr = ezomero.get_image(conn, pyr_id,
+                                       start_coords=(2, 2, 0, 0, 0),
+                                       axis_lengths=(10, 10, 3, 4, 3),
+                                       pad=False, pyramid_level=1)
 
     # test crop
     im, im_arr = ezomero.get_image(conn, im_id,
@@ -536,6 +553,11 @@ def test_get_image(conn, project_structure, users_groups):
                                    axis_lengths=(10, 10, 3, 3, 1))
     assert im_arr.shape == (1, 3, 10, 10, 3)
     assert np.allclose(im_arr[0, 0, 0, 0, :], [0, 0, 255])
+    im, im_arr = ezomero.get_image(conn, pyr_id,
+                                   start_coords=(1, 1, 0, 0, 0),
+                                   axis_lengths=(5, 5, 1, 1, 1),
+                                   pyramid_level=1)
+    assert im_arr.shape == (1, 1, 5, 5, 1)
 
     # test crop with padding
     im, im_arr = ezomero.get_image(conn, im_id,
@@ -543,6 +565,11 @@ def test_get_image(conn, project_structure, users_groups):
                                    axis_lengths=(10, 11, 3, 4, 3),
                                    pad=True)
     assert im_arr.shape == (3, 3, 11, 10, 4)
+    im, im_arr = ezomero.get_image(conn, pyr_id,
+                                   start_coords=(1, 1, 0, 0, 0),
+                                   axis_lengths=(8, 10, 1, 2, 1),
+                                   pad=True, pyramid_level=1)
+    assert im_arr.shape == (1, 1, 10, 8, 2)
 
 
 def test_get_tag_and_tag_ids(conn, project_structure):
