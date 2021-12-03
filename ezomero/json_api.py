@@ -1,7 +1,8 @@
-from multiprocessing.sharedctypes import Value
 import requests
 import os
 import configparser
+import numpy as np
+from numbers import Number
 from getpass import getpass
 from pathlib import Path
 from PIL import Image
@@ -169,13 +170,13 @@ def get_rendered_jpeg(session, base_url, img_id, scale):
 
     Parameters
     ----------
-    session : ``requests`` Session object or None
+    session : ``requests`` Session object
         ``requests`` session that has been initialized with login parameters.
-    base_url : str or None
+    base_url : str
         Base URL for further requests, retrieved via JSON API request
     img_id : int
         ID of ``Image``.
-    scale : float
+    scale : float or int
         Scaling factor for the returned JPEG. ``1`` returns original size,
         ``2`` scales each dimension down by half, and so on.
 
@@ -191,7 +192,14 @@ def get_rendered_jpeg(session, base_url, img_id, scale):
     >>> jpeg_array = get_rendered_jpeg(session, base_url, 314, 1)
 
     """
-    import numpy as np
+    if not isinstance(session, requests.sessions.Session):
+        raise TypeError('session must is a Requests session object')
+    if type(base_url) is not str:
+        raise TypeError('base_url must be a string')
+    if type(img_id) is not int:
+        raise TypeError('img_id must be an int')
+    if not isinstance(scale, Number):
+        raise TypeError('scale must be a number')
     # just some magical code to get the correct address from the json api session and image id
     r = session.get(base_url)
     host = base_url.split("/api")[0]
@@ -208,7 +216,7 @@ def get_rendered_jpeg(session, base_url, img_id, scale):
     jpeg = session.get(img_address, stream=True)
 
     if jpeg.status_code != 200:
-        raise Exception("Received response {} with content: {}".format(jpeg.status_code, jpeg.content))
+        raise ValueError("Received response {} with content: {}".format(jpeg.status_code, jpeg.content))
 
     # using PIL and BytesIO to open the request content as an image
     i = Image.open(BytesIO(jpeg.content))
