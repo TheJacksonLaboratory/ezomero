@@ -1,10 +1,11 @@
 import pytest
+import os
 import ezomero
 from pathlib import Path
 
 
 def test_connect_params(omero_params, tmp_path, monkeypatch):
-    user, password, host, port, secure = omero_params
+    user, password, host, web_host, port, secure = omero_params
 
     # params should override environment variables
     monkeypatch.setenv("OMERO_USER", 'fail')
@@ -31,7 +32,7 @@ def test_connect_params(omero_params, tmp_path, monkeypatch):
 
 
 def test_connect_env(omero_params, tmp_path, monkeypatch):
-    user, password, host, port, secure = omero_params
+    user, password, host, web_host, port, secure = omero_params
     monkeypatch.setenv("OMERO_USER", user)
     monkeypatch.setenv("OMERO_PASS", password)
     monkeypatch.setenv("OMERO_HOST", host)
@@ -70,7 +71,7 @@ def test_connect_env(omero_params, tmp_path, monkeypatch):
 
 
 def test_connect_config(omero_params, tmp_path):
-    user, password, host, port, secure = omero_params
+    user, password, host, web_host, port, secure = omero_params
     conf_txt = ("[DEFAULT]\n"
                 f"omero_user = {user}\n"
                 "omero_group = \n"
@@ -85,9 +86,20 @@ def test_connect_config(omero_params, tmp_path):
 
 
 def test_store_conn_params(omero_params, tmp_path):
-    user, password, host, port, secure = omero_params
+    user, password, host, web_host, port, secure = omero_params
     ezomero.store_connection_params(user=user, group="", host=host, port=port,
                                     secure=True, config_path=str(tmp_path))
     conn = ezomero.connect(password=password, config_path=str(tmp_path))
     assert conn.getUser().getName() == user
     conn.close()
+    with pytest.raises(KeyError):
+        _, _, _ = ezomero.json_api.create_json_session(password=password, 
+                                                       config_path=str(tmp_path))
+    os.remove(tmp_path / '.ezomero')
+    ezomero.store_connection_params(user=user, group="", host=host, port=port,
+                                    secure=True, web_host=web_host,
+                                    config_path=str(tmp_path))
+    login_rsp, session, base_url = \
+            ezomero.json_api.create_json_session(password=password, 
+                                                 config_path=str(tmp_path))
+    assert login_rsp['success']
