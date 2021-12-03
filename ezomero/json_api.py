@@ -10,7 +10,7 @@ from io import BytesIO
 
 
 def create_json_session(user=None, password=None, web_host=None,
-                           verify=True, config_path=None):
+                        verify=True, config_path=None):
     """Create an OMERO connection using the JSON API
 
     This function will create an OMERO connection by populating certain
@@ -45,7 +45,7 @@ def create_json_session(user=None, password=None, web_host=None,
     session : ``requests`` Session object or None
         The effective ``requests`` session that will be used for further
         requests to the JSON API.
-        
+
     base_url : str or None
         Base URL for further requests, retrieved via JSON API request
 
@@ -54,7 +54,7 @@ def create_json_session(user=None, password=None, web_host=None,
     The procedure for choosing parameters for initializing a JSON API session
     is as follows:
 
-    1) Any parameters given to `create_json_connection` will be used to 
+    1) Any parameters given to `create_json_connection` will be used to
        initialize a JSON session
 
     2) If a parameter is not given to this function, populate from variables
@@ -114,7 +114,7 @@ def create_json_session(user=None, password=None, web_host=None,
         web_host = os.environ.get("OMERO_WEB_HOST", web_host)
     if web_host is None:
         web_host = input('Enter host: ')
-    
+
     session = requests.Session()
     # Start by getting supported versions from the base url...
     api_url = '%s/api/' % web_host
@@ -158,7 +158,7 @@ def create_json_session(user=None, password=None, web_host=None,
     login_rsp = r.json()
     assert r.status_code == 200
     assert login_rsp['success']
-    
+
     # Can get our 'default' group
 
     return login_rsp, session, base_url
@@ -183,7 +183,7 @@ def get_rendered_jpeg(session, base_url, img_id, scale):
     Returns
     -------
     pixels : ndarray
-        Array containing pixel values from the rendered JPEG of the OMERO image. 
+        Array containing pixel values from rendered JPEG of the OMERO image.
 
     Examples
     --------
@@ -200,7 +200,7 @@ def get_rendered_jpeg(session, base_url, img_id, scale):
         raise TypeError('img_id must be an int')
     if not isinstance(scale, Number):
         raise TypeError('scale must be a number')
-    # just some magical code to get the correct address from the json api session and image id
+    # magical code for correct address from the json api session and image id
     r = session.get(base_url)
     host = base_url.split("/api")[0]
     # which lists a bunch of urls as starting points
@@ -209,14 +209,16 @@ def get_rendered_jpeg(session, base_url, img_id, scale):
     single_image_url = images_url+str(img_id)+"/"
     thisjson = session.get(single_image_url).json()
 
-    # calculate width to be requested based on metadata and the specified scale factor
+    # calculate width to be requested
     width = int(thisjson['data']['Pixels']['SizeX'])
     scaled = round(width/scale)
-    img_address = host+"/webgateway/render_birds_eye_view/"+str(img_id)+"/"+str(scaled)+"/"
+    img_address = host + "/webgateway/render_birds_eye_view/" + \
+        str(img_id)+"/"+str(scaled)+"/"
     jpeg = session.get(img_address, stream=True)
 
     if jpeg.status_code != 200:
-        raise ValueError("Received response {} with content: {}".format(jpeg.status_code, jpeg.content))
+        raise ValueError("Received response {} with content: \
+                         {}".format(jpeg.status_code, jpeg.content))
 
     # using PIL and BytesIO to open the request content as an image
     i = Image.open(BytesIO(jpeg.content))

@@ -307,7 +307,7 @@ def store_connection_params(user=None, group=None, host=None, port=None,
 
     web_host : boolean/str, optional
         Whether to save a web host address got JSON connections as well. If
-        `False`, will skip it; it `True`, will prompt user for it; if it is 
+        `False`, will skip it; it `True`, will prompt user for it; if it is
         a `str`, will save that value to `OMERO_WEB_HOST`.
 
     config_path : str, optional
