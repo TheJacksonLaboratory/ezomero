@@ -93,7 +93,7 @@ def users_groups(conn, omero_params):
     session_uuid = conn.getSession().getUuid().val
     user = omero_params[0]
     host = omero_params[2]
-    port = str(omero_params[3])
+    port = str(omero_params[4])
     cli = CLI()
     cli.register('sessions', SessionsControl, 'test')
     cli.register('user', UserControl, 'test')
@@ -177,7 +177,7 @@ def pyramid_fixture(conn, omero_params):
     session_uuid = conn.getSession().getUuid().val
     user = omero_params[0]
     host = omero_params[2]
-    port = str(omero_params[3])
+    port = str(omero_params[4])
     imp_cmd = ['omero', 'import', 'tests/data/test_pyramid.ome.tif',
                '-k', session_uuid,
                '-u', user,
