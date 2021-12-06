@@ -1,4 +1,5 @@
 import pytest
+import requests
 import numpy as np
 from ezomero import json_api, store_connection_params
 from ezomero import get_image_ids, get_image
@@ -57,7 +58,7 @@ def test_connect_env(omero_params, tmp_path, monkeypatch):
     login_rsp, session, base_url = json_api.create_json_session(
                                         config_path=str(tmp_path))
     assert login_rsp['success']
-    with pytest.raises(AssertionError):
+    with pytest.raises(requests.exceptions.HTTPError):
         login_rsp, session, base_url = json_api.create_json_session(
                                         user='fake_user')
 
@@ -100,6 +101,12 @@ def test_get_rendered_jpegs(omero_params, conn, pyramid_fixture):
         jpeg = json_api.get_rendered_jpeg(session, base_url, 'test', 1)
     with pytest.raises(TypeError):
         jpeg = json_api.get_rendered_jpeg(session, base_url, pyr_id, '1')
+
+    with pytest.raises(requests.exceptions.HTTPError):
+        jpeg = json_api.get_rendered_jpeg(session, base_url, 99999, 1)
+    with pytest.raises(requests.exceptions.ConnectionError):
+        jpeg = json_api.get_rendered_jpeg(session,
+                                          'http://messedupbaseurl', 99999, 1)
 
     jpeg = json_api.get_rendered_jpeg(session, base_url, pyr_id, 1)
     assert np.shape(pix)[2] == np.shape(jpeg)[0]  # xdim = xdim

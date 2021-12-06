@@ -156,7 +156,12 @@ def create_json_session(user=None, password=None, web_host=None,
 
     r = session.post(login_url, data=payload)
     login_rsp = r.json()
-    assert r.status_code == 200
+    try:
+        r.raise_for_status()
+    except requests.exceptions.HTTPError as e:
+        # Whoops it wasn't a 200
+        print("Error {}".format(e))
+        raise
     assert login_rsp['success']
 
     # Can get our 'default' group
@@ -202,23 +207,40 @@ def get_rendered_jpeg(session, base_url, img_id, scale):
         raise TypeError('scale must be a number')
     # magical code for correct address from the json api session and image id
     r = session.get(base_url)
+    try:
+        r.raise_for_status()
+    except requests.exceptions.ConnectionError as e:
+        # Whoops it wasn't a 200
+        print("Error {}: received response {} with content: \
+                         {}".format(e, r.status_code, r.content))
+        raise
     host = base_url.split("/api")[0]
     # which lists a bunch of urls as starting points
     urls = r.json()
     images_url = urls['url:images']
     single_image_url = images_url+str(img_id)+"/"
-    thisjson = session.get(single_image_url).json()
-
+    surl = session.get(single_image_url)
+    try:
+        surl.raise_for_status()
+    except requests.exceptions.HTTPError as e:
+        # Whoops it wasn't a 200
+        print("Error {}: received response {} \
+                         ".format(e, surl.status_code))
+        raise
     # calculate width to be requested
+    thisjson = surl.json()
     width = int(thisjson['data']['Pixels']['SizeX'])
     scaled = round(width/scale)
     img_address = host + "/webgateway/render_birds_eye_view/" + \
         str(img_id)+"/"+str(scaled)+"/"
     jpeg = session.get(img_address, stream=True)
-
-    if jpeg.status_code != 200:
-        raise ValueError("Received response {} with content: \
-                         {}".format(jpeg.status_code, jpeg.content))
+    try:
+        jpeg.raise_for_status()
+    except requests.exceptions.HTTPError as e:
+        # Whoops it wasn't a 200
+        print("Error {}: received response {} with content: \
+                         {}".format(e, jpeg.status_code, jpeg.content))
+        raise
 
     # using PIL and BytesIO to open the request content as an image
     i = Image.open(BytesIO(jpeg.content))
