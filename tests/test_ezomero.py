@@ -101,6 +101,11 @@ def test_post_image(conn, project_structure, users_groups, timestamp,
         _ = ezomero.post_image(conn, image_fixture, 10)
     with pytest.raises(TypeError):
         _ = ezomero.post_image(conn, image_fixture, 'test', dataset_id='10')
+    with pytest.raises(TypeError):
+        _ = ezomero.post_image(conn, image_fixture, 'test',dim_order=10)
+    with pytest.raises(ValueError):
+        _ = ezomero.post_image(conn, image_fixture, 'test',dim_order='hyzcb')
+
     # Post image in dataset
     image_name = 'test_post_image_' + timestamp
     im_id = ezomero.post_image(conn, image_fixture, image_name,
@@ -474,6 +479,10 @@ def test_get_image(conn, project_structure, users_groups, pyramid_fixture):
         _, _ = ezomero.get_image(conn, '1')
     with pytest.raises(TypeError):
         _, _ = ezomero.get_image(conn, im_id, pyramid_level='1')
+    with pytest.raises(TypeError):
+        _, _ = ezomero.get_image(conn, im_id, dim_order=1)
+    with pytest.raises(ValueError):
+        _, _ = ezomero.get_image(conn, im_id, dim_order='abxyz')
 
     # test default
     im, im_arr = ezomero.get_image(conn, im_id)
@@ -530,6 +539,13 @@ def test_get_image(conn, project_structure, users_groups, pyramid_fixture):
     im, im_arr = ezomero.get_image(conn, pyr_id, xyzct=True,
                                    pyramid_level=1)
     assert im_arr.shape == (8, 8, 1, 1, 1)
+
+    # test dim_order
+    im, im_arr = ezomero.get_image(conn, im_id, dim_order='czxty')
+    assert im_arr.shape == (3, 20, 200, 1, 201)
+    im, im_arr = ezomero.get_image(conn, pyr_id, dim_order='zxcyt',
+                                   pyramid_level=1)
+    assert im_arr.shape == (1, 8, 1, 8, 1)
 
     # test no pixels
     im, im_arr = ezomero.get_image(conn, im_id, no_pixels=True)
