@@ -88,7 +88,7 @@ def post_dataset(conn, dataset_name, project_id=None, description=None,
 
 @do_across_groups
 def post_image(conn, image, image_name, description=None, dataset_id=None,
-               source_image_id=None, channel_list=None, 
+               source_image_id=None, channel_list=None,
                dim_order=None, across_groups=True):
     """Create a new OMERO image from numpy array.
 
@@ -149,7 +149,8 @@ def post_image(conn, image, image_name, description=None, dataset_id=None,
         if type(dim_order) is not str:
             raise TypeError('dim_order must be a str')
         if set(dim_order.lower()) != set('xyzct'):
-            raise ValueError('dim_order must contain letters xyzct exactly once')
+            raise ValueError('dim_order must contain letters xyzct \
+                             exactly once')
 
     if dataset_id is not None:
         if type(dataset_id) is not int:
@@ -168,11 +169,11 @@ def post_image(conn, image, image_name, description=None, dataset_id=None,
         set_group(conn, default_group)
         dataset = None
     if dim_order is not None:
-                order_dict = dict(zip(dim_order, range(5)))
-                order_vector = [order_dict[c.lower()] for c in 'xyzct']
-                image = np.moveaxis(image,
-                                         order_vector,
-                                         [0, 1, 2, 3, 4])
+        order_dict = dict(zip(dim_order, range(5)))
+        order_vector = [order_dict[c.lower()] for c in 'xyzct']
+        image = np.moveaxis(image,
+                            order_vector,
+                            [0, 1, 2, 3, 4])
     image_sizez = image.shape[2]
     image_sizec = image.shape[3]
     image_sizet = image.shape[4]

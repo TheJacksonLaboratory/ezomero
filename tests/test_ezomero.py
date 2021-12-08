@@ -102,9 +102,9 @@ def test_post_image(conn, project_structure, users_groups, timestamp,
     with pytest.raises(TypeError):
         _ = ezomero.post_image(conn, image_fixture, 'test', dataset_id='10')
     with pytest.raises(TypeError):
-        _ = ezomero.post_image(conn, image_fixture, 'test',dim_order=10)
+        _ = ezomero.post_image(conn, image_fixture, 'test', dim_order=10)
     with pytest.raises(ValueError):
-        _ = ezomero.post_image(conn, image_fixture, 'test',dim_order='hyzcb')
+        _ = ezomero.post_image(conn, image_fixture, 'test', dim_order='hyzcb')
 
     # Post image in dataset
     image_name = 'test_post_image_' + timestamp
@@ -112,6 +112,15 @@ def test_post_image(conn, project_structure, users_groups, timestamp,
                                description='This is an image',
                                dataset_id=did)
     assert conn.getObject("Image", im_id).getName() == image_name
+
+    image_name = 'test_post_image_' + timestamp
+    im_id_scr = ezomero.post_image(conn, image_fixture, image_name,
+                                   description='This is an image',
+                                   dataset_id=did, dim_order='czyxt')
+    im = conn.getObject("Image", im_id_scr)
+    assert im.getSizeX() == 3
+    assert im.getSizeY() == 20
+    assert im.getSizeC() == 200
 
     # Post orphaned image
     im_id2 = ezomero.post_image(conn, image_fixture, image_name)
@@ -164,8 +173,9 @@ def test_post_image(conn, project_structure, users_groups, timestamp,
     current_conn.close()
     assert im_id6 is None
 
-    conn.deleteObjects("Image", [im_id, im_id2, im_id4], deleteAnns=True,
-                       deleteChildren=True, wait=True)
+    conn.deleteObjects("Image", [im_id, im_id2, im_id4, im_id_scr],
+                       deleteAnns=True, deleteChildren=True,
+                       wait=True)
 
 
 def test_post_get_map_annotation(conn, project_structure, users_groups):

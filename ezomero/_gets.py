@@ -113,8 +113,9 @@ def get_image(conn, image_id, no_pixels=False, start_coords=None,
         if type(dim_order) is not str:
             raise TypeError('dim_order must be a str')
         if set(dim_order.lower()) != set('xyzct'):
-            raise ValueError('dim_order must contain letters xyzct exactly once')
-        
+            raise ValueError('dim_order must contain letters \
+                             xyzct exactly once')
+
     pixel_view = None
     image = conn.getObject('Image', image_id)
     if image is None:
@@ -199,10 +200,10 @@ def get_image(conn, image_id, no_pixels=False, start_coords=None,
                                          [0, 1, 2, 3, 4],
                                          order_vector)
             else:
-                if xyzct == True: 
+                if xyzct is True:
                     pixel_view = np.moveaxis(pixels,
-                                         [0, 1, 2, 3, 4],
-                                         [4, 2, 1, 0, 3])
+                                             [0, 1, 2, 3, 4],
+                                             [4, 2, 1, 0, 3])
                 else:
                     pixel_view = pixels
 
@@ -297,10 +298,10 @@ def get_image(conn, image_id, no_pixels=False, start_coords=None,
                                          [0, 1, 2, 3, 4],
                                          order_vector)
             else:
-                if xyzct == True: 
+                if xyzct is True:
                     pixel_view = np.moveaxis(pixels,
-                                         [0, 1, 2, 3, 4],
-                                         [4, 2, 1, 0, 3])
+                                             [0, 1, 2, 3, 4],
+                                             [4, 2, 1, 0, 3])
                 else:
                     pixel_view = pixels
             pix.close()
