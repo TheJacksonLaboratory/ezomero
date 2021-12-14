@@ -10,7 +10,8 @@ from io import BytesIO
 
 
 def create_json_session(user=None, password=None, web_host=None,
-                        verify=True, config_path=None):
+                        verify=True, server_name='omero',
+                        config_path=None):
     """Create an OMERO connection using the JSON API
 
     This function will create an OMERO connection by populating certain
@@ -31,6 +32,10 @@ def create_json_session(user=None, password=None, web_host=None,
 
     verify : boolean, optional
         Whether to verify SSL certificates when making requests.
+
+    server_name : str, optional
+        OMERO server name as configured in your OMERO.web installation. For
+        a "default" OMERO.web installation, it will normally be 'omero'.
 
     config_path : str, optional
         Path to directory containing '.ezomero' file that stores connection
@@ -76,6 +81,9 @@ def create_json_session(user=None, password=None, web_host=None,
 
     4) If any remaining parameters have not been set by the above steps, the
        user is prompted to enter a value for each unset parameter.
+
+    Note that, by default, this function will use the latest API version
+    available, in case multiple versions are offered by the OMERO.web server.
     """
     # load from .ezomero config file if it exists
     if config_path is None:
@@ -141,11 +149,9 @@ def create_json_session(user=None, password=None, web_host=None,
 
     # List the servers available to connect to
     servers = session.get(servers_url).json()['data']
-
-    SERVER_NAME = 'omero'
-    servers = [s for s in servers if s['server'] == SERVER_NAME]
+    servers = [s for s in servers if s['server'] == server_name]
     if len(servers) < 1:
-        raise Exception("Found no server called '%s'" % SERVER_NAME)
+        raise Exception("Found no server called '%s'" % server_name)
     server = servers[0]
 
     # Login with username, password and token
