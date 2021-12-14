@@ -20,6 +20,7 @@ from omero.rtypes import rint
 DEFAULT_OMERO_USER = "root"
 DEFAULT_OMERO_PASS = "omero"
 DEFAULT_OMERO_HOST = "localhost"
+DEFAULT_OMERO_WEB_HOST = "http://localhost:5080"
 DEFAULT_OMERO_PORT = 6064
 DEFAULT_OMERO_SECURE = 1
 
@@ -60,6 +61,10 @@ def pytest_addoption(parser):
                      action="store",
                      default=os.environ.get("OMERO_HOST",
                                             DEFAULT_OMERO_HOST))
+    parser.addoption("--omero-web-host",
+                     action="store",
+                     default=os.environ.get("OMERO_WEB_HOST",
+                                            DEFAULT_OMERO_WEB_HOST))
     parser.addoption("--omero-port",
                      action="store",
                      type=int,
@@ -77,9 +82,10 @@ def omero_params(request):
     user = request.config.getoption("--omero-user")
     password = request.config.getoption("--omero-pass")
     host = request.config.getoption("--omero-host")
+    web_host = request.config.getoption("--omero-web-host")
     port = request.config.getoption("--omero-port")
     secure = request.config.getoption("--omero-secure")
-    return(user, password, host, port, secure)
+    return(user, password, host, web_host, port, secure)
 
 
 @pytest.fixture(scope='session')
@@ -87,7 +93,7 @@ def users_groups(conn, omero_params):
     session_uuid = conn.getSession().getUuid().val
     user = omero_params[0]
     host = omero_params[2]
-    port = str(omero_params[3])
+    port = str(omero_params[4])
     cli = CLI()
     cli.register('sessions', SessionsControl, 'test')
     cli.register('user', UserControl, 'test')
@@ -150,7 +156,7 @@ def users_groups(conn, omero_params):
 
 @pytest.fixture(scope='session')
 def conn(omero_params):
-    user, password, host, port, secure = omero_params
+    user, password, host, web_host, port, secure = omero_params
     conn = BlitzGateway(user, password, host=host, port=port, secure=secure)
     conn.connect()
     yield conn
@@ -171,7 +177,7 @@ def pyramid_fixture(conn, omero_params):
     session_uuid = conn.getSession().getUuid().val
     user = omero_params[0]
     host = omero_params[2]
-    port = str(omero_params[3])
+    port = str(omero_params[4])
     imp_cmd = ['omero', 'import', 'tests/data/test_pyramid.ome.tif',
                '-k', session_uuid,
                '-u', user,
