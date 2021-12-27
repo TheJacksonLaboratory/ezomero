@@ -66,7 +66,7 @@ def get_image(conn, image_id, no_pixels=False, start_coords=None,
     Notes
     -----
     Regardless of whether `xyzct` is `True` or `dim_order` is set, the numpy
-    array is created asTZYXC, for performance reasons. If `xyzct` is `True`
+    array is created as TZYXC, for performance reasons. If `xyzct` is `True`
     or `dim_order` is set, the returned `pixels` array is actually a view
     of the original TZYXC array.
 
