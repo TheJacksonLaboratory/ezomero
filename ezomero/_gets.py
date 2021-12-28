@@ -113,8 +113,8 @@ def get_image(conn, image_id, no_pixels=False, start_coords=None,
         if type(dim_order) is not str:
             raise TypeError('dim_order must be a str')
         if set(dim_order.lower()) != set('xyzct'):
-            raise ValueError('dim_order must contain letters \
-                             xyzct exactly once')
+            raise ValueError('dim_order must contain letters '
+                             'xyzct exactly once')
 
     pixel_view = None
     image = conn.getObject('Image', image_id)
