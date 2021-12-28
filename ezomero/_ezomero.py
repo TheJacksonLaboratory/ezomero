@@ -178,11 +178,11 @@ def connect(user=None, password=None, group=None, host=None, port=None,
     The procedure for choosing parameters for ``omero.gateway.BlitzGateway``
     initialization is as follows:
 
-    1) Any parameters given to `ezconnect` will be used to initialize
+    1) Any parameters given to `ezomero.connect` will be used to initialize
        ``omero.gateway.BlitzGateway``
 
-    2) If a parameter is not given to `ezconnect`, populate from variables
-       in ``os.environ``:
+    2) If a parameter is not given to `ezomero.connect`, populate from
+       variables in ``os.environ``:
         * OMERO_USER
         * OMERO_PASS
         * OMERO_GROUP

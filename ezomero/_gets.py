@@ -15,7 +15,7 @@ from .rois import Point, Line, Rectangle, Ellipse, Polygon
 @do_across_groups
 def get_image(conn, image_id, no_pixels=False, start_coords=None,
               axis_lengths=None, xyzct=False, pad=False,
-              pyramid_level=None, across_groups=True):
+              pyramid_level=None, dim_order=None, across_groups=True):
     """Get omero image object along with pixels as a numpy array.
 
     Parameters
@@ -47,6 +47,10 @@ def get_image(conn, image_id, no_pixels=False, start_coords=None,
         are returned at the chosen resolution level, and all other arguments
         apply to that level as well. We follow the usual convention of `0` as
         full-resolution.
+    dim_order : str, optional
+        String containing the letters 'x', 'y', 'z', 'c' and 't' in some order,
+        specifying the order of dimensions to be returned by the function.
+        If specified, ignores the value of the 'xyzct' variable.
     across_groups : bool, optional
         Defines cross-group behavior of function - set to
         ``False`` to disable it.
@@ -61,9 +65,10 @@ def get_image(conn, image_id, no_pixels=False, start_coords=None,
 
     Notes
     -----
-    Regardless of whether `xyzct` is `True`, the numpy array is created as
-    TZYXC, for performance reasons. If `xyzct` is `True`, the returned `pixels`
-    array is actually a view of the original TZYXC array.
+    Regardless of whether `xyzct` is `True` or `dim_order` is set, the numpy
+    array is created as TZYXC, for performance reasons. If `xyzct` is `True`
+    or `dim_order` is set, the returned `pixels` array is actually a view
+    of the original TZYXC array.
 
     Examples
     --------
@@ -103,6 +108,13 @@ def get_image(conn, image_id, no_pixels=False, start_coords=None,
     if pyramid_level is not None:
         if type(pyramid_level) is not int:
             raise TypeError('pyramid_level must be an int')
+
+    if dim_order is not None:
+        if type(dim_order) is not str:
+            raise TypeError('dim_order must be a str')
+        if set(dim_order.lower()) != set('xyzct'):
+            raise ValueError('dim_order must contain letters '
+                             'xyzct exactly once')
 
     pixel_view = None
     image = conn.getObject('Image', image_id)
@@ -181,12 +193,19 @@ def get_image(conn, image_id, no_pixels=False, start_coords=None,
                 t = zct_coords[2] - start_coords[4]
                 pixels[t, z, :axis_lengths[1], :axis_lengths[0], c] = plane
 
-            if xyzct is True:
+            if dim_order is not None:
+                order_dict = dict(zip(dim_order, range(5)))
+                order_vector = [order_dict[c.lower()] for c in 'tzyxc']
                 pixel_view = np.moveaxis(pixels,
                                          [0, 1, 2, 3, 4],
-                                         [4, 2, 1, 0, 3])
+                                         order_vector)
             else:
-                pixel_view = pixels
+                if xyzct is True:
+                    pixel_view = np.moveaxis(pixels,
+                                             [0, 1, 2, 3, 4],
+                                             [4, 2, 1, 0, 3])
+                else:
+                    pixel_view = pixels
 
         else:
             # get specific pyramid level
@@ -272,12 +291,19 @@ def get_image(conn, image_id, no_pixels=False, start_coords=None,
                 t = zct_coords[2] - start_coords[4]
                 pixels[t, z, :axis_lengths[1], :axis_lengths[0], c] = plane
 
-            if xyzct is True:
+            if dim_order is not None:
+                order_dict = dict(zip(dim_order, range(5)))
+                order_vector = [order_dict[c.lower()] for c in 'tzyxc']
                 pixel_view = np.moveaxis(pixels,
                                          [0, 1, 2, 3, 4],
-                                         [4, 2, 1, 0, 3])
+                                         order_vector)
             else:
-                pixel_view = pixels
+                if xyzct is True:
+                    pixel_view = np.moveaxis(pixels,
+                                             [0, 1, 2, 3, 4],
+                                             [4, 2, 1, 0, 3])
+                else:
+                    pixel_view = pixels
             pix.close()
     return (image, pixel_view)
 

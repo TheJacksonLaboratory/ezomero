@@ -88,7 +88,8 @@ def post_dataset(conn, dataset_name, project_id=None, description=None,
 
 @do_across_groups
 def post_image(conn, image, image_name, description=None, dataset_id=None,
-               source_image_id=None, channel_list=None, across_groups=True):
+               source_image_id=None, channel_list=None,
+               dim_order=None, across_groups=True):
     """Create a new OMERO image from numpy array.
 
     Parameters
@@ -111,6 +112,9 @@ def post_image(conn, image, image_name, description=None, dataset_id=None,
         ``image`` parameter.
     channel_list : list of ints
         Copies metadata from these channels in source image (if specified).
+    dim_order : str, optional
+        String containing the letters 'x', 'y', 'z', 'c' and 't' in some order,
+        specifying the order of dimensions the `image` array was supplied on.
     across_groups : bool, optional
         Defines cross-group behavior of function - set to
         ``False`` to disable it.
@@ -141,6 +145,13 @@ def post_image(conn, image, image_name, description=None, dataset_id=None,
     if type(image_name) is not str:
         raise TypeError("Image name must be a string")
 
+    if dim_order is not None:
+        if type(dim_order) is not str:
+            raise TypeError('dim_order must be a str')
+        if set(dim_order.lower()) != set('xyzct'):
+            raise ValueError('dim_order must contain letters xyzct \
+                             exactly once')
+
     if dataset_id is not None:
         if type(dataset_id) is not int:
             raise TypeError("Dataset ID must be an integer")
@@ -157,7 +168,12 @@ def post_image(conn, image, image_name, description=None, dataset_id=None,
         default_group = conn.getDefaultGroup(conn.getUser().getId()).getId()
         set_group(conn, default_group)
         dataset = None
-
+    if dim_order is not None:
+        order_dict = dict(zip(dim_order, range(5)))
+        order_vector = [order_dict[c.lower()] for c in 'xyzct']
+        image = np.moveaxis(image,
+                            order_vector,
+                            [0, 1, 2, 3, 4])
     image_sizez = image.shape[2]
     image_sizec = image.shape[3]
     image_sizet = image.shape[4]
