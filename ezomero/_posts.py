@@ -71,10 +71,7 @@ def post_dataset(conn, dataset_name, project_id=None, description=None,
             logging.warning(f'Project {project_id} could not be found '
                             '(check if you have permissions to it)')
             return None
-    else:
-        default_group = conn.getDefaultGroup(conn.getUser().getId()).getId()
-        set_group(conn, default_group)
-
+    # if project_id is None, honor conn group
     dataset = DatasetWrapper(conn, DatasetI())
     dataset.setName(dataset_name)
     if description is not None:
@@ -165,8 +162,7 @@ def post_image(conn, image, image_name, description=None, dataset_id=None,
                             '(check if you have permissions to it)')
             return None
     else:
-        default_group = conn.getDefaultGroup(conn.getUser().getId()).getId()
-        set_group(conn, default_group)
+        # if dataset_id is None, honor conn group
         dataset = None
     if dim_order is not None:
         order_dict = dict(zip(dim_order, range(5)))
