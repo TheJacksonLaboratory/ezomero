@@ -13,8 +13,10 @@ services:
     volumes:
       - "database:/var/lib/postgresql/data"
 
-  omeroserver:
-    image: "openmicroscopy/omero-server:5.6"
+  omero:
+    # This container uses the tag for the latest server release of OMERO 5
+    # To upgrade to the next major release, increment the major version number
+    image: "openmicroscopy/omero-server:latest"
     environment:
       CONFIG_omero_db_host: database
       CONFIG_omero_db_user: omero
@@ -29,11 +31,20 @@ services:
     volumes:
       - "omero:/OMERO"
 
+  omeroweb:
+    # This container uses the tag for the latest web release of OMERO 5
+    # To upgrade to the next major release, increment the major version number
+    image: "openmicroscopy/omero-web-standalone:latest"
+    environment:
+      OMEROHOST: omero
+    networks:
+      - omero
+    ports:
+      - "5080:4080"
+
 networks:
   omero:
 
 volumes:
   database:
   omero:
-  
-  

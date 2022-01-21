@@ -106,11 +106,13 @@ def put_map_annotation(conn, map_ann_id, kv_dict, ns=None, across_groups=True):
 
     >>> put_map_annotation(conn, 16, new_values, 'test_v2')
     """
+    if type(map_ann_id) is not int:
+        raise TypeError('Map annotation ID must be an integer')
+
     map_ann = conn.getObject('MapAnnotation', map_ann_id)
     if map_ann is None:
         raise ValueError("MapAnnotation is non-existent or you do not have "
                          "permissions to change it.")
-        return None
 
     if ns is None:
         ns = map_ann.getNs()
@@ -176,11 +178,11 @@ def connect(user=None, password=None, group=None, host=None, port=None,
     The procedure for choosing parameters for ``omero.gateway.BlitzGateway``
     initialization is as follows:
 
-    1) Any parameters given to `ezconnect` will be used to initialize
+    1) Any parameters given to `ezomero.connect` will be used to initialize
        ``omero.gateway.BlitzGateway``
 
-    2) If a parameter is not given to `ezconnect`, populate from variables
-       in ``os.environ``:
+    2) If a parameter is not given to `ezomero.connect`, populate from
+       variables in ``os.environ``:
         * OMERO_USER
         * OMERO_PASS
         * OMERO_GROUP
@@ -279,7 +281,7 @@ def connect(user=None, password=None, group=None, host=None, port=None,
 
 
 def store_connection_params(user=None, group=None, host=None, port=None,
-                            secure=None, config_path=None):
+                            secure=None, web_host=False, config_path=None):
     """Save OMERO connection parameters in a file.
 
     This function creates a config file ('.ezomero') in which
@@ -302,6 +304,11 @@ def store_connection_params(user=None, group=None, host=None, port=None,
 
     secure : boolean, optional
         Whether to create a secure session.
+
+    web_host : boolean/str, optional
+        Whether to save a web host address got JSON connections as well. If
+        `False`, will skip it; it `True`, will prompt user for it; if it is
+        a `str`, will save that value to `OMERO_WEB_HOST`.
 
     config_path : str, optional
         Path to directory that will contain the '.ezomero' file. If left as
@@ -340,7 +347,8 @@ def store_connection_params(user=None, group=None, host=None, port=None,
             secure = "False"
         else:
             raise ValueError('secure must be set to either True or False')
-
+    if web_host is True:
+        web_host = input('Enter web host: ')
     # make parameter dictionary and save as configfile
     # just use 'DEFAULT' for right now, we can possibly add alt configs later
     config = configparser.ConfigParser()
@@ -349,6 +357,10 @@ def store_connection_params(user=None, group=None, host=None, port=None,
                          'OMERO_HOST': host,
                          'OMERO_PORT': port,
                          'OMERO_SECURE': secure}
+    if web_host is not False:
+        config['JSON'] = {'OMERO_USER': user,
+                          'OMERO_WEB_HOST': web_host,
+                          }
     with ezo_file.open('w') as configfile:
         config.write(configfile)
         print(f'Connection settings saved to {ezo_file}')
@@ -375,6 +387,9 @@ def set_group(conn, group_id):
     change_status : bool
         Returns `True` if group is changed, otherwise returns `False`.
     """
+    if type(group_id) is not int:
+        raise TypeError('Group ID must be an integer')
+
     user_id = conn.getUser().getId()
     g = conn.getObject("ExperimenterGroup", group_id)
     owners, members = g.groupSummary()

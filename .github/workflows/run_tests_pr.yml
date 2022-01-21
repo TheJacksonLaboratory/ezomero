@@ -1,5 +1,5 @@
-name: Run Tests
-on: [push, pull_request]
+name: Run Tests on PR
+on: pull_request
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -20,3 +20,4 @@ jobs:
       - name: Test with pytest
         run: |
           pytest tests/
+          

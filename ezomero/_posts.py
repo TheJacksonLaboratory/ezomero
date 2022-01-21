@@ -13,7 +13,6 @@ from omero.rtypes import rstring, rint, rdouble
 from .rois import Point, Line, Rectangle, Ellipse, Polygon
 
 
-@do_across_groups
 def post_dataset(conn, dataset_name, project_id=None, description=None,
                  across_groups=True):
     """Create a new dataset.
@@ -62,6 +61,8 @@ def post_dataset(conn, dataset_name, project_id=None, description=None,
     if project_id is not None:
         if type(project_id) is not int:
             raise TypeError('Project ID must be integer')
+        if across_groups:
+            conn.SERVICE_OPTS.setOmeroGroup('-1')
         project = conn.getObject('Project', project_id)
         if project is not None:
             ret = set_group(conn, project.getDetails().group.id.val)
@@ -71,10 +72,7 @@ def post_dataset(conn, dataset_name, project_id=None, description=None,
             logging.warning(f'Project {project_id} could not be found '
                             '(check if you have permissions to it)')
             return None
-    else:
-        default_group = conn.getDefaultGroup(conn.getUser().getId()).getId()
-        set_group(conn, default_group)
-
+    # if project_id is None, honor conn group
     dataset = DatasetWrapper(conn, DatasetI())
     dataset.setName(dataset_name)
     if description is not None:
@@ -86,9 +84,9 @@ def post_dataset(conn, dataset_name, project_id=None, description=None,
     return dataset.getId()
 
 
-@do_across_groups
 def post_image(conn, image, image_name, description=None, dataset_id=None,
-               source_image_id=None, channel_list=None, across_groups=True):
+               source_image_id=None, channel_list=None,
+               dim_order=None, across_groups=True):
     """Create a new OMERO image from numpy array.
 
     Parameters
@@ -111,6 +109,9 @@ def post_image(conn, image, image_name, description=None, dataset_id=None,
         ``image`` parameter.
     channel_list : list of ints
         Copies metadata from these channels in source image (if specified).
+    dim_order : str, optional
+        String containing the letters 'x', 'y', 'z', 'c' and 't' in some order,
+        specifying the order of dimensions the `image` array was supplied on.
     across_groups : bool, optional
         Defines cross-group behavior of function - set to
         ``False`` to disable it.
@@ -141,9 +142,18 @@ def post_image(conn, image, image_name, description=None, dataset_id=None,
     if type(image_name) is not str:
         raise TypeError("Image name must be a string")
 
+    if dim_order is not None:
+        if type(dim_order) is not str:
+            raise TypeError('dim_order must be a str')
+        if set(dim_order.lower()) != set('xyzct'):
+            raise ValueError('dim_order must contain letters xyzct \
+                             exactly once')
+
     if dataset_id is not None:
         if type(dataset_id) is not int:
-            raise ValueError("Dataset ID must be an integer")
+            raise TypeError("Dataset ID must be an integer")
+        if across_groups:
+            conn.SERVICE_OPTS.setOmeroGroup('-1')
         dataset = conn.getObject("Dataset", dataset_id)
         if dataset is not None:
             ret = set_group(conn, dataset.getDetails().group.id.val)
@@ -154,10 +164,14 @@ def post_image(conn, image, image_name, description=None, dataset_id=None,
                             '(check if you have permissions to it)')
             return None
     else:
-        default_group = conn.getDefaultGroup(conn.getUser().getId()).getId()
-        set_group(conn, default_group)
+        # if dataset_id is None, honor conn group
         dataset = None
-
+    if dim_order is not None:
+        order_dict = dict(zip(dim_order, range(5)))
+        order_vector = [order_dict[c.lower()] for c in 'xyzct']
+        image = np.moveaxis(image,
+                            order_vector,
+                            [0, 1, 2, 3, 4])
     image_sizez = image.shape[2]
     image_sizec = image.shape[3]
     image_sizet = image.shape[4]
@@ -474,6 +488,26 @@ def post_roi(conn, image_id, shapes, name=None, description=None,
                  stroke_width=2)
     234
     """
+
+    if type(image_id) is not int:
+        raise TypeError('Image ID must be an integer')
+
+    if not isinstance(shapes, list):
+        raise TypeError('Shapes must be a list')
+
+    if not isinstance(fill_color, tuple):
+        raise TypeError('Fill color must be a tuple')
+    if len(fill_color) != 4:
+        raise ValueError('Fill color must contain 4 integers')
+
+    if not isinstance(stroke_color, tuple):
+        raise TypeError('Stroke color must be a tuple')
+    if len(stroke_color) != 4:
+        raise ValueError('Stroke color must contain 4 integers')
+
+    if type(stroke_width) is not int:
+        raise TypeError('Stroke width must be an integer')
+
     roi = RoiI()
     if name is not None:
         roi.setName(rstring(name))
@@ -545,9 +579,7 @@ def _rgba_to_int(color: tuple):
     r = r << 24
     g = g << 16
     b = b << 8
-    a = int(a * 255)
     rgba_int = sum([r, g, b, a])
     if rgba_int > (2**31-1):  # convert to signed 32-bit int
         rgba_int = rgba_int - 2**32
-
     return rgba_int

@@ -7,12 +7,15 @@ from omero import ApiUsageException
 from omero.model import MapAnnotationI, TagAnnotationI
 from omero.rtypes import rint, rlong
 from omero.sys import Parameters
+from omero.model import enums as omero_enums
+from .rois import Point, Line, Rectangle, Ellipse, Polygon
 
 
 # gets
 @do_across_groups
 def get_image(conn, image_id, no_pixels=False, start_coords=None,
-              axis_lengths=None, xyzct=False, pad=False, across_groups=True):
+              axis_lengths=None, xyzct=False, pad=False,
+              pyramid_level=None, dim_order=None, across_groups=True):
     """Get omero image object along with pixels as a numpy array.
 
     Parameters
@@ -39,6 +42,15 @@ def get_image(conn, image_id, no_pixels=False, start_coords=None,
         If `axis_lengths` values would result in out-of-bounds indices, pad
         pixel array with zeros. Otherwise, such an operation will raise an
         exception. Ignored if `no_pixels` is True.
+    pyramid_level : int, optional
+        If image has multiple pyramid levels and this argument is set, pixels
+        are returned at the chosen resolution level, and all other arguments
+        apply to that level as well. We follow the usual convention of `0` as
+        full-resolution.
+    dim_order : str, optional
+        String containing the letters 'x', 'y', 'z', 'c' and 't' in some order,
+        specifying the order of dimensions to be returned by the function.
+        If specified, ignores the value of the 'xyzct' variable.
     across_groups : bool, optional
         Defines cross-group behavior of function - set to
         ``False`` to disable it.
@@ -53,9 +65,10 @@ def get_image(conn, image_id, no_pixels=False, start_coords=None,
 
     Notes
     -----
-    Regardless of whether `xyzct` is `True`, the numpy array is created as
-    TZYXC, for performance reasons. If `xyzct` is `True`, the returned `pixels`
-    array is actually a view of the original TZYXC array.
+    Regardless of whether `xyzct` is `True` or `dim_order` is set, the numpy
+    array is created as TZYXC, for performance reasons. If `xyzct` is `True`
+    or `dim_order` is set, the returned `pixels` array is actually a view
+    of the original TZYXC array.
 
     Examples
     --------
@@ -75,8 +88,34 @@ def get_image(conn, image_id, no_pixels=False, start_coords=None,
     314
     """
 
+    if start_coords is not None:
+        if type(start_coords) not in (list, tuple):
+            raise TypeError('start_coords must be supplied as list or tuple')
+        if len(start_coords) != 5:
+            raise ValueError('start_coords must have length 5 (XYZCT)')
+
+    if axis_lengths is not None:
+        if type(axis_lengths) not in (list, tuple):
+            raise TypeError('axis_lengths must be supplied as list of tuple')
+        if len(axis_lengths) != 5:
+            raise ValueError('axis_lengths must have length 5 (XYZCT)')
+
     if image_id is None:
         raise TypeError('Object ID cannot be empty')
+    if type(image_id) is not int:
+        raise TypeError('Image ID must be an integer')
+
+    if pyramid_level is not None:
+        if type(pyramid_level) is not int:
+            raise TypeError('pyramid_level must be an int')
+
+    if dim_order is not None:
+        if type(dim_order) is not str:
+            raise TypeError('dim_order must be a str')
+        if set(dim_order.lower()) != set('xyzct'):
+            raise ValueError('dim_order must contain letters '
+                             'xyzct exactly once')
+
     pixel_view = None
     image = conn.getObject('Image', image_id)
     if image is None:
@@ -91,78 +130,181 @@ def get_image(conn, image_id, no_pixels=False, start_coords=None,
     pixels_dtype = image.getPixelsType()
     orig_sizes = [size_x, size_y, size_z, size_c, size_t]
 
-    if start_coords is None:
-        start_coords = (0, 0, 0, 0, 0)
-
-    if axis_lengths is None:
-        axis_lengths = (orig_sizes[0] - start_coords[0],  # X
-                        orig_sizes[1] - start_coords[1],  # Y
-                        orig_sizes[2] - start_coords[2],  # Z
-                        orig_sizes[3] - start_coords[3],  # C
-                        orig_sizes[4] - start_coords[4])  # T
-
-    if type(start_coords) not in (list, tuple):
-        raise TypeError('start_coords must be supplied as list or tuple')
-    if type(axis_lengths) not in (list, tuple):
-        raise TypeError('axis_lengths must be supplied as list of tuple')
-    if len(start_coords) != 5:
-        raise ValueError('start_coords must have length 5 (XYZCT)')
-    if len(axis_lengths) != 5:
-        raise ValueError('axis_lengths must have length 5 (XYZCT)')
-
     if no_pixels is False:
-        primary_pixels = image.getPrimaryPixels()
-        reordered_sizes = [axis_lengths[4],
-                           axis_lengths[2],
-                           axis_lengths[1],
-                           axis_lengths[0],
-                           axis_lengths[3]]
-        pixels = np.zeros(reordered_sizes, dtype=pixels_dtype)
+
+        # check if we are getting full-res or pyramid level
+        if pyramid_level is None or pyramid_level == 0:
+            # full-res image - can use original sizes
+            if start_coords is None:
+                start_coords = (0, 0, 0, 0, 0)
+
+            if axis_lengths is None:
+                axis_lengths = (orig_sizes[0] - start_coords[0],  # X
+                                orig_sizes[1] - start_coords[1],  # Y
+                                orig_sizes[2] - start_coords[2],  # Z
+                                orig_sizes[3] - start_coords[3],  # C
+                                orig_sizes[4] - start_coords[4])  # T
+
+            primary_pixels = image.getPrimaryPixels()
+            reordered_sizes = [axis_lengths[4],
+                               axis_lengths[2],
+                               axis_lengths[1],
+                               axis_lengths[0],
+                               axis_lengths[3]]
+            pixels = np.zeros(reordered_sizes, dtype=pixels_dtype)
+
+            # get pixels
 
         # check here if you need to trim the axis_lengths, trim if necessary
-        overhangs = [(al + sc) - osz
-                     for al, sc, osz
-                     in zip(axis_lengths,
-                            start_coords,
-                            orig_sizes)]
-        overhangs = [np.max((0, o)) for o in overhangs]
-        if any([x > 0 for x in overhangs]) & (pad is False):
-            raise IndexError('Attempting to access out-of-bounds pixel. '
-                             'Either adjust axis_lengths or use pad=True')
+            overhangs = [(al + sc) - osz
+                         for al, sc, osz
+                         in zip(axis_lengths,
+                                start_coords,
+                                orig_sizes)]
+            overhangs = [np.max((0, o)) for o in overhangs]
+            if any([x > 0 for x in overhangs]) & (pad is False):
+                raise IndexError('Attempting to access out-of-bounds pixel. '
+                                 'Either adjust axis_lengths or use pad=True')
 
-        axis_lengths = [al - oh for al, oh in zip(axis_lengths, overhangs)]
+            axis_lengths = [al - oh for al, oh in zip(axis_lengths, overhangs)]
+            zct_list = []
+            for z in range(start_coords[2],
+                           start_coords[2] + axis_lengths[2]):
+                for c in range(start_coords[3],
+                               start_coords[3] + axis_lengths[3]):
+                    for t in range(start_coords[4],
+                                   start_coords[4] + axis_lengths[4]):
+                        zct_list.append((z, c, t))
 
-        # get pixels
-        zct_list = []
-        for z in range(start_coords[2],
-                       start_coords[2] + axis_lengths[2]):
-            for c in range(start_coords[3],
-                           start_coords[3] + axis_lengths[3]):
-                for t in range(start_coords[4],
-                               start_coords[4] + axis_lengths[4]):
-                    zct_list.append((z, c, t))
+            if reordered_sizes == [size_t, size_z, size_y, size_x, size_c]:
+                plane_gen = primary_pixels.getPlanes(zct_list)
+            else:
+                tile = (start_coords[0], start_coords[1],
+                        axis_lengths[0], axis_lengths[1])
+                zct_list = [list(zct) for zct in zct_list]
+                for zct in zct_list:
+                    zct.append(tile)
+                plane_gen = primary_pixels.getTiles(zct_list)
 
-        if reordered_sizes == [size_t, size_z, size_y, size_x, size_c]:
-            plane_gen = primary_pixels.getPlanes(zct_list)
+            for i, plane in enumerate(plane_gen):
+                zct_coords = zct_list[i]
+                z = zct_coords[0] - start_coords[2]
+                c = zct_coords[1] - start_coords[3]
+                t = zct_coords[2] - start_coords[4]
+                pixels[t, z, :axis_lengths[1], :axis_lengths[0], c] = plane
+
+            if dim_order is not None:
+                order_dict = dict(zip(dim_order, range(5)))
+                order_vector = [order_dict[c.lower()] for c in 'tzyxc']
+                pixel_view = np.moveaxis(pixels,
+                                         [0, 1, 2, 3, 4],
+                                         order_vector)
+            else:
+                if xyzct is True:
+                    pixel_view = np.moveaxis(pixels,
+                                             [0, 1, 2, 3, 4],
+                                             [4, 2, 1, 0, 3])
+                else:
+                    pixel_view = pixels
+
         else:
-            tile = (start_coords[0], start_coords[1],
-                    axis_lengths[0], axis_lengths[1])
-            zct_list = [list(zct) for zct in zct_list]
-            for zct in zct_list:
-                zct.append(tile)
-            plane_gen = primary_pixels.getTiles(zct_list)
+            # get specific pyramid level
+            PIXEL_TYPES = {
+                            omero_enums.PixelsTypeint8: np.int8,
+                            omero_enums.PixelsTypeuint8: np.uint8,
+                            omero_enums.PixelsTypeint16: np.int16,
+                            omero_enums.PixelsTypeuint16: np.uint16,
+                            omero_enums.PixelsTypeint32: np.int32,
+                            omero_enums.PixelsTypeuint32: np.uint32,
+                            omero_enums.PixelsTypefloat: np.float32,
+                            omero_enums.PixelsTypedouble: np.float64,
+                          }
+            pix = image._conn.c.sf.createRawPixelsStore()
+            pid = image.getPixelsId()
+            pix.setPixelsId(pid, False)
+            res_levels = [(r.sizeX, r.sizeY)
+                          for r in pix.getResolutionDescriptions()]
+            pix.setResolutionLevel((len(res_levels) - pyramid_level - 1))
+            size_w, size_h = res_levels[pyramid_level]
+            orig_sizes = [size_w, size_h, size_z, size_c, size_t]
+            if start_coords is None:
+                start_coords = (0, 0, 0, 0, 0)
 
-        for i, plane in enumerate(plane_gen):
-            zct_coords = zct_list[i]
-            z = zct_coords[0] - start_coords[2]
-            c = zct_coords[1] - start_coords[3]
-            t = zct_coords[2] - start_coords[4]
-            pixels[t, z, :axis_lengths[1], :axis_lengths[0], c] = plane
+            if axis_lengths is None:
+                axis_lengths = (size_w - start_coords[0],  # X
+                                size_h - start_coords[1],  # Y
+                                orig_sizes[2] - start_coords[2],  # Z
+                                orig_sizes[3] - start_coords[3],  # C
+                                orig_sizes[4] - start_coords[4])  # T
+            primary_pixels = image.getPrimaryPixels()
+            reordered_sizes = [axis_lengths[4],
+                               axis_lengths[2],
+                               axis_lengths[1],
+                               axis_lengths[0],
+                               axis_lengths[3]]
+            pixels = np.zeros(reordered_sizes, dtype=pixels_dtype)
+    # check here if you need to trim the axis_lengths, trim if necessary
+            overhangs = [(al + sc) - osz
+                         for al, sc, osz
+                         in zip(axis_lengths,
+                                start_coords,
+                                orig_sizes)]
+            overhangs = [np.max((0, o)) for o in overhangs]
+            if any([x > 0 for x in overhangs]) & (pad is False):
+                raise IndexError('Attempting to access out-of-bounds pixel. '
+                                 'Either adjust axis_lengths or use pad=True')
+            axis_lengths = [al - oh for al, oh in zip(axis_lengths, overhangs)]
+            # get pixels
+            zct_list = []
+            for z in range(start_coords[2],
+                           start_coords[2] + axis_lengths[2]):
+                for c in range(start_coords[3],
+                               start_coords[3] + axis_lengths[3]):
+                    for t in range(start_coords[4],
+                                   start_coords[4] + axis_lengths[4]):
+                        zct_list.append((z, c, t))
 
-        if xyzct is True:
-            pixel_view = np.moveaxis(pixels, [0, 1, 2, 3, 4], [4, 2, 1, 0, 3])
-        else:
-            pixel_view = pixels
+            dtype = PIXEL_TYPES.get(primary_pixels.getPixelsType().value, None)
+            if reordered_sizes == [size_t, size_z, size_h, size_w, size_c]:
+                # getting whole plane
+                plane_gen = []
+                for zct in zct_list:
+                    byte_plane = pix.getPlane(*zct)
+                    plane = np.frombuffer(byte_plane, dtype=dtype)
+                    plane = plane.reshape((size_h, size_w))
+                    plane_gen.append(plane)
+
+            else:
+                plane_gen = []
+                tile = (start_coords[0], start_coords[1],
+                        axis_lengths[0], axis_lengths[1])
+                for zct in zct_list:
+                    this_tile = pix.getTile(*zct, *tile)
+                    this_tile = np.frombuffer(this_tile, dtype=dtype)
+                    this_tile = this_tile.reshape((tile[3], tile[2]))
+                    plane_gen.append(this_tile)
+
+            for i, plane in enumerate(plane_gen):
+                zct_coords = zct_list[i]
+                z = zct_coords[0] - start_coords[2]
+                c = zct_coords[1] - start_coords[3]
+                t = zct_coords[2] - start_coords[4]
+                pixels[t, z, :axis_lengths[1], :axis_lengths[0], c] = plane
+
+            if dim_order is not None:
+                order_dict = dict(zip(dim_order, range(5)))
+                order_vector = [order_dict[c.lower()] for c in 'tzyxc']
+                pixel_view = np.moveaxis(pixels,
+                                         [0, 1, 2, 3, 4],
+                                         order_vector)
+            else:
+                if xyzct is True:
+                    pixel_view = np.moveaxis(pixels,
+                                             [0, 1, 2, 3, 4],
+                                             [4, 2, 1, 0, 3])
+                else:
+                    pixel_view = pixels
+            pix.close()
     return (image, pixel_view)
 
 
@@ -277,10 +419,7 @@ def get_image_ids(conn, project=None, dataset=None, plate=None, well=None,
             params,
             conn.SERVICE_OPTS
             )
-    elif ((well is None) &
-          (dataset is None) &
-          (project is None) &
-          (plate is None)):
+    else:
         results = q.projection(
             "SELECT i.id FROM Image i"
             " WHERE NOT EXISTS ("
@@ -294,8 +433,6 @@ def get_image_ids(conn, project=None, dataset=None, plate=None, well=None,
             params,
             conn.SERVICE_OPTS
             )
-    else:
-        results = []
 
     return [r[0].val for r in results]
 
@@ -333,6 +470,12 @@ def get_map_annotation_ids(conn, object_type, object_id, ns=None,
 
     >>> map_ann_ids = get_map_annotation_ids(conn, 'Dataset', 16, ns='test')
     """
+    if type(object_type) is not str:
+        raise TypeError('Object type must be a string')
+    if type(object_id) is not int:
+        raise TypeError('Object id must be an integer')
+    if ns is not None and type(ns) is not str:
+        raise TypeError('Namespace must be a string or None')
 
     target_object = conn.getObject(object_type, object_id)
     map_ann_ids = []
@@ -375,6 +518,12 @@ def get_tag_ids(conn, object_type, object_id, ns=None,
 
     >>> tag_ids = get_tag_ids(conn, 'Dataset', 16, ns='test')
     """
+    if type(object_type) is not str:
+        raise TypeError('Object type must be a string')
+    if type(object_id) is not int:
+        raise TypeError('Object id must be an integer')
+    if ns is not None and type(ns) is not str:
+        raise TypeError('Namespace must be a string or None')
 
     target_object = conn.getObject(object_type, object_id)
     tag_ids = []
@@ -417,6 +566,12 @@ def get_file_annotation_ids(conn, object_type, object_id, ns=None,
 
     >>> file_ann_ids = get_file_annotation_ids(conn, 'Dataset', 16, ns='test')
     """
+    if type(object_type) is not str:
+        raise TypeError('Object type must be a string')
+    if type(object_id) is not int:
+        raise TypeError('Object id must be an integer')
+    if ns is not None and type(ns) is not str:
+        raise TypeError('Namespace must be a string or None')
 
     target_object = conn.getObject(object_type, object_id)
     file_ann_ids = []
@@ -447,11 +602,11 @@ def get_well_id(conn, plate_id, row, column, across_groups=True):
         ID of well being queried.
     """
     if not isinstance(plate_id, int):
-        raise ValueError('Plate ID must be an integer')
+        raise TypeError('Plate ID must be an integer')
     if not isinstance(row, int):
-        raise ValueError('Row index must be an integer')
+        raise TypeError('Row index must be an integer')
     if not isinstance(column, int):
-        raise ValueError('Column index must be an integer')
+        raise TypeError('Column index must be an integer')
     q = conn.getQueryService()
     params = Parameters()
     params.map = {"plate": rlong(plate_id),
@@ -469,6 +624,82 @@ def get_well_id(conn, plate_id, row, column, across_groups=True):
     if len(results) == 0:
         return None
     return [r[0].val for r in results][0]
+
+
+@do_across_groups
+def get_roi_ids(conn, image_id, across_groups=True):
+    """Get IDs of ROIs associated with an Image
+
+    Parameters
+    ----------
+    conn : ``omero.gateway.BlitzGateway`` object
+        OMERO connection.
+    image_id : int
+        ID of ``Image``.
+    across_groups : bool, optional
+        Defines cross-group behavior of function - set to
+        ``False`` to disable it.
+
+    Returns
+    -------
+    roi_ids : list of ints
+
+    Examples
+    --------
+    # Return IDs of all ROIs linked to an image:
+
+    >>> roi_ids = get_roi_ids(conn, 42)
+
+    """
+    if not isinstance(image_id, int):
+        raise TypeError('Image ID must be an integer')
+    roi_ids = []
+    roi_svc = conn.getRoiService()
+    roi_list = roi_svc.findByImage(image_id, None)
+    for roi in roi_list.rois:
+        roi_ids.append(roi.id.val)
+    return roi_ids
+
+
+@do_across_groups
+def get_shape_ids(conn, roi_id, across_groups=True):
+    """Get IDs of shapes associated with an ROI
+
+    Parameters
+    ----------
+    conn : ``omero.gateway.BlitzGateway`` object
+        OMERO connection.
+    roi_id : int
+        ID of ``ROI``.
+    across_groups : bool, optional
+        Defines cross-group behavior of function - set to
+        ``False`` to disable it.
+
+    Returns
+    -------
+    shape_ids : list of ints
+
+    Examples
+    --------
+    # Return IDs of all shapes linked to an ROI:
+
+    >>> shape_ids = get_shape_ids(conn, 4222)
+
+    """
+    if not isinstance(roi_id, int):
+        raise TypeError('ROI ID must be an integer')
+    q = conn.getQueryService()
+    params = Parameters()
+    params.map = {"roi_id": rlong(roi_id)}
+    results = q.projection(
+        "SELECT s.id FROM Shape s"
+        " WHERE s.roi.id=:roi_id",
+        params,
+        conn.SERVICE_OPTS
+        )
+    if len(results) == 0:
+        return None
+    return [r[0].val for r in results]
 
 
 @do_across_groups
@@ -496,6 +727,9 @@ def get_map_annotation(conn, map_ann_id, across_groups=True):
     >>> print(ma_dict)
     {'testkey': 'testvalue', 'testkey2': 'testvalue2'}
     """
+    if type(map_ann_id) is not int:
+        raise TypeError('Map annotation ID must be an integer')
+
     return dict(conn.getObject('MapAnnotation', map_ann_id).getValue())
 
 
@@ -524,6 +758,9 @@ def get_tag(conn, tag_id, across_groups=True):
     >>> print(tag)
     This_is_a_tag
     """
+    if type(tag_id) is not int:
+        raise TypeError('Tag ID must be an integer')
+
     return conn.getObject('TagAnnotation', tag_id).getValue()
 
 
@@ -558,6 +795,8 @@ def get_file_annotation(conn, file_ann_id, folder_path=None,
     >>> print(attch_path)
     '/home/user/Downloads/attachment.txt'
     """
+    if type(file_ann_id) is not int:
+        raise TypeError('File annotation ID must be an integer')
 
     if not folder_path or not os.path.exists(folder_path):
         folder_path = os.path.dirname(__file__)
@@ -676,6 +915,8 @@ def get_original_filepaths(conn, image_id, fpath='repo', across_groups=True):
     >>> get_original_filepaths(conn, 2201, fpath='client')
     ['/client/omero/smith_lab/stack2/PJN17_083_07.ndpi']
     """
+    if type(image_id) is not int:
+        raise TypeError('Image ID must be an integer')
 
     q = conn.getQueryService()
     params = Parameters()
@@ -708,3 +949,145 @@ def get_original_filepaths(conn, image_id, fpath='repo', across_groups=True):
         raise ValueError("Parameter fpath must be 'client' or 'repo'")
 
     return results
+
+
+@do_across_groups
+def get_pyramid_levels(conn, image_id, across_groups=True):
+    """Get number of pyramid levels associated with an Image
+
+    Parameters
+    ----------
+    conn : ``omero.gateway.BlitzGateway`` object
+        OMERO connection.
+    image_id : int
+        ID of ``Image``.
+    across_groups : bool, optional
+        Defines cross-group behavior of function - set to
+        ``False`` to disable it.
+
+    Returns
+    -------
+    levels : list of tuples
+        Pyramidal levels available for this image, with number of
+        pixels for X and Y axes.
+
+    Examples
+    --------
+    # Return pyramid levels associated to an image:
+
+    >>> lvls = get_pyramid_levels(conn, 42)
+    [(2048, 1600), (1024, 800), (512, 400), (256, 200)]
+
+    """
+    image = conn.getObject("image", image_id)
+    pix = image._conn.c.sf.createRawPixelsStore()
+    pid = image.getPixelsId()
+    pix.setPixelsId(pid, False)
+    levels = [(r.sizeX, r.sizeY) for r in pix.getResolutionDescriptions()]
+    pix.close()
+    return levels
+
+
+@do_across_groups
+def get_shape(conn, shape_id, across_groups=True):
+    """Get an ezomero shape object from an OMERO Shape id
+
+    Parameters
+    ----------
+    conn : ``omero.gateway.BlitzGateway`` object
+        OMERO connection.
+    shape_id : int
+        ID of shape to get.
+    across_groups : bool, optional
+        Defines cross-group behavior of function - set to
+        ``False`` to disable it.
+
+    Returns
+    -------
+    shape : obj
+        An object of one of ezomero shape classes
+    fill_color: tuple
+        Tuple of format (r, g, b, a) containing the shape fill color.
+    stroke_color: tuple
+        Tuple of format (r, g, b, a) containing the shape stroke color.
+    stroke_width: float
+        Shape stroke width, in pixels
+    Examples
+    --------
+    >>> shape = get_shape(conn, 634443)
+
+    """
+    if not isinstance(shape_id, int):
+        raise TypeError('Shape ID must be an integer')
+    omero_shape = conn.getObject('Shape', shape_id)
+    return _omero_shape_to_shape(omero_shape)
+
+
+def _omero_shape_to_shape(omero_shape):
+    """ Helper function to convert ezomero shapes into omero shapes"""
+    shape_type = omero_shape.ice_id().split("::omero::model::")[1]
+    try:
+        z_val = omero_shape.theZ
+    except AttributeError:
+        z_val = None
+    try:
+        c_val = omero_shape.theC
+    except AttributeError:
+        c_val = None
+    try:
+        t_val = omero_shape.theT
+    except AttributeError:
+        t_val = None
+    try:
+        text = omero_shape.textValue
+    except AttributeError:
+        text = None
+    if shape_type == "Point":
+        x = omero_shape.x
+        y = omero_shape.y
+        shape = Point(x, y, z_val, c_val, t_val, text)
+    elif shape_type == "Line":
+        x1 = omero_shape.x1
+        x2 = omero_shape.x2
+        y1 = omero_shape.y1
+        y2 = omero_shape.y2
+        shape = Line(x1, y1, x2, y2, z_val, c_val, t_val, text)
+    elif shape_type == "Rectangle":
+        x = omero_shape.x
+        y = omero_shape.y
+        width = omero_shape.width
+        height = omero_shape.height
+        shape = Rectangle(x, y, width, height, z_val, c_val, t_val, text)
+    elif shape_type == "Ellipse":
+        x = omero_shape.x
+        y = omero_shape.y
+        radiusX = omero_shape.radiusX
+        radiusY = omero_shape.radiusY
+        shape = Ellipse(x, y, radiusX, radiusY, z_val, c_val, t_val, text)
+    elif shape_type == "Polygon":
+        omero_points = omero_shape.points.split()
+        points = []
+        for point in omero_points:
+            coords = point.split(',')
+            points.append((float(coords[0]), float(coords[1])))
+        shape = Polygon(points, z_val, c_val, t_val, text)
+    else:
+        err = 'The shape passed for the roi is not a valid shape type'
+        raise TypeError(err)
+
+    fill_color = _int_to_rgba(omero_shape.getFillColor())
+    stroke_color = _int_to_rgba(omero_shape.getStrokeColor())
+    stroke_width = omero_shape.getStrokeWidth().getValue()
+
+    return shape, fill_color, stroke_color, stroke_width
+
+
+def _int_to_rgba(omero_val):
+    """ Helper function returning the color as an Integer in RGBA encoding """
+    if omero_val < 0:
+        omero_val = omero_val + (2**32)
+    r = omero_val >> 24
+    g = omero_val - (r << 24) >> 16
+    b = omero_val - (r << 24) - (g << 16) >> 8
+    a = omero_val - (r << 24) - (g << 16) - (b << 8)
+    return (r, g, b, a)
