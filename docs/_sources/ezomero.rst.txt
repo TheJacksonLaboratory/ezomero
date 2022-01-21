@@ -4,6 +4,14 @@ ezomero package
 Submodules
 ----------
 
+ezomero.json\_api module
+------------------------
+
+.. automodule:: ezomero.json_api
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 ezomero.rois module
 -------------------
 

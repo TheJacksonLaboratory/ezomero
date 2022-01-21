@@ -4,11 +4,12 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
     <title>ezomero package &#8212; ezomero  documentation</title>
-    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
-    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/alabaster.css" />
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
     <script src="_static/jquery.js"></script>
     <script src="_static/underscore.js"></script>
     <script src="_static/doctools.js"></script>
@@ -30,16 +31,112 @@
 
           <div class="body" role="main">
             
-  <div class="section" id="ezomero-package">
+  <section id="ezomero-package">
 <h1>ezomero package<a class="headerlink" href="#ezomero-package" title="Permalink to this headline">¶</a></h1>
-<div class="section" id="submodules">
+<section id="submodules">
 <h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</section>
+<section id="module-ezomero.json_api">
+<span id="ezomero-json-api-module"></span><h2>ezomero.json_api module<a class="headerlink" href="#module-ezomero.json_api" title="Permalink to this headline">¶</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="ezomero.json_api.create_json_session">
+<span class="sig-prename descclassname"><span class="pre">ezomero.json_api.</span></span><span class="sig-name descname"><span class="pre">create_json_session</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">user</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">password</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">web_host</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verify</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">server_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'omero'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ezomero.json_api.create_json_session" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create an OMERO connection using the JSON API</p>
+<p>This function will create an OMERO connection by populating certain
+parameters for a request using the <code class="docutils literal notranslate"><span class="pre">requests</span></code> library by the
+procedure described in the notes below. Note that this function may
+ask for user input, so be cautious if using in the context of a script.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>user</strong> (<em>str</em><em>, </em><em>optional</em>) – OMERO username.</p></li>
+<li><p><strong>password</strong> (<em>str</em><em>, </em><em>optional</em>) – OMERO password.</p></li>
+<li><p><strong>web_host</strong> (<em>str</em><em>, </em><em>optional</em>) – OMERO.web host.</p></li>
+<li><p><strong>verify</strong> (<em>boolean</em><em>, </em><em>optional</em>) – Whether to verify SSL certificates when making requests.</p></li>
+<li><p><strong>server_name</strong> (<em>str</em><em>, </em><em>optional</em>) – OMERO server name as configured in your OMERO.web installation. For
+a “default” OMERO.web installation, it will normally be ‘omero’.</p></li>
+<li><p><strong>config_path</strong> (<em>str</em><em>, </em><em>optional</em>) – Path to directory containing ‘.ezomero’ file that stores connection
+information. If left as <code class="docutils literal notranslate"><span class="pre">None</span></code>, defaults to the home directory as
+determined by Python’s <code class="docutils literal notranslate"><span class="pre">pathlib</span></code>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><strong>login_rsp</strong> (<em>JSON object</em>) – JSON containing the response to the <code class="docutils literal notranslate"><span class="pre">POST</span></code> request sent for log in.</p></li>
+<li><p><strong>session</strong> (<code class="docutils literal notranslate"><span class="pre">requests</span></code> Session object or None) – The effective <code class="docutils literal notranslate"><span class="pre">requests</span></code> session that will be used for further
+requests to the JSON API.</p></li>
+<li><p><strong>base_url</strong> (<em>str or None</em>) – Base URL for further requests, retrieved via JSON API request</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>The procedure for choosing parameters for initializing a JSON API session
+is as follows:</p>
+<ol class="arabic">
+<li><p>Any parameters given to <cite>create_json_connection</cite> will be used to
+initialize a JSON session</p></li>
+<li><p>If a parameter is not given to this function, populate from variables
+in <code class="docutils literal notranslate"><span class="pre">os.environ</span></code>:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>OMERO_USER</p></li>
+<li><p>OMERO_PASS</p></li>
+<li><p>OMERO_WEB_HOST</p></li>
+</ul>
+</div></blockquote>
+</li>
+<li><p>If environment variables are not set, try to load from a config file.
+This file should be called ‘.ezomero’. By default, this function will
+look in the home directory, but <code class="docutils literal notranslate"><span class="pre">config_path</span></code> can be used to specify
+a directory in which to look for ‘.ezomero’.</p>
+<p>The function <code class="docutils literal notranslate"><span class="pre">ezomero.store_connection_params</span></code> can be used to create
+the ‘.ezomero’ file.</p>
+<p>Note that passwords can not be loaded from the ‘.ezomero’ file. This is
+to discourage storing credentials in a file as cleartext.</p>
+</li>
+<li><p>If any remaining parameters have not been set by the above steps, the
+user is prompted to enter a value for each unset parameter.</p></li>
+</ol>
+<p>Note that, by default, this function will use the latest API version
+available, in case multiple versions are offered by the OMERO.web server.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ezomero.json_api.get_rendered_jpeg">
+<span class="sig-prename descclassname"><span class="pre">ezomero.json_api.</span></span><span class="sig-name descname"><span class="pre">get_rendered_jpeg</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">session</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">base_url</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">img_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scale</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ezomero.json_api.get_rendered_jpeg" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get a numpy array from a rendered JPEG at given scale factor
+of an image.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>session</strong> (<code class="docutils literal notranslate"><span class="pre">requests</span></code> Session object) – <code class="docutils literal notranslate"><span class="pre">requests</span></code> session that has been initialized with login parameters.</p></li>
+<li><p><strong>base_url</strong> (<em>str</em>) – Base URL for further requests, retrieved via JSON API request</p></li>
+<li><p><strong>img_id</strong> (<em>int</em>) – ID of <code class="docutils literal notranslate"><span class="pre">Image</span></code>.</p></li>
+<li><p><strong>scale</strong> (<em>float</em><em> or </em><em>int</em>) – Scaling factor for the returned JPEG. <code class="docutils literal notranslate"><span class="pre">1</span></code> returns original size,
+<code class="docutils literal notranslate"><span class="pre">2</span></code> scales each dimension down by half, and so on.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>pixels</strong> – Array containing pixel values from rendered JPEG of the OMERO image.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>ndarray</p>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<p># Get a JPEG of an entire image as a numpy array:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">jpeg_array</span> <span class="o">=</span> <span class="n">get_rendered_jpeg</span><span class="p">(</span><span class="n">session</span><span class="p">,</span> <span class="n">base_url</span><span class="p">,</span> <span class="mi">314</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+</pre></div>
 </div>
-<div class="section" id="module-ezomero.rois">
+</dd></dl>
+
+</section>
+<section id="module-ezomero.rois">
 <span id="ezomero-rois-module"></span><h2>ezomero.rois module<a class="headerlink" href="#module-ezomero.rois" title="Permalink to this headline">¶</a></h2>
 <dl class="py class">
-<dt id="ezomero.rois.Ellipse">
-<em class="property">class </em><code class="sig-prename descclassname">ezomero.rois.</code><code class="sig-name descname">Ellipse</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">x</span><span class="p">:</span> <span class="n">float</span></em>, <em class="sig-param"><span class="n">y</span><span class="p">:</span> <span class="n">float</span></em>, <em class="sig-param"><span class="n">x_rad</span><span class="p">:</span> <span class="n">float</span></em>, <em class="sig-param"><span class="n">y_rad</span><span class="p">:</span> <span class="n">float</span></em>, <em class="sig-param"><span class="n">z</span><span class="p">:</span> <span class="n">Optional<span class="p">[</span>int<span class="p">]</span></span> <span class="o">=</span> <span class="default_value">None</span></em>, <em class="sig-param"><span class="n">c</span><span class="p">:</span> <span class="n">Optional<span class="p">[</span>int<span class="p">]</span></span> <span class="o">=</span> <span class="default_value">None</span></em>, <em class="sig-param"><span class="n">t</span><span class="p">:</span> <span class="n">Optional<span class="p">[</span>int<span class="p">]</span></span> <span class="o">=</span> <span class="default_value">None</span></em>, <em class="sig-param"><span class="n">label</span><span class="p">:</span> <span class="n">Optional<span class="p">[</span>str<span class="p">]</span></span> <span class="o">=</span> <span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#ezomero.rois.Ellipse" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="ezomero.rois.Ellipse">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">ezomero.rois.</span></span><span class="sig-name descname"><span class="pre">Ellipse</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x_rad</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_rad</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">z</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">c</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">t</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">label</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ezomero.rois.Ellipse" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>A dataclass used to create an OMERO Ellipse.</p>
 <p>A dataclass used to represent an Ellipse shape and create an OMERO
@@ -69,8 +166,8 @@ Default is <code class="docutils literal notranslate"><span class="pre">None</sp
 </dd></dl>
 
 <dl class="py class">
-<dt id="ezomero.rois.Line">
-<em class="property">class </em><code class="sig-prename descclassname">ezomero.rois.</code><code class="sig-name descname">Line</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">x1</span><span class="p">:</span> <span class="n">float</span></em>, <em class="sig-param"><span class="n">y1</span><span class="p">:</span> <span class="n">float</span></em>, <em class="sig-param"><span class="n">x2</span><span class="p">:</span> <span class="n">float</span></em>, <em class="sig-param"><span class="n">y2</span><span class="p">:</span> <span class="n">float</span></em>, <em class="sig-param"><span class="n">z</span><span class="p">:</span> <span class="n">Optional<span class="p">[</span>int<span class="p">]</span></span> <span class="o">=</span> <span class="default_value">None</span></em>, <em class="sig-param"><span class="n">c</span><span class="p">:</span> <span class="n">Optional<span class="p">[</span>int<span class="p">]</span></span> <span class="o">=</span> <span class="default_value">None</span></em>, <em class="sig-param"><span class="n">t</span><span class="p">:</span> <span class="n">Optional<span class="p">[</span>int<span class="p">]</span></span> <span class="o">=</span> <span class="default_value">None</span></em>, <em class="sig-param"><span class="n">label</span><span class="p">:</span> <span class="n">Optional<span class="p">[</span>str<span class="p">]</span></span> <span class="o">=</span> <span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#ezomero.rois.Line" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="ezomero.rois.Line">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">ezomero.rois.</span></span><span class="sig-name descname"><span class="pre">Line</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x1</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y1</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x2</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y2</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">z</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">c</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">t</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">label</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ezomero.rois.Line" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>A dataclass used to create an OMERO Line.</p>
 <p>A dataclass used to represent a Line shape and create an OMERO equivalent.
@@ -99,8 +196,8 @@ Default is <code class="docutils literal notranslate"><span class="pre">None</sp
 </dd></dl>
 
 <dl class="py class">
-<dt id="ezomero.rois.Point">
-<em class="property">class </em><code class="sig-prename descclassname">ezomero.rois.</code><code class="sig-name descname">Point</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">x</span><span class="p">:</span> <span class="n">float</span></em>, <em class="sig-param"><span class="n">y</span><span class="p">:</span> <span class="n">float</span></em>, <em class="sig-param"><span class="n">z</span><span class="p">:</span> <span class="n">Optional<span class="p">[</span>int<span class="p">]</span></span> <span class="o">=</span> <span class="default_value">None</span></em>, <em class="sig-param"><span class="n">c</span><span class="p">:</span> <span class="n">Optional<span class="p">[</span>int<span class="p">]</span></span> <span class="o">=</span> <span class="default_value">None</span></em>, <em class="sig-param"><span class="n">t</span><span class="p">:</span> <span class="n">Optional<span class="p">[</span>int<span class="p">]</span></span> <span class="o">=</span> <span class="default_value">None</span></em>, <em class="sig-param"><span class="n">label</span><span class="p">:</span> <span class="n">Optional<span class="p">[</span>str<span class="p">]</span></span> <span class="o">=</span> <span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#ezomero.rois.Point" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="ezomero.rois.Point">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">ezomero.rois.</span></span><span class="sig-name descname"><span class="pre">Point</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">z</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">c</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">t</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">label</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ezomero.rois.Point" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>A dataclass used to create an OMERO Point.</p>
 <p>A dataclass used to represent a Point shape and create an OMERO equivalent.
@@ -127,8 +224,8 @@ Default is <code class="docutils literal notranslate"><span class="pre">None</sp
 </dd></dl>
 
 <dl class="py class">
-<dt id="ezomero.rois.Polygon">
-<em class="property">class </em><code class="sig-prename descclassname">ezomero.rois.</code><code class="sig-name descname">Polygon</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">points</span><span class="p">:</span> <span class="n">List<span class="p">[</span>Tuple<span class="p">[</span>float<span class="p">, </span>float<span class="p">]</span><span class="p">]</span></span></em>, <em class="sig-param"><span class="n">z</span><span class="p">:</span> <span class="n">Optional<span class="p">[</span>int<span class="p">]</span></span> <span class="o">=</span> <span class="default_value">None</span></em>, <em class="sig-param"><span class="n">c</span><span class="p">:</span> <span class="n">Optional<span class="p">[</span>int<span class="p">]</span></span> <span class="o">=</span> <span class="default_value">None</span></em>, <em class="sig-param"><span class="n">t</span><span class="p">:</span> <span class="n">Optional<span class="p">[</span>int<span class="p">]</span></span> <span class="o">=</span> <span class="default_value">None</span></em>, <em class="sig-param"><span class="n">label</span><span class="p">:</span> <span class="n">Optional<span class="p">[</span>str<span class="p">]</span></span> <span class="o">=</span> <span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#ezomero.rois.Polygon" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="ezomero.rois.Polygon">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">ezomero.rois.</span></span><span class="sig-name descname"><span class="pre">Polygon</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">points</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">,</span> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">z</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">c</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">t</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">label</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ezomero.rois.Polygon" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>A dataclass used to create an OMERO polygon.</p>
 <p>A dataclass used to represent a Polygon shape and create an OMERO
@@ -156,8 +253,8 @@ Default is <code class="docutils literal notranslate"><span class="pre">None</sp
 </dd></dl>
 
 <dl class="py class">
-<dt id="ezomero.rois.Rectangle">
-<em class="property">class </em><code class="sig-prename descclassname">ezomero.rois.</code><code class="sig-name descname">Rectangle</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">x</span><span class="p">:</span> <span class="n">float</span></em>, <em class="sig-param"><span class="n">y</span><span class="p">:</span> <span class="n">float</span></em>, <em class="sig-param"><span class="n">width</span><span class="p">:</span> <span class="n">float</span></em>, <em class="sig-param"><span class="n">height</span><span class="p">:</span> <span class="n">float</span></em>, <em class="sig-param"><span class="n">z</span><span class="p">:</span> <span class="n">Optional<span class="p">[</span>int<span class="p">]</span></span> <span class="o">=</span> <span class="default_value">None</span></em>, <em class="sig-param"><span class="n">c</span><span class="p">:</span> <span class="n">Optional<span class="p">[</span>int<span class="p">]</span></span> <span class="o">=</span> <span class="default_value">None</span></em>, <em class="sig-param"><span class="n">t</span><span class="p">:</span> <span class="n">Optional<span class="p">[</span>int<span class="p">]</span></span> <span class="o">=</span> <span class="default_value">None</span></em>, <em class="sig-param"><span class="n">label</span><span class="p">:</span> <span class="n">Optional<span class="p">[</span>str<span class="p">]</span></span> <span class="o">=</span> <span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#ezomero.rois.Rectangle" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="ezomero.rois.Rectangle">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">ezomero.rois.</span></span><span class="sig-name descname"><span class="pre">Rectangle</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">width</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">height</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">z</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">c</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">t</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">label</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ezomero.rois.Rectangle" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>A dataclass used to create an OMERO rectangle.</p>
 <p>A dataclass used to represent a Rectangle shape and create an OMERO
@@ -186,12 +283,12 @@ Default is <code class="docutils literal notranslate"><span class="pre">None</sp
 </dl>
 </dd></dl>
 
-</div>
-<div class="section" id="module-ezomero">
+</section>
+<section id="module-ezomero">
 <span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-ezomero" title="Permalink to this headline">¶</a></h2>
 <dl class="py function">
-<dt id="ezomero.connect">
-<code class="sig-prename descclassname">ezomero.</code><code class="sig-name descname">connect</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">user</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">password</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">group</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">host</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">port</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">secure</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">config_path</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#ezomero.connect" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="ezomero.connect">
+<span class="sig-prename descclassname"><span class="pre">ezomero.</span></span><span class="sig-name descname"><span class="pre">connect</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">user</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">password</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">group</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">host</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">port</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">secure</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ezomero.connect" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create an OMERO connection</p>
 <p>This function will create an OMERO connection by populating certain
 parameters for <code class="docutils literal notranslate"><span class="pre">omero.gateway.BlitzGateway</span></code> initialization by the
@@ -225,10 +322,10 @@ returns None.</p>
 <p>The procedure for choosing parameters for <code class="docutils literal notranslate"><span class="pre">omero.gateway.BlitzGateway</span></code>
 initialization is as follows:</p>
 <ol class="arabic">
-<li><p>Any parameters given to <cite>ezconnect</cite> will be used to initialize
+<li><p>Any parameters given to <cite>ezomero.connect</cite> will be used to initialize
 <code class="docutils literal notranslate"><span class="pre">omero.gateway.BlitzGateway</span></code></p></li>
-<li><p>If a parameter is not given to <cite>ezconnect</cite>, populate from variables
-in <code class="docutils literal notranslate"><span class="pre">os.environ</span></code>:</p>
+<li><p>If a parameter is not given to <cite>ezomero.connect</cite>, populate from
+variables in <code class="docutils literal notranslate"><span class="pre">os.environ</span></code>:</p>
 <blockquote>
 <div><ul class="simple">
 <li><p>OMERO_USER</p></li>
@@ -255,8 +352,8 @@ user is prompted to enter a value for each unset parameter.</p></li>
 </dd></dl>
 
 <dl class="py function">
-<dt id="ezomero.filter_by_filename">
-<code class="sig-prename descclassname">ezomero.</code><code class="sig-name descname">filter_by_filename</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">conn</span></em>, <em class="sig-param"><span class="n">im_ids</span></em>, <em class="sig-param"><span class="n">imported_filename</span></em>, <em class="sig-param"><span class="n">across_groups</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="headerlink" href="#ezomero.filter_by_filename" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="ezomero.filter_by_filename">
+<span class="sig-prename descclassname"><span class="pre">ezomero.</span></span><span class="sig-name descname"><span class="pre">filter_by_filename</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">conn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">im_ids</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">imported_filename</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">across_groups</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ezomero.filter_by_filename" title="Permalink to this definition">¶</a></dt>
 <dd><p>Filter list of image ids by originalFile name.</p>
 <p>Sometimes we know the filename of an image that has been imported into
 OMERO but not necessarily the image ID. This is frequently the case when
@@ -294,8 +391,8 @@ in OMERO may share the same filename (e.g., image.tif).</p>
 </dd></dl>
 
 <dl class="py function">
-<dt id="ezomero.filter_by_kv">
-<code class="sig-prename descclassname">ezomero.</code><code class="sig-name descname">filter_by_kv</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">conn</span></em>, <em class="sig-param"><span class="n">im_ids</span></em>, <em class="sig-param"><span class="n">key</span></em>, <em class="sig-param"><span class="n">value</span></em>, <em class="sig-param"><span class="n">across_groups</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="headerlink" href="#ezomero.filter_by_kv" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="ezomero.filter_by_kv">
+<span class="sig-prename descclassname"><span class="pre">ezomero.</span></span><span class="sig-name descname"><span class="pre">filter_by_kv</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">conn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">im_ids</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">key</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">across_groups</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ezomero.filter_by_kv" title="Permalink to this definition">¶</a></dt>
 <dd><p>Filter list of image ids by a key-value pair of a MapAnnotation.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -318,8 +415,8 @@ in OMERO may share the same filename (e.g., image.tif).</p>
 </dd></dl>
 
 <dl class="py function">
-<dt id="ezomero.filter_by_tag_value">
-<code class="sig-prename descclassname">ezomero.</code><code class="sig-name descname">filter_by_tag_value</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">conn</span></em>, <em class="sig-param"><span class="n">im_ids</span></em>, <em class="sig-param"><span class="n">tag_value</span></em>, <em class="sig-param"><span class="n">across_groups</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="headerlink" href="#ezomero.filter_by_tag_value" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="ezomero.filter_by_tag_value">
+<span class="sig-prename descclassname"><span class="pre">ezomero.</span></span><span class="sig-name descname"><span class="pre">filter_by_tag_value</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">conn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">im_ids</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tag_value</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">across_groups</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ezomero.filter_by_tag_value" title="Permalink to this definition">¶</a></dt>
 <dd><p>Filter list of image ids by textValue of a TagAnnotation.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -341,8 +438,8 @@ in OMERO may share the same filename (e.g., image.tif).</p>
 </dd></dl>
 
 <dl class="py function">
-<dt id="ezomero.get_file_annotation">
-<code class="sig-prename descclassname">ezomero.</code><code class="sig-name descname">get_file_annotation</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">conn</span></em>, <em class="sig-param"><span class="n">file_ann_id</span></em>, <em class="sig-param"><span class="n">folder_path</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">across_groups</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="headerlink" href="#ezomero.get_file_annotation" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="ezomero.get_file_annotation">
+<span class="sig-prename descclassname"><span class="pre">ezomero.</span></span><span class="sig-name descname"><span class="pre">get_file_annotation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">conn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">file_ann_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">folder_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">across_groups</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ezomero.get_file_annotation" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get the value of a file annotation object</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -373,8 +470,8 @@ directory.</p></li>
 </dd></dl>
 
 <dl class="py function">
-<dt id="ezomero.get_file_annotation_ids">
-<code class="sig-prename descclassname">ezomero.</code><code class="sig-name descname">get_file_annotation_ids</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">conn</span></em>, <em class="sig-param"><span class="n">object_type</span></em>, <em class="sig-param"><span class="n">object_id</span></em>, <em class="sig-param"><span class="n">ns</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">across_groups</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="headerlink" href="#ezomero.get_file_annotation_ids" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="ezomero.get_file_annotation_ids">
+<span class="sig-prename descclassname"><span class="pre">ezomero.</span></span><span class="sig-name descname"><span class="pre">get_file_annotation_ids</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">conn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">object_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">object_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ns</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">across_groups</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ezomero.get_file_annotation_ids" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get IDs of file annotations associated with an object</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -406,8 +503,8 @@ directory.</p></li>
 </dd></dl>
 
 <dl class="py function">
-<dt id="ezomero.get_group_id">
-<code class="sig-prename descclassname">ezomero.</code><code class="sig-name descname">get_group_id</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">conn</span></em>, <em class="sig-param"><span class="n">group_name</span></em><span class="sig-paren">)</span><a class="headerlink" href="#ezomero.get_group_id" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="ezomero.get_group_id">
+<span class="sig-prename descclassname"><span class="pre">ezomero.</span></span><span class="sig-name descname"><span class="pre">get_group_id</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">conn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">group_name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ezomero.get_group_id" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get ID of a group based on group name.</p>
 <p>Must be an exact match. Case sensitive.</p>
 <dl class="field-list simple">
@@ -432,8 +529,8 @@ directory.</p></li>
 </dd></dl>
 
 <dl class="py function">
-<dt id="ezomero.get_image">
-<code class="sig-prename descclassname">ezomero.</code><code class="sig-name descname">get_image</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">conn</span></em>, <em class="sig-param"><span class="n">image_id</span></em>, <em class="sig-param"><span class="n">no_pixels</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">start_coords</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">axis_lengths</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">xyzct</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">pad</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">across_groups</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="headerlink" href="#ezomero.get_image" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="ezomero.get_image">
+<span class="sig-prename descclassname"><span class="pre">ezomero.</span></span><span class="sig-name descname"><span class="pre">get_image</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">conn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">image_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">no_pixels</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_coords</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">axis_lengths</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xyzct</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pad</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pyramid_level</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dim_order</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">across_groups</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ezomero.get_image" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get omero image object along with pixels as a numpy array.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -453,6 +550,13 @@ the entire possible range of pixels is returned. Default is None.</p></li>
 <li><p><strong>pad</strong> (<em>bool</em><em>, </em><em>optional</em>) – If <cite>axis_lengths</cite> values would result in out-of-bounds indices, pad
 pixel array with zeros. Otherwise, such an operation will raise an
 exception. Ignored if <cite>no_pixels</cite> is True.</p></li>
+<li><p><strong>pyramid_level</strong> (<em>int</em><em>, </em><em>optional</em>) – If image has multiple pyramid levels and this argument is set, pixels
+are returned at the chosen resolution level, and all other arguments
+apply to that level as well. We follow the usual convention of <cite>0</cite> as
+full-resolution.</p></li>
+<li><p><strong>dim_order</strong> (<em>str</em><em>, </em><em>optional</em>) – String containing the letters ‘x’, ‘y’, ‘z’, ‘c’ and ‘t’ in some order,
+specifying the order of dimensions to be returned by the function.
+If specified, ignores the value of the ‘xyzct’ variable.</p></li>
 <li><p><strong>across_groups</strong> (<em>bool</em><em>, </em><em>optional</em>) – Defines cross-group behavior of function - set to
 <code class="docutils literal notranslate"><span class="pre">False</span></code> to disable it.</p></li>
 </ul>
@@ -467,9 +571,10 @@ of the image if <cite>start_coords</cite> and <cite>axis_lengths</cite> are spec
 </dd>
 </dl>
 <p class="rubric">Notes</p>
-<p>Regardless of whether <cite>xyzct</cite> is <cite>True</cite>, the numpy array is created as
-TZYXC, for performance reasons. If <cite>xyzct</cite> is <cite>True</cite>, the returned <cite>pixels</cite>
-array is actually a view of the original TZYXC array.</p>
+<p>Regardless of whether <cite>xyzct</cite> is <cite>True</cite> or <cite>dim_order</cite> is set, the numpy
+array is created as TZYXC, for performance reasons. If <cite>xyzct</cite> is <cite>True</cite>
+or <cite>dim_order</cite> is set, the returned <cite>pixels</cite> array is actually a view
+of the original TZYXC array.</p>
 <p class="rubric">Examples</p>
 <p># Get an entire image as a numpy array:</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">im_object</span><span class="p">,</span> <span class="n">im_array</span> <span class="o">=</span> <span class="n">get_image</span><span class="p">(</span><span class="n">conn</span><span class="p">,</span> <span class="mi">314</span><span class="p">)</span>
@@ -489,8 +594,8 @@ array is actually a view of the original TZYXC array.</p>
 </dd></dl>
 
 <dl class="py function">
-<dt id="ezomero.get_image_ids">
-<code class="sig-prename descclassname">ezomero.</code><code class="sig-name descname">get_image_ids</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">conn</span></em>, <em class="sig-param"><span class="n">project</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">dataset</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">plate</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">well</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">across_groups</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="headerlink" href="#ezomero.get_image_ids" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="ezomero.get_image_ids">
+<span class="sig-prename descclassname"><span class="pre">ezomero.</span></span><span class="sig-name descname"><span class="pre">get_image_ids</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">conn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">project</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataset</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">well</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">across_groups</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ezomero.get_image_ids" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return a list of image ids based on image container</p>
 <p>If no container is specified, function will return orphans.</p>
 <dl class="field-list simple">
@@ -532,8 +637,8 @@ those are specified, orphaned images are returned.</p>
 </dd></dl>
 
 <dl class="py function">
-<dt id="ezomero.get_map_annotation">
-<code class="sig-prename descclassname">ezomero.</code><code class="sig-name descname">get_map_annotation</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">conn</span></em>, <em class="sig-param"><span class="n">map_ann_id</span></em>, <em class="sig-param"><span class="n">across_groups</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="headerlink" href="#ezomero.get_map_annotation" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="ezomero.get_map_annotation">
+<span class="sig-prename descclassname"><span class="pre">ezomero.</span></span><span class="sig-name descname"><span class="pre">get_map_annotation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">conn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">map_ann_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">across_groups</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ezomero.get_map_annotation" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get the value of a map annotation object</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -560,8 +665,8 @@ those are specified, orphaned images are returned.</p>
 </dd></dl>
 
 <dl class="py function">
-<dt id="ezomero.get_map_annotation_ids">
-<code class="sig-prename descclassname">ezomero.</code><code class="sig-name descname">get_map_annotation_ids</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">conn</span></em>, <em class="sig-param"><span class="n">object_type</span></em>, <em class="sig-param"><span class="n">object_id</span></em>, <em class="sig-param"><span class="n">ns</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">across_groups</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="headerlink" href="#ezomero.get_map_annotation_ids" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="ezomero.get_map_annotation_ids">
+<span class="sig-prename descclassname"><span class="pre">ezomero.</span></span><span class="sig-name descname"><span class="pre">get_map_annotation_ids</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">conn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">object_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">object_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ns</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">across_groups</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ezomero.get_map_annotation_ids" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get IDs of map annotations associated with an object</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -593,8 +698,8 @@ those are specified, orphaned images are returned.</p>
 </dd></dl>
 
 <dl class="py function">
-<dt id="ezomero.get_original_filepaths">
-<code class="sig-prename descclassname">ezomero.</code><code class="sig-name descname">get_original_filepaths</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">conn</span></em>, <em class="sig-param"><span class="n">image_id</span></em>, <em class="sig-param"><span class="n">fpath</span><span class="o">=</span><span class="default_value">'repo'</span></em>, <em class="sig-param"><span class="n">across_groups</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="headerlink" href="#ezomero.get_original_filepaths" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="ezomero.get_original_filepaths">
+<span class="sig-prename descclassname"><span class="pre">ezomero.</span></span><span class="sig-name descname"><span class="pre">get_original_filepaths</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">conn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">image_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fpath</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'repo'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">across_groups</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ezomero.get_original_filepaths" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get paths to original files for specified image.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -637,8 +742,120 @@ are absolute.</p>
 </dd></dl>
 
 <dl class="py function">
-<dt id="ezomero.get_tag">
-<code class="sig-prename descclassname">ezomero.</code><code class="sig-name descname">get_tag</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">conn</span></em>, <em class="sig-param"><span class="n">tag_id</span></em>, <em class="sig-param"><span class="n">across_groups</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="headerlink" href="#ezomero.get_tag" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="ezomero.get_pyramid_levels">
+<span class="sig-prename descclassname"><span class="pre">ezomero.</span></span><span class="sig-name descname"><span class="pre">get_pyramid_levels</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">conn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">image_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">across_groups</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ezomero.get_pyramid_levels" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get number of pyramid levels associated with an Image</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>conn</strong> (<code class="docutils literal notranslate"><span class="pre">omero.gateway.BlitzGateway</span></code> object) – OMERO connection.</p></li>
+<li><p><strong>image_id</strong> (<em>int</em>) – ID of <code class="docutils literal notranslate"><span class="pre">Image</span></code>.</p></li>
+<li><p><strong>across_groups</strong> (<em>bool</em><em>, </em><em>optional</em>) – Defines cross-group behavior of function - set to
+<code class="docutils literal notranslate"><span class="pre">False</span></code> to disable it.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>levels</strong> – Pyramidal levels available for this image, with number of
+pixels for X and Y axes.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>list of tuples</p>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<p># Return pyramid levels associated to an image:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">lvls</span> <span class="o">=</span> <span class="n">get_pyramid_levels</span><span class="p">(</span><span class="n">conn</span><span class="p">,</span> <span class="mi">42</span><span class="p">)</span>
+<span class="go">[(2048, 1600), (1024, 800), (512, 400), (256, 200)]</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ezomero.get_roi_ids">
+<span class="sig-prename descclassname"><span class="pre">ezomero.</span></span><span class="sig-name descname"><span class="pre">get_roi_ids</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">conn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">image_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">across_groups</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ezomero.get_roi_ids" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get IDs of ROIs associated with an Image</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>conn</strong> (<code class="docutils literal notranslate"><span class="pre">omero.gateway.BlitzGateway</span></code> object) – OMERO connection.</p></li>
+<li><p><strong>image_id</strong> (<em>int</em>) – ID of <code class="docutils literal notranslate"><span class="pre">Image</span></code>.</p></li>
+<li><p><strong>across_groups</strong> (<em>bool</em><em>, </em><em>optional</em>) – Defines cross-group behavior of function - set to
+<code class="docutils literal notranslate"><span class="pre">False</span></code> to disable it.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>roi_ids</strong></p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>list of ints</p>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<p># Return IDs of all ROIs linked to an image:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">roi_ids</span> <span class="o">=</span> <span class="n">get_roi_ids</span><span class="p">(</span><span class="n">conn</span><span class="p">,</span> <span class="mi">42</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ezomero.get_shape">
+<span class="sig-prename descclassname"><span class="pre">ezomero.</span></span><span class="sig-name descname"><span class="pre">get_shape</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">conn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shape_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">across_groups</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ezomero.get_shape" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get an ezomero shape object from an OMERO Shape id</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>conn</strong> (<code class="docutils literal notranslate"><span class="pre">omero.gateway.BlitzGateway</span></code> object) – OMERO connection.</p></li>
+<li><p><strong>shape_id</strong> (<em>int</em>) – ID of shape to get.</p></li>
+<li><p><strong>across_groups</strong> (<em>bool</em><em>, </em><em>optional</em>) – Defines cross-group behavior of function - set to
+<code class="docutils literal notranslate"><span class="pre">False</span></code> to disable it.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><strong>shape</strong> (<em>obj</em>) – An object of one of ezomero shape classes</p></li>
+<li><p><strong>fill_color</strong> (<em>tuple</em>) – Tuple of format (r, g, b, a) containing the shape fill color.</p></li>
+<li><p><strong>stroke_color</strong> (<em>tuple</em>) – Tuple of format (r, g, b, a) containing the shape stroke color.</p></li>
+<li><p><strong>stroke_width</strong> (<em>float</em>) – Shape stroke width, in pixels</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">shape</span> <span class="o">=</span> <span class="n">get_shape</span><span class="p">(</span><span class="n">conn</span><span class="p">,</span> <span class="mi">634443</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ezomero.get_shape_ids">
+<span class="sig-prename descclassname"><span class="pre">ezomero.</span></span><span class="sig-name descname"><span class="pre">get_shape_ids</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">conn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">roi_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">across_groups</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ezomero.get_shape_ids" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get IDs of shapes associated with an ROI</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>conn</strong> (<code class="docutils literal notranslate"><span class="pre">omero.gateway.BlitzGateway</span></code> object) – OMERO connection.</p></li>
+<li><p><strong>roi_id</strong> (<em>int</em>) – ID of <code class="docutils literal notranslate"><span class="pre">ROI</span></code>.</p></li>
+<li><p><strong>across_groups</strong> (<em>bool</em><em>, </em><em>optional</em>) – Defines cross-group behavior of function - set to
+<code class="docutils literal notranslate"><span class="pre">False</span></code> to disable it.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>shape_ids</strong></p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>list of ints</p>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<p># Return IDs of all shapes linked to an ROI:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">shape_ids</span> <span class="o">=</span> <span class="n">get_shape_ids</span><span class="p">(</span><span class="n">conn</span><span class="p">,</span> <span class="mi">4222</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ezomero.get_tag">
+<span class="sig-prename descclassname"><span class="pre">ezomero.</span></span><span class="sig-name descname"><span class="pre">get_tag</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">conn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tag_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">across_groups</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ezomero.get_tag" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get the value of a tag annotation object</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -665,8 +882,8 @@ are absolute.</p>
 </dd></dl>
 
 <dl class="py function">
-<dt id="ezomero.get_tag_ids">
-<code class="sig-prename descclassname">ezomero.</code><code class="sig-name descname">get_tag_ids</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">conn</span></em>, <em class="sig-param"><span class="n">object_type</span></em>, <em class="sig-param"><span class="n">object_id</span></em>, <em class="sig-param"><span class="n">ns</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">across_groups</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="headerlink" href="#ezomero.get_tag_ids" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="ezomero.get_tag_ids">
+<span class="sig-prename descclassname"><span class="pre">ezomero.</span></span><span class="sig-name descname"><span class="pre">get_tag_ids</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">conn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">object_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">object_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ns</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">across_groups</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ezomero.get_tag_ids" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get IDs of tag annotations associated with an object</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -698,8 +915,8 @@ are absolute.</p>
 </dd></dl>
 
 <dl class="py function">
-<dt id="ezomero.get_user_id">
-<code class="sig-prename descclassname">ezomero.</code><code class="sig-name descname">get_user_id</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">conn</span></em>, <em class="sig-param"><span class="n">user_name</span></em><span class="sig-paren">)</span><a class="headerlink" href="#ezomero.get_user_id" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="ezomero.get_user_id">
+<span class="sig-prename descclassname"><span class="pre">ezomero.</span></span><span class="sig-name descname"><span class="pre">get_user_id</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">conn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">user_name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ezomero.get_user_id" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get ID of a user based on user name.</p>
 <p>Must be an exact match. Case sensitive.</p>
 <dl class="field-list simple">
@@ -724,8 +941,8 @@ are absolute.</p>
 </dd></dl>
 
 <dl class="py function">
-<dt id="ezomero.get_well_id">
-<code class="sig-prename descclassname">ezomero.</code><code class="sig-name descname">get_well_id</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">conn</span></em>, <em class="sig-param"><span class="n">plate_id</span></em>, <em class="sig-param"><span class="n">row</span></em>, <em class="sig-param"><span class="n">column</span></em>, <em class="sig-param"><span class="n">across_groups</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="headerlink" href="#ezomero.get_well_id" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="ezomero.get_well_id">
+<span class="sig-prename descclassname"><span class="pre">ezomero.</span></span><span class="sig-name descname"><span class="pre">get_well_id</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">conn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plate_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">row</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">column</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">across_groups</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ezomero.get_well_id" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get ID of well based on plate ID, row, and column</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -746,8 +963,8 @@ are absolute.</p>
 </dd></dl>
 
 <dl class="py function">
-<dt id="ezomero.link_datasets_to_project">
-<code class="sig-prename descclassname">ezomero.</code><code class="sig-name descname">link_datasets_to_project</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">conn</span></em>, <em class="sig-param"><span class="n">dataset_ids</span></em>, <em class="sig-param"><span class="n">project_id</span></em><span class="sig-paren">)</span><a class="headerlink" href="#ezomero.link_datasets_to_project" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="ezomero.link_datasets_to_project">
+<span class="sig-prename descclassname"><span class="pre">ezomero.</span></span><span class="sig-name descname"><span class="pre">link_datasets_to_project</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">conn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataset_ids</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">project_id</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ezomero.link_datasets_to_project" title="Permalink to this definition">¶</a></dt>
 <dd><p>Link datasets to the specified project.</p>
 <p>Nothing is returned by this function.</p>
 <dl class="field-list simple">
@@ -762,8 +979,8 @@ are absolute.</p>
 </dd></dl>
 
 <dl class="py function">
-<dt id="ezomero.link_images_to_dataset">
-<code class="sig-prename descclassname">ezomero.</code><code class="sig-name descname">link_images_to_dataset</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">conn</span></em>, <em class="sig-param"><span class="n">image_ids</span></em>, <em class="sig-param"><span class="n">dataset_id</span></em><span class="sig-paren">)</span><a class="headerlink" href="#ezomero.link_images_to_dataset" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="ezomero.link_images_to_dataset">
+<span class="sig-prename descclassname"><span class="pre">ezomero.</span></span><span class="sig-name descname"><span class="pre">link_images_to_dataset</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">conn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">image_ids</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataset_id</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ezomero.link_images_to_dataset" title="Permalink to this definition">¶</a></dt>
 <dd><p>Link images to the specified dataset.</p>
 <p>Nothing is returned by this function.</p>
 <dl class="field-list simple">
@@ -778,8 +995,8 @@ are absolute.</p>
 </dd></dl>
 
 <dl class="py function">
-<dt id="ezomero.link_plates_to_screen">
-<code class="sig-prename descclassname">ezomero.</code><code class="sig-name descname">link_plates_to_screen</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">conn</span></em>, <em class="sig-param"><span class="n">plate_ids</span></em>, <em class="sig-param"><span class="n">screen_id</span></em><span class="sig-paren">)</span><a class="headerlink" href="#ezomero.link_plates_to_screen" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="ezomero.link_plates_to_screen">
+<span class="sig-prename descclassname"><span class="pre">ezomero.</span></span><span class="sig-name descname"><span class="pre">link_plates_to_screen</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">conn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plate_ids</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">screen_id</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ezomero.link_plates_to_screen" title="Permalink to this definition">¶</a></dt>
 <dd><p>Link plates to the specified screen.</p>
 <p>Nothing is returned by this function.</p>
 <dl class="field-list simple">
@@ -794,8 +1011,8 @@ are absolute.</p>
 </dd></dl>
 
 <dl class="py function">
-<dt id="ezomero.post_dataset">
-<code class="sig-prename descclassname">ezomero.</code><code class="sig-name descname">post_dataset</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">conn</span></em>, <em class="sig-param"><span class="n">dataset_name</span></em>, <em class="sig-param"><span class="n">project_id</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">description</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">across_groups</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="headerlink" href="#ezomero.post_dataset" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="ezomero.post_dataset">
+<span class="sig-prename descclassname"><span class="pre">ezomero.</span></span><span class="sig-name descname"><span class="pre">post_dataset</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">conn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataset_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">project_id</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">description</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">across_groups</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ezomero.post_dataset" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create a new dataset.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -831,8 +1048,8 @@ specified, the Dataset will be orphaned.</p></li>
 </dd></dl>
 
 <dl class="py function">
-<dt id="ezomero.post_file_annotation">
-<code class="sig-prename descclassname">ezomero.</code><code class="sig-name descname">post_file_annotation</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">conn</span></em>, <em class="sig-param"><span class="n">object_type</span></em>, <em class="sig-param"><span class="n">object_id</span></em>, <em class="sig-param"><span class="n">file_path</span></em>, <em class="sig-param"><span class="n">ns</span></em>, <em class="sig-param"><span class="n">mimetype</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">description</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">across_groups</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="headerlink" href="#ezomero.post_file_annotation" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="ezomero.post_file_annotation">
+<span class="sig-prename descclassname"><span class="pre">ezomero.</span></span><span class="sig-name descname"><span class="pre">post_file_annotation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">conn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">object_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">object_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">file_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ns</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mimetype</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">description</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">across_groups</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ezomero.post_file_annotation" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create new FileAnnotation and link to images.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -870,8 +1087,8 @@ header.</p></li>
 </dd></dl>
 
 <dl class="py function">
-<dt id="ezomero.post_image">
-<code class="sig-prename descclassname">ezomero.</code><code class="sig-name descname">post_image</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">conn</span></em>, <em class="sig-param"><span class="n">image</span></em>, <em class="sig-param"><span class="n">image_name</span></em>, <em class="sig-param"><span class="n">description</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">dataset_id</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">source_image_id</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">channel_list</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">across_groups</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="headerlink" href="#ezomero.post_image" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="ezomero.post_image">
+<span class="sig-prename descclassname"><span class="pre">ezomero.</span></span><span class="sig-name descname"><span class="pre">post_image</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">conn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">image</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">image_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">description</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataset_id</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">source_image_id</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">channel_list</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dim_order</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">across_groups</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ezomero.post_image" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create a new OMERO image from numpy array.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -887,6 +1104,8 @@ specified, an orphaned image will be created.</p></li>
 <li><p><strong>source_image_id</strong> (<em>int</em><em>, </em><em>optional</em>) – If specified, copy this image with metadata, then add pixel data from
 <code class="docutils literal notranslate"><span class="pre">image</span></code> parameter.</p></li>
 <li><p><strong>channel_list</strong> (<em>list of ints</em>) – Copies metadata from these channels in source image (if specified).</p></li>
+<li><p><strong>dim_order</strong> (<em>str</em><em>, </em><em>optional</em>) – String containing the letters ‘x’, ‘y’, ‘z’, ‘c’ and ‘t’ in some order,
+specifying the order of dimensions the <cite>image</cite> array was supplied on.</p></li>
 <li><p><strong>across_groups</strong> (<em>bool</em><em>, </em><em>optional</em>) – Defines cross-group behavior of function - set to
 <code class="docutils literal notranslate"><span class="pre">False</span></code> to disable it.</p></li>
 </ul>
@@ -908,8 +1127,8 @@ specified, an orphaned image will be created.</p></li>
 </dd></dl>
 
 <dl class="py function">
-<dt id="ezomero.post_map_annotation">
-<code class="sig-prename descclassname">ezomero.</code><code class="sig-name descname">post_map_annotation</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">conn</span></em>, <em class="sig-param"><span class="n">object_type</span></em>, <em class="sig-param"><span class="n">object_id</span></em>, <em class="sig-param"><span class="n">kv_dict</span></em>, <em class="sig-param"><span class="n">ns</span></em>, <em class="sig-param"><span class="n">across_groups</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="headerlink" href="#ezomero.post_map_annotation" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="ezomero.post_map_annotation">
+<span class="sig-prename descclassname"><span class="pre">ezomero.</span></span><span class="sig-name descname"><span class="pre">post_map_annotation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">conn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">object_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">object_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kv_dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ns</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">across_groups</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ezomero.post_map_annotation" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create new MapAnnotation and link to images.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -947,8 +1166,8 @@ specified, an orphaned image will be created.</p></li>
 </dd></dl>
 
 <dl class="py function">
-<dt id="ezomero.post_project">
-<code class="sig-prename descclassname">ezomero.</code><code class="sig-name descname">post_project</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">conn</span></em>, <em class="sig-param"><span class="n">project_name</span></em>, <em class="sig-param"><span class="n">description</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#ezomero.post_project" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="ezomero.post_project">
+<span class="sig-prename descclassname"><span class="pre">ezomero.</span></span><span class="sig-name descname"><span class="pre">post_project</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">conn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">project_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">description</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ezomero.post_project" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create a new project.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -977,8 +1196,8 @@ be changed using <code class="docutils literal notranslate"><span class="pre">co
 </dd></dl>
 
 <dl class="py function">
-<dt id="ezomero.post_roi">
-<code class="sig-prename descclassname">ezomero.</code><code class="sig-name descname">post_roi</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">conn</span></em>, <em class="sig-param"><span class="n">image_id</span></em>, <em class="sig-param"><span class="n">shapes</span></em>, <em class="sig-param"><span class="n">name</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">description</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">fill_color</span><span class="o">=</span><span class="default_value">(10, 10, 10, 10)</span></em>, <em class="sig-param"><span class="n">stroke_color</span><span class="o">=</span><span class="default_value">(255, 255, 255, 255)</span></em>, <em class="sig-param"><span class="n">stroke_width</span><span class="o">=</span><span class="default_value">1</span></em><span class="sig-paren">)</span><a class="headerlink" href="#ezomero.post_roi" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="ezomero.post_roi">
+<span class="sig-prename descclassname"><span class="pre">ezomero.</span></span><span class="sig-name descname"><span class="pre">post_roi</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">conn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">image_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shapes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">description</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fill_color</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(10,</span> <span class="pre">10,</span> <span class="pre">10,</span> <span class="pre">10)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stroke_color</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(255,</span> <span class="pre">255,</span> <span class="pre">255,</span> <span class="pre">255)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stroke_width</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ezomero.post_roi" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create new ROI from a list of shapes and link to an image.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -1026,8 +1245,8 @@ levels. Default is (255, 255, 255, 255).</p></li>
 </dd></dl>
 
 <dl class="py function">
-<dt id="ezomero.post_screen">
-<code class="sig-prename descclassname">ezomero.</code><code class="sig-name descname">post_screen</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">conn</span></em>, <em class="sig-param"><span class="n">screen_name</span></em>, <em class="sig-param"><span class="n">description</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#ezomero.post_screen" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="ezomero.post_screen">
+<span class="sig-prename descclassname"><span class="pre">ezomero.</span></span><span class="sig-name descname"><span class="pre">post_screen</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">conn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">screen_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">description</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ezomero.post_screen" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create a new screen.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -1056,8 +1275,8 @@ be changed using <code class="docutils literal notranslate"><span class="pre">co
 </dd></dl>
 
 <dl class="py function">
-<dt id="ezomero.print_datasets">
-<code class="sig-prename descclassname">ezomero.</code><code class="sig-name descname">print_datasets</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">conn</span></em>, <em class="sig-param"><span class="n">project</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#ezomero.print_datasets" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="ezomero.print_datasets">
+<span class="sig-prename descclassname"><span class="pre">ezomero.</span></span><span class="sig-name descname"><span class="pre">print_datasets</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">conn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">project</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ezomero.print_datasets" title="Permalink to this definition">¶</a></dt>
 <dd><p>Print all available Datasets for a given Project.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -1071,8 +1290,8 @@ orphans are listed.</p></li>
 </dd></dl>
 
 <dl class="py function">
-<dt id="ezomero.print_groups">
-<code class="sig-prename descclassname">ezomero.</code><code class="sig-name descname">print_groups</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">conn</span></em><span class="sig-paren">)</span><a class="headerlink" href="#ezomero.print_groups" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="ezomero.print_groups">
+<span class="sig-prename descclassname"><span class="pre">ezomero.</span></span><span class="sig-name descname"><span class="pre">print_groups</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">conn</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ezomero.print_groups" title="Permalink to this definition">¶</a></dt>
 <dd><p>Print all Groups with IDs and membership info.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -1082,8 +1301,8 @@ orphans are listed.</p></li>
 </dd></dl>
 
 <dl class="py function">
-<dt id="ezomero.print_map_annotation">
-<code class="sig-prename descclassname">ezomero.</code><code class="sig-name descname">print_map_annotation</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">conn</span></em>, <em class="sig-param"><span class="n">map_ann_id</span></em><span class="sig-paren">)</span><a class="headerlink" href="#ezomero.print_map_annotation" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="ezomero.print_map_annotation">
+<span class="sig-prename descclassname"><span class="pre">ezomero.</span></span><span class="sig-name descname"><span class="pre">print_map_annotation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">conn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">map_ann_id</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ezomero.print_map_annotation" title="Permalink to this definition">¶</a></dt>
 <dd><p>Print some information and value of a map annotation.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -1096,8 +1315,8 @@ orphans are listed.</p></li>
 </dd></dl>
 
 <dl class="py function">
-<dt id="ezomero.print_projects">
-<code class="sig-prename descclassname">ezomero.</code><code class="sig-name descname">print_projects</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">conn</span></em><span class="sig-paren">)</span><a class="headerlink" href="#ezomero.print_projects" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="ezomero.print_projects">
+<span class="sig-prename descclassname"><span class="pre">ezomero.</span></span><span class="sig-name descname"><span class="pre">print_projects</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">conn</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ezomero.print_projects" title="Permalink to this definition">¶</a></dt>
 <dd><p>Print all available Projects.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -1107,8 +1326,8 @@ orphans are listed.</p></li>
 </dd></dl>
 
 <dl class="py function">
-<dt id="ezomero.put_map_annotation">
-<code class="sig-prename descclassname">ezomero.</code><code class="sig-name descname">put_map_annotation</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">conn</span></em>, <em class="sig-param"><span class="n">map_ann_id</span></em>, <em class="sig-param"><span class="n">kv_dict</span></em>, <em class="sig-param"><span class="n">ns</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">across_groups</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="headerlink" href="#ezomero.put_map_annotation" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="ezomero.put_map_annotation">
+<span class="sig-prename descclassname"><span class="pre">ezomero.</span></span><span class="sig-name descname"><span class="pre">put_map_annotation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">conn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">map_ann_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kv_dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ns</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">across_groups</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ezomero.put_map_annotation" title="Permalink to this definition">¶</a></dt>
 <dd><p>Update an existing map annotation with new values (kv pairs)</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -1146,8 +1365,8 @@ namespace will be used.</p></li>
 </dd></dl>
 
 <dl class="py function">
-<dt id="ezomero.set_group">
-<code class="sig-prename descclassname">ezomero.</code><code class="sig-name descname">set_group</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">conn</span></em>, <em class="sig-param"><span class="n">group_id</span></em><span class="sig-paren">)</span><a class="headerlink" href="#ezomero.set_group" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="ezomero.set_group">
+<span class="sig-prename descclassname"><span class="pre">ezomero.</span></span><span class="sig-name descname"><span class="pre">set_group</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">conn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">group_id</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ezomero.set_group" title="Permalink to this definition">¶</a></dt>
 <dd><p>Safely switch OMERO group.</p>
 <p>This function will change the user’s current group to that specified by
 <cite>group_id</cite>, but only if the user is a member of that group. This is a
@@ -1171,8 +1390,8 @@ lead to server-side errors.</p>
 </dd></dl>
 
 <dl class="py function">
-<dt id="ezomero.store_connection_params">
-<code class="sig-prename descclassname">ezomero.</code><code class="sig-name descname">store_connection_params</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">user</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">group</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">host</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">port</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">secure</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">config_path</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#ezomero.store_connection_params" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="ezomero.store_connection_params">
+<span class="sig-prename descclassname"><span class="pre">ezomero.</span></span><span class="sig-name descname"><span class="pre">store_connection_params</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">user</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">group</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">host</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">port</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">secure</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">web_host</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ezomero.store_connection_params" title="Permalink to this definition">¶</a></dt>
 <dd><p>Save OMERO connection parameters in a file.</p>
 <p>This function creates a config file (‘.ezomero’) in which
 certain OMERO parameters are stored, to make it easier to create
@@ -1185,6 +1404,9 @@ certain OMERO parameters are stored, to make it easier to create
 <li><p><strong>host</strong> (<em>str</em><em>, </em><em>optional</em>) – OMERO.server host.</p></li>
 <li><p><strong>port</strong> (<em>int</em><em>, </em><em>optional</em>) – OMERO port.</p></li>
 <li><p><strong>secure</strong> (<em>boolean</em><em>, </em><em>optional</em>) – Whether to create a secure session.</p></li>
+<li><p><strong>web_host</strong> (<em>boolean/str</em><em>, </em><em>optional</em>) – Whether to save a web host address got JSON connections as well. If
+<cite>False</cite>, will skip it; it <cite>True</cite>, will prompt user for it; if it is
+a <cite>str</cite>, will save that value to <cite>OMERO_WEB_HOST</cite>.</p></li>
 <li><p><strong>config_path</strong> (<em>str</em><em>, </em><em>optional</em>) – Path to directory that will contain the ‘.ezomero’ file. If left as
 <code class="docutils literal notranslate"><span class="pre">None</span></code>, defaults to the home directory as determined by Python’s
 <code class="docutils literal notranslate"><span class="pre">pathlib</span></code>.</p></li>
@@ -1193,8 +1415,8 @@ certain OMERO parameters are stored, to make it easier to create
 </dl>
 </dd></dl>
 
-</div>
-</div>
+</section>
+</section>
 
 
           </div>
@@ -1225,7 +1447,7 @@ certain OMERO parameters are stored, to make it easier to create
   <h3 id="searchlabel">Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="search.html" method="get">
-      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
       <input type="submit" value="Go" />
     </form>
     </div>
@@ -1247,7 +1469,7 @@ certain OMERO parameters are stored, to make it easier to create
       &copy;2021, The Jackson Laboratory.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.4.3</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 4.2.0</a>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
       |
