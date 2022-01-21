@@ -13,7 +13,6 @@ from omero.rtypes import rstring, rint, rdouble
 from .rois import Point, Line, Rectangle, Ellipse, Polygon
 
 
-@do_across_groups
 def post_dataset(conn, dataset_name, project_id=None, description=None,
                  across_groups=True):
     """Create a new dataset.
@@ -62,6 +61,8 @@ def post_dataset(conn, dataset_name, project_id=None, description=None,
     if project_id is not None:
         if type(project_id) is not int:
             raise TypeError('Project ID must be integer')
+        if across_groups:
+            conn.SERVICE_OPTS.setOmeroGroup('-1')
         project = conn.getObject('Project', project_id)
         if project is not None:
             ret = set_group(conn, project.getDetails().group.id.val)
@@ -71,10 +72,7 @@ def post_dataset(conn, dataset_name, project_id=None, description=None,
             logging.warning(f'Project {project_id} could not be found '
                             '(check if you have permissions to it)')
             return None
-    else:
-        default_group = conn.getDefaultGroup(conn.getUser().getId()).getId()
-        set_group(conn, default_group)
-
+    # if project_id is None, honor conn group
     dataset = DatasetWrapper(conn, DatasetI())
     dataset.setName(dataset_name)
     if description is not None:
@@ -86,7 +84,6 @@ def post_dataset(conn, dataset_name, project_id=None, description=None,
     return dataset.getId()
 
 
-@do_across_groups
 def post_image(conn, image, image_name, description=None, dataset_id=None,
                source_image_id=None, channel_list=None,
                dim_order=None, across_groups=True):
@@ -155,6 +152,8 @@ def post_image(conn, image, image_name, description=None, dataset_id=None,
     if dataset_id is not None:
         if type(dataset_id) is not int:
             raise TypeError("Dataset ID must be an integer")
+        if across_groups:
+            conn.SERVICE_OPTS.setOmeroGroup('-1')
         dataset = conn.getObject("Dataset", dataset_id)
         if dataset is not None:
             ret = set_group(conn, dataset.getDetails().group.id.val)
@@ -165,8 +164,7 @@ def post_image(conn, image, image_name, description=None, dataset_id=None,
                             '(check if you have permissions to it)')
             return None
     else:
-        default_group = conn.getDefaultGroup(conn.getUser().getId()).getId()
-        set_group(conn, default_group)
+        # if dataset_id is None, honor conn group
         dataset = None
     if dim_order is not None:
         order_dict = dict(zip(dim_order, range(5)))
