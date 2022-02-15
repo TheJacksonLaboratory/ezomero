@@ -21,7 +21,7 @@ jobs:
         pip install setuptools wheel twine
     - name: Package and Upload
       env:
-        STACKMANAGER_VERSION: ${{ github.event.release.tag_name }}
+        VERSION: ${{ github.event.release.tag_name }}
         TWINE_USERNAME: __token__
         TWINE_PASSWORD: ${{ secrets.TEST_PYPI_API_TOKEN }}
       run: |

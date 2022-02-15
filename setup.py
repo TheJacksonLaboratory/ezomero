@@ -1,11 +1,12 @@
 import setuptools
+import os
 
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setuptools.setup(
     name="ezomero",
-    version="1.0.1",
+    version=os.environ.get('VERSION', '0.0.0'),
     maintainer="Dave Mellert",
     maintainer_email="Dave.Mellert@jax.org",
     description=("A suite of convenience functions for working"
