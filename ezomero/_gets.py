@@ -8,7 +8,7 @@ from omero.model import MapAnnotationI, TagAnnotationI
 from omero.rtypes import rint, rlong
 from omero.sys import Parameters
 from omero.model import enums as omero_enums
-from .rois import Point, Line, Rectangle, Ellipse, Polygon
+from .rois import Point, Line, Rectangle, Ellipse, Polygon, Polyline, Label
 
 
 # gets
@@ -1042,6 +1042,15 @@ def _omero_shape_to_shape(omero_shape):
         text = omero_shape.textValue
     except AttributeError:
         text = None
+    try:
+        mk_start = omero_shape.markerStart
+    except AttributeError:
+        mk_start = None
+    try:
+        mk_end = omero_shape.markerEnd
+    except AttributeError:
+        mk_end = None
+
     if shape_type == "Point":
         x = omero_shape.x
         y = omero_shape.y
@@ -1051,7 +1060,8 @@ def _omero_shape_to_shape(omero_shape):
         x2 = omero_shape.x2
         y1 = omero_shape.y1
         y2 = omero_shape.y2
-        shape = Line(x1, y1, x2, y2, z_val, c_val, t_val, text)
+        shape = Line(x1, y1, x2, y2, z_val, c_val, t_val,
+                     mk_start, mk_end, text)
     elif shape_type == "Rectangle":
         x = omero_shape.x
         y = omero_shape.y
@@ -1071,6 +1081,18 @@ def _omero_shape_to_shape(omero_shape):
             coords = point.split(',')
             points.append((float(coords[0]), float(coords[1])))
         shape = Polygon(points, z_val, c_val, t_val, text)
+    elif shape_type == "Polyline":
+        omero_points = omero_shape.points.split()
+        points = []
+        for point in omero_points:
+            coords = point.split(',')
+            points.append((float(coords[0]), float(coords[1])))
+        shape = Polyline(points, z_val, c_val, t_val, text)
+    elif shape_type == "Label":
+        x = omero_shape.x
+        y = omero_shape.y
+        fsize = omero_shape.getFontSize().getValue()
+        shape = Label(x, y, text, fsize, z_val, c_val, t_val)
     else:
         err = 'The shape passed for the roi is not a valid shape type'
         raise TypeError(err)
