@@ -4,13 +4,13 @@ import numpy as np
 from ._ezomero import do_across_groups, set_group
 from ._misc import link_datasets_to_project
 from omero.model import RoiI, PointI, LineI, RectangleI, EllipseI
-from omero.model import PolygonI, LengthI, enums
+from omero.model import PolygonI, PolylineI, LabelI, LengthI, enums
 from omero.model import DatasetI, ProjectI, ScreenI
 from omero.gateway import ProjectWrapper, DatasetWrapper
 from omero.gateway import ScreenWrapper
 from omero.gateway import MapAnnotationWrapper
 from omero.rtypes import rstring, rint, rdouble
-from .rois import Point, Line, Rectangle, Ellipse, Polygon
+from .rois import Point, Line, Rectangle, Ellipse, Polygon, Polyline, Label
 
 
 def post_dataset(conn, dataset_name, project_id=None, description=None,
@@ -534,6 +534,10 @@ def _shape_to_omero_shape(shape, fill_color, stroke_color, stroke_width):
         omero_shape.x2 = rdouble(shape.x2)
         omero_shape.y1 = rdouble(shape.y1)
         omero_shape.y2 = rdouble(shape.y2)
+        if shape.markerStart is not None:
+            omero_shape.markerStart = rstring(shape.markerStart)
+        if shape.markerEnd is not None:
+            omero_shape.markerEnd = rstring(shape.markerEnd)
     elif isinstance(shape, Rectangle):
         omero_shape = RectangleI()
         omero_shape.x = rdouble(shape.x)
@@ -551,6 +555,17 @@ def _shape_to_omero_shape(shape, fill_color, stroke_color, stroke_width):
         points_str = "".join("".join([str(x), ',', str(y), ', '])
                              for x, y in shape.points)[:-2]
         omero_shape.points = rstring(points_str)
+    elif isinstance(shape, Polyline):
+        omero_shape = PolylineI()
+        points_str = "".join("".join([str(x), ',', str(y), ', '])
+                             for x, y in shape.points)[:-2]
+        omero_shape.points = rstring(points_str)
+    elif isinstance(shape, Label):
+        omero_shape = LabelI()
+        omero_shape.x = rdouble(shape.x)
+        omero_shape.y = rdouble(shape.y)
+        omero_shape.fontSize = LengthI(shape.fontSize,
+                                       enums.UnitsLength.POINT)
     else:
         err = 'The shape passed for the roi is not a valid shape type'
         raise TypeError(err)

@@ -194,6 +194,9 @@ def roi_fixture():
     point = rois.Point(x=100.0, y=100.0, z=0, c=0, t=0, label='test_point')
     line = rois.Line(x1=100.0, y1=100.0, x2=150.0, y2=150.0, z=0, c=0, t=0,
                      label='test_line')
+    arrow = rois.Line(x1=100.0, y1=100.0, x2=150.0, y2=150.0, z=0, c=0, t=0,
+                      label='test_arrow', markerEnd="Arrow",
+                      markerStart="Arrow")
     rectangle = rois.Rectangle(x=100.0, y=100.0, width=50.0, height=40.0, z=0,
                                c=0, t=0, label='test_rectangle')
     ellipse = rois.Ellipse(x=80, y=60, x_rad=20.0, y_rad=40.0, z=0, c=0, t=0,
@@ -202,8 +205,15 @@ def roi_fixture():
                                    (110.0, 150.0),
                                    (100.0, 150.0)],
                            z=0, c=0, t=0, label='test_polygon')
+    polyline = rois.Polyline(points=[(100.0, 100.0),
+                                     (110.0, 150.0),
+                                     (100.0, 150.0)],
+                             z=0, c=0, t=0, label='test_polyline')
+    label = rois.Label(x=100.0, y=100.0, z=0, c=0, t=0,
+                       label='test_label', fontSize=60)
 
-    return {'shapes': [point, line, rectangle, ellipse, polygon],
+    return {'shapes': [point, line, rectangle, ellipse,
+                       polygon, polyline, arrow, label],
             'name': 'ROI_name',
             'desc': 'A description for the ROI',
             'fill_color': (255, 0, 0, 200),

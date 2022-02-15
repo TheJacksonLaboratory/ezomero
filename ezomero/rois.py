@@ -5,7 +5,9 @@ __all__ = ["Point",
            "Line",
            "Rectangle",
            "Ellipse",
-           "Polygon"]
+           "Polygon",
+           "Polyline",
+           "Label"]
 
 
 @dataclass(frozen=True)
@@ -76,6 +78,10 @@ class Line:
         The time frame to which the shape is linked.
         If ``None``, the shape will not be linked to any time frame.
         Default is ``None``.
+    markerStart : str, optional
+        The marker for the start of the line. Default is ``None``.
+    markerEnd : str, optional
+        The marker for the end of the line. Default is ``None``.
     label : str, optional
         The label of the shape. Default is ``None``.
     """
@@ -87,6 +93,8 @@ class Line:
     z: int = field(default=None)
     c: int = field(default=None)
     t: int = field(default=None)
+    markerStart: str = field(default=None)
+    markerEnd: str = field(default=None)
     label: str = field(default=None)
 
 
@@ -215,3 +223,81 @@ class Polygon:
     c: int = field(default=None)
     t: int = field(default=None)
     label: str = field(default=None)
+
+
+@dataclass(frozen=True)
+class Polyline:
+    """A dataclass used to create an OMERO polyline.
+
+    A dataclass used to represent a Polyline shape and create an OMERO
+    equivalent. This dataclass is frozen and should not be modified after
+    instantiation.
+
+    Parameters
+    ----------
+    points : list of tuples of 2 floats
+        A list of 2 element tuples corresponding to the (x, y) coordinates of
+        each vertex of the polyline.
+    z : int, optional
+        The z position of the shape in pixels. Note this is the z plane to
+        which the shape is linked and not the sub-voxel resolution position of
+        your shape. If ``None``, the Point will not be linked to any z plane.
+        Default is ``None``.
+    c : int, optional
+        The channel index to which the shape is linked.
+        If None, the shape will not be linked to any channel. Default is
+        ``None``.
+    t : int, optional
+        The time frame to which the shape is linked.
+        If ``None``, the shape will not be linked to any time frame.
+        Default is ``None``.
+    label : str, optional
+        The label of the shape. Default is ``None``.
+    """
+
+    points: List[Tuple[float, float]] = field(metadata={'units': 'PIXELS'})
+    z: int = field(default=None)
+    c: int = field(default=None)
+    t: int = field(default=None)
+    label: str = field(default=None)
+
+
+@dataclass(frozen=True)
+class Label:
+    """A dataclass used to create an OMERO Label.
+
+    A dataclass used to represent a Label shape and create an OMERO equivalent.
+    This dataclass is frozen and should not be modified after instantiation
+
+    Parameters
+    ----------
+    x : float
+        The x axis position of the label shape in pixels.
+    y : float
+        The y axis position of the label shape in pixels.
+    label : str
+        The text value of the Label.
+    fontSize: int
+        The font size of the label, in pt.
+    z : int, optional
+        The z position of the label in pixels. Note this is the z plane to
+        which the shape is linked and not the sub-voxel resolution position of
+        your shape. If ``None``, the Label will not be linked to any z plane.
+        Default is ``None``.
+    c : int, optional
+        The channel index to which the shape is linked.
+        If None, the Label will not be linked to any channel. Default is
+        ``None``.
+    t : int, optional
+        The time frame to which the shape is linked.
+        If ``None``, the Label will not be linked to any time frame.
+        Default is ``None``.
+    """
+
+    x: float = field(metadata={'units': 'PIXELS'})
+    y: float = field(metadata={'units': 'PIXELS'})
+    label: str = field()
+    fontSize: int = field(metadata={'FontSizeUnit': 'pt'})
+    z: int = field(default=None)
+    c: int = field(default=None)
+    t: int = field(default=None)
