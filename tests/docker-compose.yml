@@ -22,6 +22,7 @@ services:
       CONFIG_omero_db_user: omero
       CONFIG_omero_db_pass: omero
       CONFIG_omero_db_name: omero
+      CONFIG_omero_policy_binary__access: +read,+write,+image,+plate
       ROOTPASS: omero
     networks:
       - omero

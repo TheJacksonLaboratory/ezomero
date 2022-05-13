@@ -131,3 +131,6 @@ dmypy.json
 
 # VS Code
 .vscode
+
+# For my sanity, I have a local script to run tests
+run_tests.sh

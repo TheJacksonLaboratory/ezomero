@@ -438,6 +438,85 @@ def get_image_ids(conn, project=None, dataset=None, plate=None, well=None,
 
 
 @do_across_groups
+def get_project_ids(conn, across_groups=True):
+    """Return a list with IDs for all available Projects.
+
+    Parameters
+    ----------
+    conn : ``omero.gateway.BlitzGateway`` object
+        OMERO connection.
+    across_groups : bool, optional
+        Defines cross-group behavior of function - set to
+        ``False`` to disable it.
+
+    Returns
+    -------
+    proj_ids : list of ints
+        List of project IDs accessible by current user.
+
+    Examples
+    --------
+   # Return IDs of all projects accessible by current user:
+
+    >>> proj_ids = get_project_ids(conn)
+    """
+    proj_ids = []
+    for p in conn.listProjects():
+        proj_ids.append(p.getId())
+    return proj_ids
+
+
+@do_across_groups
+def get_dataset_ids(conn, project=None, across_groups=True):
+    """Return a list of dataset ids based on project ID.
+
+    If no project is specified, function will return orphan datasets.
+
+    Parameters
+    ----------
+    conn : ``omero.gateway.BlitzGateway`` object
+        OMERO connection.
+    project : int, optional
+        ID of Project from which to return dataset IDs. This will return IDs of
+        all datasets contained in the specified Project.
+    across_groups : bool, optional
+        Defines cross-group behavior of function - set to
+        ``False`` to disable it.
+
+    Returns
+    -------
+    ds_ids : list of ints
+        List of dataset IDs contained in the specified project.
+
+    Examples
+    --------
+    # Return orphaned datasets:
+
+    >>> orphans = get_dataset_ids(conn)
+
+    # Return IDs of all datasets from Project with ID 224:
+
+    >>> ds_ids = get_dataset_ids(conn, project=224)
+    """
+    q = conn.getQueryService()
+    params = Parameters()
+
+    if project is not None:
+        if not isinstance(project, int):
+            raise TypeError('Project ID must be integer')
+        params.map = {"project": rlong(project)}
+        results = q.projection(
+            "SELECT d.id FROM Project p"
+            " JOIN p.datasetLinks pdl"
+            " JOIN pdl.child d"
+            " WHERE p.id=:project",
+            params,
+            conn.SERVICE_OPTS
+            )
+    return [r[0].val for r in results]
+
+
+@do_across_groups
 def get_map_annotation_ids(conn, object_type, object_id, ns=None,
                            across_groups=True):
     """Get IDs of map annotations associated with an object

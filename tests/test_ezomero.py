@@ -703,6 +703,22 @@ def test_get_image_ids(conn, project_structure, screen_structure,
     assert set(plate_im_ids) == set([plate_im_id1, plate_im_id2])
 
 
+def test_get_project_ids(conn, project_structure, users_groups):
+
+    project_info = project_structure[0]
+
+    proj_ids = ezomero.get_project_ids(conn)
+    assert len(proj_ids) == len(project_info)
+
+    # test cross-group valid
+    username = users_groups[1][0][0]  # test_user1
+    groupname = users_groups[0][0][0]  # test_group_1
+    current_conn = conn.suConn(username, groupname)
+    pj_ids = ezomero.get_project_ids(current_conn)
+    assert len(pj_ids) == len(project_info) - 1
+    current_conn.close()
+
+
 def test_get_image_ids_params(conn):
     with pytest.raises(ValueError):
         _ = ezomero.get_image_ids(conn, project=1, plate=2)
