@@ -513,6 +513,16 @@ def get_dataset_ids(conn, project=None, across_groups=True):
             params,
             conn.SERVICE_OPTS
             )
+    else:
+        results = q.projection(
+            "SELECT d.id FROM Dataset d"
+            " WHERE NOT EXISTS ("
+            " SELECT pdl FROM ProjectDatasetLink pdl"
+            " WHERE pdl.child=d.id"
+            " )",
+            params,
+            conn.SERVICE_OPTS
+            )
     return [r[0].val for r in results]
 
 
