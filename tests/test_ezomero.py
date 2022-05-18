@@ -703,6 +703,46 @@ def test_get_image_ids(conn, project_structure, screen_structure,
     assert set(plate_im_ids) == set([plate_im_id1, plate_im_id2])
 
 
+def test_get_project_ids(conn, project_structure, users_groups):
+
+    project_info = project_structure[0]
+
+    proj_ids = ezomero.get_project_ids(conn)
+    assert len(proj_ids) == len(project_info)
+
+    # test cross-group valid
+    username = users_groups[1][0][0]  # test_user1
+    groupname = users_groups[0][0][0]  # test_group_1
+    current_conn = conn.suConn(username, groupname)
+    pj_ids = ezomero.get_project_ids(current_conn)
+    assert len(pj_ids) == len(project_info) - 1
+    current_conn.close()
+
+
+def test_get_dataset_ids(conn, project_structure, users_groups):
+
+    project_info = project_structure[0]
+    dataset_info = project_structure[1]
+
+    with pytest.raises(TypeError):
+        _ = ezomero.get_dataset_ids(conn, project='test')
+
+    # Test orphans
+    orphan_ids = ezomero.get_dataset_ids(conn)
+    assert len(orphan_ids) == 1
+
+    # Based on project ID (also tests cross-group)
+    proj3_id = project_info[3][1]
+    ds2_id = dataset_info[2][1]  # im2, belongs to proj3/ds2
+    ds3_id = dataset_info[3][1]  # im3, belongs to proj3/ds3
+    proj3_ds_ids = ezomero.get_dataset_ids(conn, project=proj3_id)
+    assert set(proj3_ds_ids) == set([ds2_id, ds3_id])
+
+    # Return nothing on bad input
+    bad_im_ids = ezomero.get_dataset_ids(conn, project=999999)
+    assert not bad_im_ids
+
+
 def test_get_image_ids_params(conn):
     with pytest.raises(ValueError):
         _ = ezomero.get_image_ids(conn, project=1, plate=2)

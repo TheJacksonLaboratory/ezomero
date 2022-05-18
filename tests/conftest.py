@@ -253,7 +253,8 @@ def project_structure(conn, timestamp, image_fixture, users_groups,
                                                 }
                                             ]
                                         }
-                                    ]
+                                    ],
+                                    'datasets': []
                                 }
                             ]
                         },
@@ -278,7 +279,8 @@ def project_structure(conn, timestamp, image_fixture, users_groups,
                                             'name': f'proj2_{timestamp}',
                                             'datasets': []
                                         }
-                                    ]
+                                    ],
+                                    'datasets': []
                                 },
                                 {
                                     'name': 'test_group_2',
@@ -302,7 +304,8 @@ def project_structure(conn, timestamp, image_fixture, users_groups,
                                                 }
                                             ]
                                         }
-                                    ]
+                                    ],
+                                    'datasets': []
                                 }
                             ]
                         },
@@ -334,7 +337,8 @@ def project_structure(conn, timestamp, image_fixture, users_groups,
                                                 }
                                             ]
                                         }
-                                    ]
+                                    ],
+                                    'datasets': []
                                 },
                                 {
                                     'name': 'test_group_2',
@@ -350,6 +354,11 @@ def project_structure(conn, timestamp, image_fixture, users_groups,
                                                     ]
                                                 }
                                             ]
+                                        }
+                                    ],
+                                    'datasets': [
+                                        {
+                                            'name': f'ds7_{timestamp}'
                                         }
                                     ]
                                 }
@@ -392,6 +401,12 @@ def project_structure(conn, timestamp, image_fixture, users_groups,
                                                    imname,
                                                    dataset_id=ds_id)
                         image_info.append([imname, im_id])
+            for dataset in group['datasets']:
+                dsname = dataset['name']
+                ds_id = ezomero.post_dataset(current_conn,
+                                             dsname,
+                                             description='test dataset')
+                dataset_info.append([dsname, ds_id])
 
             # Close temporary connection if it was created
             if username != 'default_user':
