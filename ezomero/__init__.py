@@ -11,8 +11,8 @@ from ._misc import (filter_by_filename,
                     print_map_annotation,
                     print_groups,
                     print_projects,
-                    print_datasets,
-                    ezimport)
+                    print_datasets)
+from ._importer import (ezimport)
 from ._posts import (post_dataset,
                      post_image,
                      post_map_annotation,

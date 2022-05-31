@@ -2,6 +2,7 @@ import logging
 import mimetypes
 import numpy as np
 from ._ezomero import do_across_groups, set_group
+from ._misc import link_datasets_to_project
 from omero.model import RoiI, PointI, LineI, RectangleI, EllipseI
 from omero.model import PolygonI, PolylineI, LabelI, LengthI, enums
 from omero.model import DatasetI, ProjectI, ScreenI

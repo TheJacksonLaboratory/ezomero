@@ -6,10 +6,36 @@ from omero.gateway import MapAnnotationWrapper
 from ._ezomero import do_across_groups
 from ._gets import get_image_ids
 from ._posts import post_dataset, post_project, post_screen
+from ._misc import link_images_to_dataset
+from ._misc import link_plates_to_screen
 from omero.cli import CLI
 from omero.plugins.sessions import SessionsControl
 from importlib import import_module
 ImportControl = import_module("omero.plugins.import").ImportControl
+
+
+# import
+@do_across_groups
+def ezimport(conn, target, project=None, dataset=None,
+             screen=None, ln_s=False, ann=None, ns=None, across_groups=True):
+    imp_ctl = Importer(conn, target, project, dataset, screen, ln_s, ann, ns)
+    imp_ctl.ezimport()
+    print("import done")
+    if imp_ctl.screen:
+        print("it's a screen")
+        imp_ctl.get_plate_ids()
+        print(f"plate ids get! {str(imp_ctl.plate_ids[0])}")
+        imp_ctl.organize_plates()
+        print("plate organized")
+        imp_ctl.annotate_plates()
+        print("plate annotated")
+        return imp_ctl.plate_ids
+
+    else:
+        imp_ctl.get_image_ids()
+        imp_ctl.organize_images()
+        imp_ctl.annotate_images()
+        return imp_ctl.image_ids
 
 
 @do_across_groups
@@ -38,7 +64,7 @@ def set_or_create_project(conn, project, across_groups=True):
 
 
 @do_across_groups
-def set_or_create_dataset(conn, dataset, across_groups=True):
+def set_or_create_dataset(conn, project_id, dataset, across_groups=True):
     """Create a new Dataset unless one already exists with that name/Project.
     Parameter
     ---------
@@ -56,7 +82,10 @@ def set_or_create_dataset(conn, dataset, across_groups=True):
         The id of the Dataset that was either found or created.
     """
     if isinstance(dataset, str):
-        dataset_id = post_dataset(conn, dataset)
+        if project_id:
+            dataset_id = post_dataset(conn, dataset, project_id=project_id)
+        else:
+            dataset_id = post_dataset(conn, dataset)
         print(f'Created new Dataset:{dataset_id}')
     elif (isinstance(dataset, int)):
         dataset_id = dataset
