@@ -1,4 +1,5 @@
 from ._ezomero import do_across_groups
+from ._importer import Importer
 from omero.sys import Parameters
 from omero.rtypes import rstring
 from omero.model import DatasetImageLinkI, ImageI, ExperimenterI
@@ -341,3 +342,27 @@ def print_datasets(conn, project=None):
 
     for d in datasets:
         print(f"\t{d.getName()}:\t{d.getId()}")
+
+
+# import
+@do_across_groups
+def ezimport(conn, target, project=None, dataset=None, 
+             screen=None, ln_s=False, ann=None, ns=None):
+    imp_ctl = Importer(conn, target, project, dataset, screen, ln_s, ann, ns)
+    imp_ctl.ezimport()
+    print("import done")
+    if imp_ctl.screen:
+        print("it's a screen")
+        imp_ctl.get_plate_ids()
+        print(f"plate ids get! {str(imp_ctl.plate_ids[0])}")
+        imp_ctl.organize_plates()
+        print("plate organized")
+        imp_ctl.annotate_plates()
+        print("plate annotated")
+        return imp_ctl.plate_ids
+
+    else:
+        imp_ctl.get_image_ids()
+        imp_ctl.organize_images()
+        imp_ctl.annotate_images()
+        return imp_ctl.image_ids

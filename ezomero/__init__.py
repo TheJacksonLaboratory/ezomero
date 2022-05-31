@@ -11,7 +11,8 @@ from ._misc import (filter_by_filename,
                     print_map_annotation,
                     print_groups,
                     print_projects,
-                    print_datasets)
+                    print_datasets,
+                    ezimport)
 from ._posts import (post_dataset,
                      post_image,
                      post_map_annotation,
@@ -74,6 +75,7 @@ __all__ = ['post_dataset',
            'print_groups',
            'print_projects',
            'print_datasets',
+           'ezimport',
            'connect',
            'store_connection_params',
            'set_group']
