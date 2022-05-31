@@ -4,9 +4,8 @@ from omero.rtypes import rstring
 from omero.sys import Parameters
 from omero.gateway import MapAnnotationWrapper
 from ._ezomero import do_across_groups
-from ezomero import post_dataset, post_project
-from ezomero import get_image_ids, link_images_to_dataset
-from ezomero import post_screen, link_plates_to_screen
+from ._gets import get_image_ids
+from ._posts import post_dataset, post_project, post_screen
 from omero.cli import CLI
 from omero.plugins.sessions import SessionsControl
 from importlib import import_module
@@ -14,7 +13,7 @@ ImportControl = import_module("omero.plugins.import").ImportControl
 
 
 @do_across_groups
-def set_or_create_project(conn, project):
+def set_or_create_project(conn, project, across_groups=True):
     """Create a new Project unless one already exists with that name.
     Parameter
     ---------
@@ -39,7 +38,7 @@ def set_or_create_project(conn, project):
 
 
 @do_across_groups
-def set_or_create_dataset(conn, dataset):
+def set_or_create_dataset(conn, dataset, across_groups=True):
     """Create a new Dataset unless one already exists with that name/Project.
     Parameter
     ---------
@@ -67,7 +66,7 @@ def set_or_create_dataset(conn, dataset):
 
 
 @do_across_groups
-def set_or_create_screen(conn, screen):
+def set_or_create_screen(conn, screen, across_groups=True):
     """Create a new Screen unless one already exists with that name.
     Parameter
     ---------
@@ -92,7 +91,8 @@ def set_or_create_screen(conn, screen):
 
 
 @do_across_groups
-def multi_post_map_annotation(conn, object_type, object_ids, kv_dict, ns):
+def multi_post_map_annotation(conn, object_type, object_ids, 
+                              kv_dict, ns, across_groups=True):
     """Create a single new MapAnnotation and link to multiple images.
     Parameters
     ----------
@@ -191,7 +191,7 @@ class Importer:
         self.conn = conn
         self.file_path = Path(file_path)
         self.session_uuid = conn.getSession().getUuid().val
-        self.filename = self.md.pop('filename')
+        self.file_path = file_path
         self.project = project
         self.dataset = dataset
         if self.project and not self.dataset:
@@ -280,6 +280,10 @@ class Importer:
         map_ann_id : int
             The Id of the MapAnnotation that was created.
         """
+        if not self.ann or not self.ns:
+            logging.warning("Missing annotation or namespace, "
+                            "skipping annotations")
+            return
         if len(self.image_ids) == 0:
             logging.error('No image ids to annotate')
             return None
@@ -296,6 +300,10 @@ class Importer:
         map_ann_id : int
             The Id of the MapAnnotation that was created.
         """
+        if not self.ann or not self.ns:
+            logging.warning("Missing annotation or namespace, "
+                            "skipping annotations")
+            return
         if len(self.plate_ids) == 0:
             logging.error('No plate ids to annotate')
             return None

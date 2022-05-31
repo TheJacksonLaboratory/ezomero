@@ -346,8 +346,8 @@ def print_datasets(conn, project=None):
 
 # import
 @do_across_groups
-def ezimport(conn, target, project=None, dataset=None, 
-             screen=None, ln_s=False, ann=None, ns=None):
+def ezimport(conn, target, project=None, dataset=None,
+             screen=None, ln_s=False, ann=None, ns=None, across_groups=True):
     imp_ctl = Importer(conn, target, project, dataset, screen, ln_s, ann, ns)
     imp_ctl.ezimport()
     print("import done")
