@@ -214,3 +214,4 @@ def test_link_plates_to_screen(conn, image_fixture):
                        deleteAnns=True,
                        deleteChildren=True,
                        wait=True)
+
