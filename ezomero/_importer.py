@@ -19,7 +19,7 @@ def ezimport(conn, target, project=None, dataset=None,
              host=None, port=None,
              across_groups=True):
     """Entry point that creates Importer and runs import.
-    
+
     Parameters
     ----------
     conn : ``omero.gateway.BlitzGateway`` object.
@@ -95,7 +95,7 @@ def set_or_create_dataset(conn, project_id, dataset, across_groups=True):
     """Create or set a Dataset of interest.
 
     If argument is a string, creates a new Dataset with that name. If it is
-    an integer, sets that Dataset ID as the Dataset of interest. If 
+    an integer, sets that Dataset ID as the Dataset of interest. If
     ``project_id`` is specified, new Dataset will be created in that Project.
     Parameter
     ---------
@@ -119,7 +119,7 @@ def set_or_create_dataset(conn, project_id, dataset, across_groups=True):
     elif (isinstance(dataset, int)):
         dataset_id = dataset
     else:
-        raise TypeError("'dataset' must be str or int")   
+        raise TypeError("'dataset' must be str or int")
     return dataset_id
 
 
@@ -149,7 +149,7 @@ def set_or_create_screen(conn, screen, across_groups=True):
     return screen_id
 
 
-def multi_post_map_annotation(conn, object_type, object_ids, 
+def multi_post_map_annotation(conn, object_type, object_ids,
                               kv_dict, ns, across_groups=True):
     """Create a single new MapAnnotation and link to multiple images.
     Parameters
@@ -209,7 +209,7 @@ def multi_post_map_annotation(conn, object_type, object_ids,
 
 class Importer:
     """Class for managing OMERO imports using OMERO CLI.
-    
+
     Parameters
     ----------
     conn : ``omero.gateway.BlitzGateway`` object.
@@ -232,7 +232,7 @@ class Importer:
         Hostname of the OMERO server to which data will be imported.
     port : int, optional
         Port of the OMERO server to which data will be imported.
-    
+
     Important notes:
     1) Setting ``project`` also requires setting ``dataset``. Failing to do so
     will raise a ValueError.
@@ -243,8 +243,8 @@ class Importer:
     prompt.
     4) The returned image IDs correspond to ALL image IDs accessible to this
     user that have the same ``ClientPath``, i.e., that have the same file
-    name and have been imported from the same folder. In production, this 
-    should be a rare occurrence, but please keep that in mind if you are 
+    name and have been imported from the same folder. In production, this
+    should be a rare occurrence, but please keep that in mind if you are
     getting more image IDs than you were expecting!
     """
 
@@ -388,7 +388,7 @@ class Importer:
             return False
         orphans = get_image_ids(self.conn)
         if self.project:
-            project_id = set_or_create_project(self.conn, 
+            project_id = set_or_create_project(self.conn,
                                                self.project)
         else:
             project_id = None
@@ -488,4 +488,3 @@ class Importer:
         else:
             logging.error(f'Import of {self.file_path} has failed!')
             return False
-

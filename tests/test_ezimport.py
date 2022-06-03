@@ -1,5 +1,5 @@
-import ezomero
-import pytest
+# import ezomero
+# import pytest
 
 
 # This file is a placeholder for the tests we would LIKE to run
