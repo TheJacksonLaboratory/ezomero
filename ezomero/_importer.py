@@ -15,8 +15,7 @@ ImportControl = import_module("omero.plugins.import").ImportControl
 
 # import
 def ezimport(conn, target, project=None, dataset=None,
-             screen=None, ln_s=False, ann=None, ns=None,
-             across_groups=True):
+             screen=None, ln_s=False, ann=None, ns=None):
     """Entry point that creates Importer and runs import.
 
     Parameters
@@ -37,10 +36,7 @@ def ezimport(conn, target, project=None, dataset=None,
         Dictionary with key-value pairs to be added to imported images.
     ns : str, optional
         Namespace for the added key-value pairs.
-    host : str, optional
-        Hostname of the OMERO server to which data will be imported.
-    port : int, optional
-        Port of the OMERO server to which data will be imported.
+
     Returns
     -------
     plate_ids or image_ids : list of ints
@@ -285,7 +281,8 @@ class Importer:
         else:
             q = self.conn.getQueryService()
             params = Parameters()
-            path_query = str(self.file_path).strip('/')
+            path_query = self.make_substitutions()
+            path_query = path_query.strip('/')
             params.map = {"cpath": rstring(path_query)}
             results = q.projection(
                 "SELECT i.id FROM Image i"
@@ -297,6 +294,12 @@ class Importer:
                 )
             self.image_ids = [r[0].val for r in results]
             return self.image_ids
+
+    def make_substitutions(self):
+        fpath = self.file_path
+        mytable = fpath.maketrans("\"*:<>?\|", "\'x;[]%/!")
+        final_path = fpath.translate(mytable)
+        return final_path
 
     def get_plate_ids(self):
         """Get the Ids of imported plates.
