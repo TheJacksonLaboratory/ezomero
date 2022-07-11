@@ -297,7 +297,7 @@ class Importer:
 
     def make_substitutions(self):
         fpath = self.file_path
-        mytable = fpath.maketrans("\"*:<>?\|", "\'x;[]%/!")
+        mytable = fpath.maketrans("\"*:<>?\\|", "\'x;[]%/!")
         final_path = fpath.translate(mytable)
         return final_path
 
