@@ -6,7 +6,7 @@ A module with convenience functions for writing Python code that interacts with 
 
 # Installation
 
-Just `pip install ezomero` and you should be good to go! The repo contains a `requirements.txt` file with the specific package versions we test `ezomero` with, but any Python>=3.6 and latest `omero-py` and `numpy` _should_ work -  note that this package is in active development!
+Just `pip install ezomero` and you should be good to go! The repo contains a `requirements.txt` file with the specific package versions we test `ezomero` with, but any Python>=3.8 and latest `omero-py` and `numpy` _should_ work -  note that this package is in active development!
 
 # Usage
 
