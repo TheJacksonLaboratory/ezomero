@@ -11,6 +11,13 @@ from omero.gateway import ScreenWrapper
 from omero.gateway import MapAnnotationWrapper
 from omero.rtypes import rstring, rint, rdouble
 from .rois import Point, Line, Rectangle, Ellipse, Polygon, Polyline, Label
+import importlib.util
+# try importing pandas
+if (importlib.util.find_spec('pandas')):
+    import pandas as pd
+    has_pandas = True
+else:
+    has_pandas = False
 
 
 def post_dataset(conn, dataset_name, project_id=None, description=None,

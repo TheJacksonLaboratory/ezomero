@@ -9,6 +9,13 @@ from omero.rtypes import rint, rlong
 from omero.sys import Parameters
 from omero.model import enums as omero_enums
 from .rois import Point, Line, Rectangle, Ellipse, Polygon, Polyline, Label
+import importlib.util
+# try importing pandas
+if (importlib.util.find_spec('pandas')):
+    import pandas as pd
+    has_pandas = True
+else:
+    has_pandas = False
 
 
 # gets
