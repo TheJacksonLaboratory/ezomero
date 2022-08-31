@@ -1,11 +1,13 @@
 import logging
 import mimetypes
 import numpy as np
+from random import random
 from ._ezomero import do_across_groups, set_group
 from ._misc import link_datasets_to_project
 from omero.model import RoiI, PointI, LineI, RectangleI, EllipseI
 from omero.model import PolygonI, PolylineI, LabelI, LengthI, enums
 from omero.model import DatasetI, ProjectI, ScreenI
+from omero.model import FileAnnotationI, OriginalFileI
 from omero.gateway import ProjectWrapper, DatasetWrapper
 from omero.gateway import ScreenWrapper
 from omero.gateway import MapAnnotationWrapper
@@ -565,6 +567,27 @@ def post_table(conn, table, object_type, object_id, title="", headers=True):
     >>> post_table(conn, table, "Image", 99, title='My Table', headers=True)
     234
     """
+    if title:
+        table_name = title
+    else:
+        table_name = "Table:%s", str(random())
+    columns = create_columns(table)
+    resources = conn.c.sf.sharedResources()
+    repository_id = resources.repositories().descriptions[0].getId().getValue()
+    table = resources.newTable(repository_id, table_name)
+    table.initialize(columns)
+    data = create_data(table)
+    table.addData(data)
+    orig_file = table.getOriginalFile()
+    table.close()
+    orig_file_id = orig_file.id.val
+    file_ann = FileAnnotationI()
+    file_ann.setFile(OriginalFileI(orig_file_id, False))
+    file_ann = conn.getUpdateService().saveAndReturnObject(file_ann)
+    link = create_link(object_type, object_id)
+    link.setChild(FileAnnotationI(file_ann.getId().getValue(), False))
+    conn.getUpdateService().saveAndReturnObject(link)
+    return file_ann.id.val
 
 
 def _shape_to_omero_shape(shape, fill_color, stroke_color, stroke_width):
