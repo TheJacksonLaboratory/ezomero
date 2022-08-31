@@ -529,6 +529,44 @@ def post_roi(conn, image_id, shapes, name=None, description=None,
     return roi.getId().getValue()
 
 
+def post_table(conn, table, object_type, object_id, title="", headers=True):
+    """Create new table and link it to an OMERO object.
+
+    Parameters
+    ----------
+    conn : ``omero.gateway.BlitzGateway`` object
+        OMERO connection.
+    object_type : str
+       OMERO object type, passed to ``BlitzGateway.getObjects``
+    object_ids : int
+        ID of object to which the new Table will be linked.
+    table : object
+        Object containing the actual table. It can be either a list of
+        row-lists or a pandas Dataframe in case the optional pandas dependency
+        was installed.
+    title : str, optional
+        Title for the table. If none is specified, a `Table:ID` name is picked,
+        with a random ID number. Note that table names need to be unique!
+    headers : bool, optional
+        Whether the first line of the `table` object should be interpreted
+        as column headers or not. Defaults to `True` and is ignored for pandas
+        Dataframes.
+
+
+    Returns
+    -------
+    TableFile_id : int
+        ID of newly created FileAnnotation containing the new Table.
+
+    Examples
+    --------
+    >>> columns = ['ID', 'X', 'Y']
+    >>> table = [columns, [1, 10, 20], [2, 30, 40]]
+    >>> post_table(conn, table, "Image", 99, title='My Table', headers=True)
+    234
+    """
+
+
 def _shape_to_omero_shape(shape, fill_color, stroke_color, stroke_width):
     """ Helper function to convert ezomero shapes into omero shapes"""
     if isinstance(shape, Point):
