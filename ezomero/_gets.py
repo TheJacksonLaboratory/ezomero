@@ -1117,8 +1117,8 @@ def get_table(conn, file_ann_id, across_groups=True):
     orig_table_file = conn.getObject('OriginalFile', ann.getFile().id)
     resources = conn.c.sf.sharedResources()
     table_obj = resources.openTable(orig_table_file._obj)
-    table = create_table(table_obj)
-    return table    
+    table = _create_table(table_obj)
+    return table
 
 
 @do_across_groups
@@ -1154,6 +1154,11 @@ def get_shape(conn, shape_id, across_groups=True):
         raise TypeError('Shape ID must be an integer')
     omero_shape = conn.getObject('Shape', shape_id)
     return _omero_shape_to_shape(omero_shape)
+
+
+def _create_table(table_obj):
+    table = None
+    return table
 
 
 def _omero_shape_to_shape(omero_shape):

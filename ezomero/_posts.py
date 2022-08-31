@@ -584,10 +584,21 @@ def post_table(conn, table, object_type, object_id, title="", headers=True):
     file_ann = FileAnnotationI()
     file_ann.setFile(OriginalFileI(orig_file_id, False))
     file_ann = conn.getUpdateService().saveAndReturnObject(file_ann)
-    link = create_link(object_type, object_id)
-    link.setChild(FileAnnotationI(file_ann.getId().getValue(), False))
-    conn.getUpdateService().saveAndReturnObject(link)
+    obj = conn.getObject(object_type, object_id)
+    obj.linkAnnotation(file_ann)
     return file_ann.id
+
+
+def create_columns(table):
+    """Helper function to create the correct column types from a table"""
+    cols = []
+    return cols
+
+
+def create_data(table):
+    """Helper function to create the data lists from a table"""
+    data = []
+    return data
 
 
 def _shape_to_omero_shape(shape, fill_color, stroke_color, stroke_width):
