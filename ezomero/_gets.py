@@ -870,7 +870,7 @@ def get_file_annotation(conn, file_ann_id, folder_path=None,
     conn : ``omero.gateway.BlitzGateway`` object
         OMERO connection.
     file_ann_id : int
-        ID of map annotation to get.
+        ID of file annotation to get.
     folder_path : str
         Path where file annotation will be saved. Defaults to local script
         directory.
@@ -1082,6 +1082,43 @@ def get_pyramid_levels(conn, image_id, across_groups=True):
     levels = [(r.sizeX, r.sizeY) for r in pix.getResolutionDescriptions()]
     pix.close()
     return levels
+
+
+@do_across_groups
+def get_table(conn, file_ann_id, across_groups=True):
+    """Get a table from its FileAnnotation object.
+
+    Parameters
+    ----------
+    conn : ``omero.gateway.BlitzGateway`` object
+        OMERO connection.
+    file_ann_id : int
+        ID of FileAnnotation table to get.
+    across_groups : bool, optional
+        Defines cross-group behavior of function - set to
+        ``False`` to disable it.
+
+    Returns
+    -------
+    table : object
+        Object containing the actual table. It can be either a list of
+        row-lists or a pandas Dataframe in case the optional pandas dependency
+        was installed.
+
+    Examples
+    --------
+    >>> table = get_table(conn, 62)
+    >>> print(table[0])
+    ['ID', 'X', 'Y']
+    """
+    if type(file_ann_id) is not int:
+        raise TypeError('File annotation ID must be an integer')
+    ann = conn.getObject('FileAnnotation', file_ann_id)
+    orig_table_file = conn.getObject('OriginalFile', ann.getFile().id)
+    resources = conn.c.sf.sharedResources()
+    table_obj = resources.openTable(orig_table_file._obj)
+    table = create_table(table_obj)
+    return table    
 
 
 @do_across_groups
