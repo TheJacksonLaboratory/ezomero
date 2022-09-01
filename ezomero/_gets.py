@@ -1157,6 +1157,23 @@ def get_shape(conn, shape_id, across_groups=True):
 
 
 def _create_table(table_obj):
+    if importlib.util.find_spec('pandas'):
+        columns = []
+        for col in table_obj.getHeaders():
+            columns.append(col.name)
+        df = pd.DataFrame(columns=columns)
+        rowCount = table_obj.getNumberOfRows()
+        data = table_obj.read(list(range(len(columns))), 0, rowCount)
+        for col in data.columns:
+            col_data = []
+            for v in col.values:
+                col_data.append(v)
+            df[col.name] = col_data
+        return df
+
+    else:
+        # do list of lists stuff
+        pass
     table = None
     return table
 
