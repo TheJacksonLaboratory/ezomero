@@ -1161,20 +1161,34 @@ def _create_table(table_obj):
         columns = []
         for col in table_obj.getHeaders():
             columns.append(col.name)
-        df = pd.DataFrame(columns=columns)
+        table = pd.DataFrame(columns=columns)
         rowCount = table_obj.getNumberOfRows()
         data = table_obj.read(list(range(len(columns))), 0, rowCount)
         for col in data.columns:
             col_data = []
             for v in col.values:
                 col_data.append(v)
-            df[col.name] = col_data
-        return df
+            table[col.name] = col_data
 
     else:
-        # do list of lists stuff
-        pass
-    table = None
+        table = []
+        columns = []
+        data_lists = []
+        for col in table_obj.getHeaders():
+            columns.append(col.name)
+        table.append(columns)
+        rowCount = table_obj.getNumberOfRows()
+        data = table_obj.read(list(range(len(columns))), 0, rowCount)
+        for col in data.columns:
+            col_data = []
+            for v in col.values:
+                col_data.append(v)
+            data_lists.append(col_data)
+        # transpose data_lists
+        data_lists = [list(i) for i in zip(*data_lists)]
+        for row in data_lists:
+            table.append(row)
+
     return table
 
 
