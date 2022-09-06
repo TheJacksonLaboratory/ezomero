@@ -7,9 +7,10 @@ from ._misc import link_datasets_to_project
 from omero.model import RoiI, PointI, LineI, RectangleI, EllipseI
 from omero.model import PolygonI, PolylineI, LabelI, LengthI, enums
 from omero.model import DatasetI, ProjectI, ScreenI
-from omero.model import FileAnnotationI, OriginalFileI
+from omero.model import OriginalFileI
+from omero.grid import BoolColumn, LongColumn, StringColumn, DoubleColumn
 from omero.gateway import ProjectWrapper, DatasetWrapper
-from omero.gateway import ScreenWrapper
+from omero.gateway import ScreenWrapper, FileAnnotationWrapper
 from omero.gateway import MapAnnotationWrapper
 from omero.rtypes import rstring, rint, rdouble
 from .rois import Point, Line, Rectangle, Ellipse, Polygon, Polyline, Label
@@ -545,7 +546,9 @@ def post_table(conn, table, object_type, object_id, title="", headers=True):
     table : object
         Object containing the actual table. It can be either a list of
         row-lists or a pandas Dataframe in case the optional pandas dependency
-        was installed.
+        was installed. Note that each column should be of a single type;
+        mixed-type columns will be ignored. Types supported: int, string,
+        float, boolean.
     title : str, optional
         Title for the table. If none is specified, a `Table:ID` name is picked,
         with a random ID number. Note that table names need to be unique!
@@ -571,34 +574,67 @@ def post_table(conn, table, object_type, object_id, title="", headers=True):
         table_name = title
     else:
         table_name = "Table:%s", str(random())
-    columns = create_columns(table)
+    columns = create_columns(table, headers)
     resources = conn.c.sf.sharedResources()
     repository_id = resources.repositories().descriptions[0].getId().getValue()
     table = resources.newTable(repository_id, table_name)
     table.initialize(columns)
-    data = create_data(table)
-    table.addData(data)
+    table.addData(columns)
     orig_file = table.getOriginalFile()
     table.close()
     orig_file_id = orig_file.id
-    file_ann = FileAnnotationI()
+    file_ann = FileAnnotationWrapper()
     file_ann.setFile(OriginalFileI(orig_file_id, False))
-    file_ann = conn.getUpdateService().saveAndReturnObject(file_ann)
+    #file_ann = conn.getUpdateService().saveAndReturnObject(file_ann)
     obj = conn.getObject(object_type, object_id)
     obj.linkAnnotation(file_ann)
     return file_ann.id
 
 
-def create_columns(table):
+def create_columns(table, headers):
     """Helper function to create the correct column types from a table"""
     cols = []
+    if type(table) == list:
+        if headers:
+            titles = table[0]
+            data = table[1:]
+        else:
+            titles = [f"column {i}" for i in range(len(table[0]))]
+            data = table
+        # transposing data matrix to have columns as first dimension
+        data = [list(i) for i in zip(*data)]
+        for i in range(len(titles)):
+            types = list(set([type(data[i][j]) for j in range(len(data[i]))]))
+            if len(types) > 1:
+                continue
+            if types[0] == bool:
+                cols.append(BoolColumn(titles[i], '', data[i]))
+            if types[0] == int:
+                cols.append(LongColumn(titles[i], '', data[i]))
+            if types[0] == float:
+                cols.append(DoubleColumn(titles[i], '', data[i]))
+            if types[0] == str:
+                max_size = len(max(data[i], key=len))
+                cols.append(StringColumn(titles[i], '',
+                            max_size, data[i]))
+    elif type(table) == pd.core.frame.DataFrame:
+        df = table.convert_dtypes()
+        ints = df.select_dtypes(include='int')
+        for col in ints:
+            cols.append(LongColumn(col, '', df[col].tolist()))
+        floats = df.select_dtypes(include='float')
+        for col in floats:
+            cols.append(DoubleColumn(col, '', df[col].tolist()))
+        strings = df.select_dtypes(include='string')
+        for col in strings:
+            max_size = df[col].map(len).max()
+            cols.append(StringColumn(col, '', max_size,
+                                     df[col].tolist()))
+        bools = df.select_dtypes(include='bool')
+        for col in bools:
+            cols.append(BoolColumn(col, '', df[col].tolist()))
+    print(cols)
     return cols
-
-
-def create_data(table):
-    """Helper function to create the data lists from a table"""
-    data = []
-    return data
 
 
 def _shape_to_omero_shape(shape, fill_color, stroke_color, stroke_width):
