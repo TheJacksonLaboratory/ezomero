@@ -585,7 +585,6 @@ def post_table(conn, table, object_type, object_id, title="", headers=True):
     orig_file_id = orig_file.id
     file_ann = FileAnnotationWrapper()
     file_ann.setFile(OriginalFileI(orig_file_id, False))
-    #file_ann = conn.getUpdateService().saveAndReturnObject(file_ann)
     obj = conn.getObject(object_type, object_id)
     obj.linkAnnotation(file_ann)
     return file_ann.id
@@ -633,7 +632,6 @@ def create_columns(table, headers):
         bools = df.select_dtypes(include='bool')
         for col in bools:
             cols.append(BoolColumn(col, '', df[col].tolist()))
-    print(cols)
     return cols
 
 
