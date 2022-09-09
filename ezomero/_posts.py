@@ -1,7 +1,7 @@
 import logging
 import mimetypes
 import numpy as np
-from random import random
+from uuid import uuid4
 from ._ezomero import do_across_groups, set_group
 from ._misc import link_datasets_to_project
 from omero.model import RoiI, PointI, LineI, RectangleI, EllipseI
@@ -541,7 +541,7 @@ def post_table(conn, table, object_type, object_id, title="", headers=True):
         OMERO connection.
     object_type : str
        OMERO object type, passed to ``BlitzGateway.getObjects``
-    object_ids : int
+    object_id : int
         ID of object to which the new Table will be linked.
     table : object
         Object containing the actual table. It can be either a list of
@@ -551,7 +551,7 @@ def post_table(conn, table, object_type, object_id, title="", headers=True):
         float, boolean.
     title : str, optional
         Title for the table. If none is specified, a `Table:ID` name is picked,
-        with a random ID number. Note that table names need to be unique!
+        with a random UUID. Note that table names need to be unique!
     headers : bool, optional
         Whether the first line of the `table` object should be interpreted
         as column headers or not. Defaults to `True` and is ignored for pandas
@@ -573,7 +573,24 @@ def post_table(conn, table, object_type, object_id, title="", headers=True):
     if title:
         table_name = title
     else:
-        table_name = "Table:%s", str(random())
+        table_name = f"Table:{uuid4()}"
+    obj = None
+    if object_id is not None:
+        if type(object_id) is not int:
+            raise TypeError('object_ids must be integer')
+        obj = conn.getObject(object_type, object_id)
+        if obj is not None:
+            ret = set_group(conn, obj.getDetails().group.id.val)
+            if ret is False:
+                logging.warning('Cannot change into group '
+                                f'where object {object_id} is.')
+                return None
+        else:
+            logging.warning(f'Object {object_id} could not be found '
+                            '(check if you have permissions to it)')
+            return None
+    else:
+        raise TypeError('Object ID cannot be empty')
     columns = create_columns(table, headers)
     resources = conn.c.sf.sharedResources()
     repository_id = resources.repositories().descriptions[0].getId().getValue()
@@ -585,8 +602,7 @@ def post_table(conn, table, object_type, object_id, title="", headers=True):
     orig_file_id = orig_file.id
     file_ann = FileAnnotationWrapper()
     file_ann.setFile(OriginalFileI(orig_file_id, False))
-    obj = conn.getObject(object_type, object_id)
-    obj.linkAnnotation(file_ann)
+    file_ann = obj.linkAnnotation(file_ann)
     return file_ann.id
 
 
@@ -632,6 +648,9 @@ def create_columns(table, headers):
         bools = df.select_dtypes(include='bool')
         for col in bools:
             cols.append(BoolColumn(col, '', df[col].tolist()))
+    else:
+        raise TypeError("Table must be a list of row lists or "
+                        "pandas Dataframe")
     return cols
 
 

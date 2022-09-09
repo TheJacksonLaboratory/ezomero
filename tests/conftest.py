@@ -14,6 +14,13 @@ from omero.plugins.sessions import SessionsControl
 from omero.plugins.user import UserControl
 from omero.plugins.group import GroupControl
 from omero.rtypes import rint
+import importlib.util
+# try importing pandas
+if (importlib.util.find_spec('pandas')):
+    import pandas as pd
+    has_pandas = True
+else:
+    has_pandas = False
 
 
 # Settings for OMERO
@@ -479,3 +486,45 @@ def screen_structure(conn, timestamp, image_fixture):
     conn.deleteObjects("Screen", [screen_id], deleteAnns=True,
                        deleteChildren=True, wait=True)
     conn.SERVICE_OPTS.setOmeroGroup(current_group)
+
+
+@pytest.fixture(scope='session')
+def tables():
+    table = [
+        ['intcol', 'floatcol', 'stringcol', 'boolcol', 'mixed'],
+        [1, 1.2, 'string1', True, 'mixedstr'],
+        [2, 2.3, 'string2', False, 1],
+        [3, 3.4, 'string3', False, 2.4],
+        [4, 4.5, 'string4', True, True],
+    ]
+    result_table = [
+        ['intcol', 'floatcol', 'stringcol', 'boolcol'],
+        [1, 1.2, 'string1', True],
+        [2, 2.3, 'string2', False],
+        [3, 3.4, 'string3', False],
+        [4, 4.5, 'string4', True],
+    ]
+    return [table, result_table]
+
+
+@pytest.fixture(scope='session')
+def table_dfs():
+    table = [
+        ['intcol', 'floatcol', 'stringcol', 'boolcol', 'mixed'],
+        [1, 1.2, 'string1', True, 'mixedstr'],
+        [2, 2.3, 'string2', False, 1],
+        [3, 3.4, 'string3', False, 2.4],
+        [4, 4.5, 'string4', True, True],
+    ]
+    result_table = [
+        ['intcol', 'floatcol', 'stringcol', 'boolcol'],
+        [1, 1.2, 'string1', True],
+        [2, 2.3, 'string2', False],
+        [3, 3.4, 'string3', False],
+        [4, 4.5, 'string4', True],
+    ]
+    headers = table.pop(0)
+    df = pd.DataFrame(table, columns=headers)
+    headers = result_table.pop(0)
+    result_df = pd.DataFrame(result_table, columns=headers)
+    return [df, result_df]

@@ -4,6 +4,8 @@ import numpy as np
 import ezomero
 import filecmp
 import os
+import sys
+from unittest import mock
 
 
 # Test posts
@@ -458,3 +460,76 @@ def test_post_screen_type(conn):
         _ = ezomero.post_screen(conn, 123)
     with pytest.raises(TypeError):
         _ = ezomero.post_screen(conn, '123', description=1245)
+
+
+def test_post_get_table_pandas(conn, project_structure, table_dfs):
+
+    image_info = project_structure[2]
+    im_id = image_info[0][1]
+
+    # This test both ezomero.post_table and ezomero.get_table, using pandas
+
+    table_id = ezomero.post_table(conn, table_dfs[0], "Image", im_id)
+    print(table_id)
+    return_ann = ezomero.get_table(conn, table_id)
+    print(return_ann, table_dfs[1])
+    assert return_ann.equals(table_dfs[1])
+
+
+def test_post_get_table_nopandas(conn, project_structure, users_groups,
+                                 tables):
+
+    # This test both ezomero.post_table and ezomero.get_table, not using pandas
+    image_info = project_structure[2]
+    im_id = image_info[0][1]
+    # test sanitized input on post
+    with pytest.raises(TypeError):
+        _ = ezomero.post_table(conn, 10, "Image", im_id)
+    with pytest.raises(TypeError):
+        _ = ezomero.post_table(conn, tables[0], "Image", '10')
+    with pytest.raises(TypeError):
+        _ = ezomero.post_table(conn, tables[0], "Image", None)
+
+    with mock.patch.dict(sys.modules):
+        sys.modules["pandas"] = None
+        # # Test posting to non-existing object
+        # im_id2 = 999999999
+        # file_ann_id2 = ezomero.post_file_annotation(conn, "Image", im_id2,
+        #                                             file_ann, ns)
+        # assert file_ann_id2 is None
+
+        # # Test posting cross-group
+        # username = users_groups[1][0][0]  # test_user1
+        # groupname = users_groups[0][0][0]  # test_group_1
+        # current_conn = conn.suConn(username, groupname)
+        # im_id3 = image_info[2][1]  # im2, in test_group_2
+        # file_ann_id3 = ezomero.post_file_annotation(current_conn, "Image", im_id3,
+        #                                             file_ann, ns)
+        # return_ann3 = ezomero.get_file_annotation(current_conn, file_ann_id3)
+        # assert filecmp.cmp(return_ann3, file_ann)
+        # os.remove(return_ann3)
+        # current_conn.close()
+
+        # # Test posting to an invalid cross-group
+        # username = users_groups[1][2][0]  # test_user3
+        # groupname = users_groups[0][1][0]  # test_group_2
+        # current_conn = conn.suConn(username, groupname)
+        # im_id4 = image_info[1][1]  # im1(in test_group_1)
+        # file_ann_id4 = ezomero.post_file_annotation(current_conn, "Image", im_id4,
+        #                                             file_ann, ns)
+        # assert file_ann_id4 is None
+        # current_conn.close()
+
+        # # Test posting cross-group, across_groups unset
+        # username = users_groups[1][0][0]  # test_user1
+        # groupname = users_groups[0][0][0]  # test_group_1
+        # current_conn = conn.suConn(username, groupname)
+        # im_id5 = image_info[2][1]  # im2, in test_group_2
+        # file_ann_id5 = ezomero.post_file_annotation(current_conn, "Image", im_id5,
+        #                                             file_ann, ns,
+        #                                             across_groups=False)
+        # assert file_ann_id5 is None
+        # current_conn.close()
+
+        # conn.deleteObjects("Annotation", [file_ann_id, file_ann_id3],
+        #                    deleteAnns=True, deleteChildren=True, wait=True)
