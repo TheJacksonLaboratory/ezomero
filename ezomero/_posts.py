@@ -7,11 +7,10 @@ from ._misc import link_datasets_to_project
 from omero.model import RoiI, PointI, LineI, RectangleI, EllipseI
 from omero.model import PolygonI, PolylineI, LabelI, LengthI, enums
 from omero.model import DatasetI, ProjectI, ScreenI
-from omero.model import OriginalFileI
 from omero.grid import BoolColumn, LongColumn, StringColumn, DoubleColumn
 from omero.gateway import ProjectWrapper, DatasetWrapper
 from omero.gateway import ScreenWrapper, FileAnnotationWrapper
-from omero.gateway import MapAnnotationWrapper
+from omero.gateway import MapAnnotationWrapper, OriginalFileWrapper
 from omero.rtypes import rstring, rint, rdouble
 from .rois import Point, Line, Rectangle, Ellipse, Polygon, Polyline, Label
 import importlib.util
@@ -247,7 +246,7 @@ def post_map_annotation(conn, object_type, object_id, kv_dict, ns,
     >>> post_map_annotation(conn, "Image", 56, d, ns)
     234
     """
-
+    print("group at begin", conn.getGroupFromContext().getId())
     if type(kv_dict) is not dict:
         raise TypeError('kv_dict must be of type `dict`')
 
@@ -256,13 +255,13 @@ def post_map_annotation(conn, object_type, object_id, kv_dict, ns,
         k = str(k)
         v = str(v)
         kv_pairs.append([k, v])
-
     obj = None
     if object_id is not None:
         if type(object_id) is not int:
             raise TypeError('object_ids must be integer')
         obj = conn.getObject(object_type, object_id)
         if obj is not None:
+            print("object group", obj.getDetails().group.id.val)
             ret = set_group(conn, obj.getDetails().group.id.val)
             if ret is False:
                 logging.warning('Cannot change into group '
@@ -274,7 +273,7 @@ def post_map_annotation(conn, object_type, object_id, kv_dict, ns,
             return None
     else:
         raise TypeError('Object ID cannot be empty')
-
+    print("group after", conn.getGroupFromContext().getId())
     map_ann = MapAnnotationWrapper(conn)
     map_ann.setNs(str(ns))
     map_ann.setValue(kv_pairs)
@@ -563,6 +562,13 @@ def post_table(conn, table, object_type, object_id, title="", headers=True):
     TableFile_id : int
         ID of newly created FileAnnotation containing the new Table.
 
+
+    Notes
+    -------
+    Currently not working with `across_groups` - the `OriginalFile` seems to
+    ignore setting groups dynamically and always does it on the original
+    connection group, causing issues.
+
     Examples
     --------
     >>> columns = ['ID', 'X', 'Y']
@@ -598,10 +604,10 @@ def post_table(conn, table, object_type, object_id, title="", headers=True):
     table.initialize(columns)
     table.addData(columns)
     orig_file = table.getOriginalFile()
-    table.close()
-    orig_file_id = orig_file.id
-    file_ann = FileAnnotationWrapper()
-    file_ann.setFile(OriginalFileI(orig_file_id, False))
+    file_ann = FileAnnotationWrapper(conn)
+    file_obj = OriginalFileWrapper(conn, orig_file)
+    file_obj.save()
+    file_ann.setFile(file_obj)
     file_ann = obj.linkAnnotation(file_ann)
     return file_ann.id
 
