@@ -246,7 +246,6 @@ def post_map_annotation(conn, object_type, object_id, kv_dict, ns,
     >>> post_map_annotation(conn, "Image", 56, d, ns)
     234
     """
-    print("group at begin", conn.getGroupFromContext().getId())
     if type(kv_dict) is not dict:
         raise TypeError('kv_dict must be of type `dict`')
 
@@ -273,7 +272,6 @@ def post_map_annotation(conn, object_type, object_id, kv_dict, ns,
             return None
     else:
         raise TypeError('Object ID cannot be empty')
-    print("group after", conn.getGroupFromContext().getId())
     map_ann = MapAnnotationWrapper(conn)
     map_ann.setNs(str(ns))
     map_ann.setValue(kv_pairs)
