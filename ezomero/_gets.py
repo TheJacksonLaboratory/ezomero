@@ -3,7 +3,7 @@ import os
 import numpy as np
 from ._ezomero import do_across_groups
 from omero.gateway import FileAnnotationWrapper
-from omero import ApiUsageException
+from omero import ApiUsageException, InternalException
 from omero.model import MapAnnotationI, TagAnnotationI
 from omero.rtypes import rint, rlong
 from omero.sys import Parameters
@@ -1114,10 +1114,17 @@ def get_table(conn, file_ann_id, across_groups=True):
     if type(file_ann_id) is not int:
         raise TypeError('File annotation ID must be an integer')
     ann = conn.getObject('FileAnnotation', file_ann_id)
-    orig_table_file = conn.getObject('OriginalFile', ann.getFile().id)
-    resources = conn.c.sf.sharedResources()
-    table_obj = resources.openTable(orig_table_file._obj)
-    table = _create_table(table_obj)
+    table = None
+    if ann:
+        orig_table_file = conn.getObject('OriginalFile', ann.getFile().id)
+        resources = conn.c.sf.sharedResources()
+        try:
+            table_obj = resources.openTable(orig_table_file._obj)
+            table = _create_table(table_obj)
+        except InternalException:
+            logging.warning(f" FileAnnotation {file_ann_id} is not a table.")
+    else:
+        logging.warning(f' FileAnnotation {file_ann_id} does not exist.')
     return table
 
 
