@@ -6,7 +6,9 @@ A module with convenience functions for writing Python code that interacts with 
 
 # Installation
 
-Just `pip install ezomero` and you should be good to go! The repo contains a `requirements.txt` file with the specific package versions we test `ezomero` with, but any Python>=3.8 and latest `omero-py` and `numpy` _should_ work -  note that this package is in active development!
+Just `pip install ezomero` and you should be good to go! The repo contains the specific package versions we test `ezomero` with in `setup.py`, but any Python>=3.8 and latest `omero-py` and `numpy` _should_ work -  note that this package is in active development!
+
+If you want to use `get_table` and `post_table` to/from Pandas dataframes, you need to install `ezomero[tables]` - that install an optional `pandas` dependency. Installing ezomero without this will default `get_table` and `post_table` to use lists of row lists as their default.
 
 # Usage
 

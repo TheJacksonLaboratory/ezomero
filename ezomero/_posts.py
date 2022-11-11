@@ -1,16 +1,25 @@
 import logging
 import mimetypes
 import numpy as np
+from uuid import uuid4
 from ._ezomero import do_across_groups, set_group
 from ._misc import link_datasets_to_project
 from omero.model import RoiI, PointI, LineI, RectangleI, EllipseI
 from omero.model import PolygonI, PolylineI, LabelI, LengthI, enums
 from omero.model import DatasetI, ProjectI, ScreenI
+from omero.grid import BoolColumn, LongColumn, StringColumn, DoubleColumn
 from omero.gateway import ProjectWrapper, DatasetWrapper
-from omero.gateway import ScreenWrapper
-from omero.gateway import MapAnnotationWrapper
+from omero.gateway import ScreenWrapper, FileAnnotationWrapper
+from omero.gateway import MapAnnotationWrapper, OriginalFileWrapper
 from omero.rtypes import rstring, rint, rdouble
 from .rois import Point, Line, Rectangle, Ellipse, Polygon, Polyline, Label
+import importlib.util
+# try importing pandas
+if (importlib.util.find_spec('pandas')):
+    import pandas as pd
+    has_pandas = True
+else:
+    has_pandas = False
 
 
 def post_dataset(conn, dataset_name, project_id=None, description=None,
@@ -237,7 +246,6 @@ def post_map_annotation(conn, object_type, object_id, kv_dict, ns,
     >>> post_map_annotation(conn, "Image", 56, d, ns)
     234
     """
-
     if type(kv_dict) is not dict:
         raise TypeError('kv_dict must be of type `dict`')
 
@@ -246,13 +254,13 @@ def post_map_annotation(conn, object_type, object_id, kv_dict, ns,
         k = str(k)
         v = str(v)
         kv_pairs.append([k, v])
-
     obj = None
     if object_id is not None:
         if type(object_id) is not int:
             raise TypeError('object_ids must be integer')
         obj = conn.getObject(object_type, object_id)
         if obj is not None:
+            print("object group", obj.getDetails().group.id.val)
             ret = set_group(conn, obj.getDetails().group.id.val)
             if ret is False:
                 logging.warning('Cannot change into group '
@@ -264,7 +272,6 @@ def post_map_annotation(conn, object_type, object_id, kv_dict, ns,
             return None
     else:
         raise TypeError('Object ID cannot be empty')
-
     map_ann = MapAnnotationWrapper(conn)
     map_ann.setNs(str(ns))
     map_ann.setValue(kv_pairs)
@@ -520,6 +527,135 @@ def post_roi(conn, image_id, shapes, name=None, description=None,
     roi.setImage(image._obj)
     roi = conn.getUpdateService().saveAndReturnObject(roi)
     return roi.getId().getValue()
+
+
+def post_table(conn, table, object_type, object_id, title="", headers=True):
+    """Create new table and link it to an OMERO object.
+
+    Parameters
+    ----------
+    conn : ``omero.gateway.BlitzGateway`` object
+        OMERO connection.
+    object_type : str
+       OMERO object type, passed to ``BlitzGateway.getObjects``
+    object_id : int
+        ID of object to which the new Table will be linked.
+    table : object
+        Object containing the actual table. It can be either a list of
+        row-lists or a pandas Dataframe in case the optional pandas dependency
+        was installed. Note that each column should be of a single type;
+        mixed-type columns will be ignored. Types supported: int, string,
+        float, boolean.
+    title : str, optional
+        Title for the table. If none is specified, a `Table:ID` name is picked,
+        with a random UUID. Note that table names need to be unique!
+    headers : bool, optional
+        Whether the first line of the `table` object should be interpreted
+        as column headers or not. Defaults to `True` and is ignored for pandas
+        Dataframes.
+
+
+    Returns
+    -------
+    TableFile_id : int
+        ID of newly created FileAnnotation containing the new Table.
+
+
+    Notes
+    -------
+    Currently not working with `across_groups` - the `OriginalFile` seems to
+    ignore setting groups dynamically and always does it on the original
+    connection group, causing issues.
+
+    Examples
+    --------
+    >>> columns = ['ID', 'X', 'Y']
+    >>> table = [columns, [1, 10, 20], [2, 30, 40]]
+    >>> post_table(conn, table, "Image", 99, title='My Table', headers=True)
+    234
+    """
+    if title:
+        table_name = title
+    else:
+        table_name = f"Table:{uuid4()}"
+    obj = None
+    if object_id is not None:
+        if type(object_id) is not int:
+            raise TypeError('object_ids must be integer')
+        obj = conn.getObject(object_type, object_id)
+        if obj is not None:
+            ret = set_group(conn, obj.getDetails().group.id.val)
+            if ret is False:
+                logging.warning('Cannot change into group '
+                                f'where object {object_id} is.')
+                return None
+        else:
+            logging.warning(f'Object {object_id} could not be found '
+                            '(check if you have permissions to it)')
+            return None
+    else:
+        raise TypeError('Object ID cannot be empty')
+    columns = create_columns(table, headers)
+    resources = conn.c.sf.sharedResources()
+    repository_id = resources.repositories().descriptions[0].getId().getValue()
+    table = resources.newTable(repository_id, table_name)
+    table.initialize(columns)
+    table.addData(columns)
+    orig_file = table.getOriginalFile()
+    file_ann = FileAnnotationWrapper(conn)
+    file_obj = OriginalFileWrapper(conn, orig_file)
+    file_obj.save()
+    file_ann.setFile(file_obj)
+    file_ann = obj.linkAnnotation(file_ann)
+    return file_ann.id
+
+
+def create_columns(table, headers):
+    """Helper function to create the correct column types from a table"""
+    cols = []
+    if type(table) == list:
+        if headers:
+            titles = table[0]
+            data = table[1:]
+        else:
+            titles = [f"column {i}" for i in range(len(table[0]))]
+            data = table
+        # transposing data matrix to have columns as first dimension
+        data = [list(i) for i in zip(*data)]
+        for i in range(len(titles)):
+            types = list(set([type(data[i][j]) for j in range(len(data[i]))]))
+            if len(types) > 1:
+                continue
+            if types[0] == bool:
+                cols.append(BoolColumn(titles[i], '', data[i]))
+            if types[0] == int:
+                cols.append(LongColumn(titles[i], '', data[i]))
+            if types[0] == float:
+                cols.append(DoubleColumn(titles[i], '', data[i]))
+            if types[0] == str:
+                max_size = len(max(data[i], key=len))
+                cols.append(StringColumn(titles[i], '',
+                            max_size, data[i]))
+    elif type(table) == pd.core.frame.DataFrame:
+        df = table.convert_dtypes()
+        ints = df.select_dtypes(include='int')
+        for col in ints:
+            cols.append(LongColumn(col, '', df[col].tolist()))
+        floats = df.select_dtypes(include='float')
+        for col in floats:
+            cols.append(DoubleColumn(col, '', df[col].tolist()))
+        strings = df.select_dtypes(include='string')
+        for col in strings:
+            max_size = df[col].map(len).max()
+            cols.append(StringColumn(col, '', max_size,
+                                     df[col].tolist()))
+        bools = df.select_dtypes(include='bool')
+        for col in bools:
+            cols.append(BoolColumn(col, '', df[col].tolist()))
+    else:
+        raise TypeError("Table must be a list of row lists or "
+                        "pandas Dataframe")
+    return cols
 
 
 def _shape_to_omero_shape(shape, fill_color, stroke_color, stroke_width):

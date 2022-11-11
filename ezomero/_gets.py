@@ -3,12 +3,19 @@ import os
 import numpy as np
 from ._ezomero import do_across_groups
 from omero.gateway import FileAnnotationWrapper
-from omero import ApiUsageException
+from omero import ApiUsageException, InternalException
 from omero.model import MapAnnotationI, TagAnnotationI
 from omero.rtypes import rint, rlong
 from omero.sys import Parameters
 from omero.model import enums as omero_enums
 from .rois import Point, Line, Rectangle, Ellipse, Polygon, Polyline, Label
+import importlib.util
+# try importing pandas
+if (importlib.util.find_spec('pandas')):
+    import pandas as pd
+    has_pandas = True
+else:
+    has_pandas = False
 
 
 # gets
@@ -863,7 +870,7 @@ def get_file_annotation(conn, file_ann_id, folder_path=None,
     conn : ``omero.gateway.BlitzGateway`` object
         OMERO connection.
     file_ann_id : int
-        ID of map annotation to get.
+        ID of file annotation to get.
     folder_path : str
         Path where file annotation will be saved. Defaults to local script
         directory.
@@ -1078,6 +1085,50 @@ def get_pyramid_levels(conn, image_id, across_groups=True):
 
 
 @do_across_groups
+def get_table(conn, file_ann_id, across_groups=True):
+    """Get a table from its FileAnnotation object.
+
+    Parameters
+    ----------
+    conn : ``omero.gateway.BlitzGateway`` object
+        OMERO connection.
+    file_ann_id : int
+        ID of FileAnnotation table to get.
+    across_groups : bool, optional
+        Defines cross-group behavior of function - set to
+        ``False`` to disable it.
+
+    Returns
+    -------
+    table : object
+        Object containing the actual table. It can be either a list of
+        row-lists or a pandas Dataframe in case the optional pandas dependency
+        was installed.
+
+    Examples
+    --------
+    >>> table = get_table(conn, 62)
+    >>> print(table[0])
+    ['ID', 'X', 'Y']
+    """
+    if type(file_ann_id) is not int:
+        raise TypeError('File annotation ID must be an integer')
+    ann = conn.getObject('FileAnnotation', file_ann_id)
+    table = None
+    if ann:
+        orig_table_file = conn.getObject('OriginalFile', ann.getFile().id)
+        resources = conn.c.sf.sharedResources()
+        try:
+            table_obj = resources.openTable(orig_table_file._obj)
+            table = _create_table(table_obj)
+        except InternalException:
+            logging.warning(f" FileAnnotation {file_ann_id} is not a table.")
+    else:
+        logging.warning(f' FileAnnotation {file_ann_id} does not exist.')
+    return table
+
+
+@do_across_groups
 def get_shape(conn, shape_id, across_groups=True):
     """Get an ezomero shape object from an OMERO Shape id
 
@@ -1110,6 +1161,42 @@ def get_shape(conn, shape_id, across_groups=True):
         raise TypeError('Shape ID must be an integer')
     omero_shape = conn.getObject('Shape', shape_id)
     return _omero_shape_to_shape(omero_shape)
+
+
+def _create_table(table_obj):
+    if importlib.util.find_spec('pandas'):
+        columns = []
+        for col in table_obj.getHeaders():
+            columns.append(col.name)
+        table = pd.DataFrame(columns=columns)
+        rowCount = table_obj.getNumberOfRows()
+        data = table_obj.read(list(range(len(columns))), 0, rowCount)
+        for col in data.columns:
+            col_data = []
+            for v in col.values:
+                col_data.append(v)
+            table[col.name] = col_data
+
+    else:
+        table = []
+        columns = []
+        data_lists = []
+        for col in table_obj.getHeaders():
+            columns.append(col.name)
+        table.append(columns)
+        rowCount = table_obj.getNumberOfRows()
+        data = table_obj.read(list(range(len(columns))), 0, rowCount)
+        for col in data.columns:
+            col_data = []
+            for v in col.values:
+                col_data.append(v)
+            data_lists.append(col_data)
+        # transpose data_lists
+        data_lists = [list(i) for i in zip(*data_lists)]
+        for row in data_lists:
+            table.append(row)
+
+    return table
 
 
 def _omero_shape_to_shape(omero_shape):
