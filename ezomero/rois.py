@@ -7,11 +7,23 @@ __all__ = ["Point",
            "Ellipse",
            "Polygon",
            "Polyline",
-           "Label"]
+           "Label",
+           "ezShape"]
 
 
 @dataclass(frozen=True)
-class Point:
+class ezShape:
+    """Generic dataclass used to create an OMERO Shape.
+
+    A dataclass used to represent any shape and create an OMERO equivalent.
+    This class has no fields; it's just extended by all ROIs.
+    This dataclass is frozen and should not be modified after instantiation
+
+    """
+
+
+@dataclass(frozen=True)
+class Point(ezShape):
     """A dataclass used to create an OMERO Point.
 
     A dataclass used to represent a Point shape and create an OMERO equivalent.
@@ -45,11 +57,11 @@ class Point:
     z: int = field(default=None)
     c: int = field(default=None)
     t: int = field(default=None)
-    label: str = field(default=None)
+    label: str = field(default=None)  
 
 
 @dataclass(frozen=True)
-class Line:
+class Line(ezShape):
     """A dataclass used to create an OMERO Line.
 
     A dataclass used to represent a Line shape and create an OMERO equivalent.
@@ -99,7 +111,7 @@ class Line:
 
 
 @dataclass(frozen=True)
-class Rectangle:
+class Rectangle(ezShape):
     """A dataclass used to create an OMERO rectangle.
 
     A dataclass used to represent a Rectangle shape and create an OMERO
@@ -144,7 +156,7 @@ class Rectangle:
 
 
 @dataclass(frozen=True)
-class Ellipse:
+class Ellipse(ezShape):
     """A dataclass used to create an OMERO Ellipse.
 
     A dataclass used to represent an Ellipse shape and create an OMERO
@@ -189,7 +201,7 @@ class Ellipse:
 
 
 @dataclass(frozen=True)
-class Polygon:
+class Polygon(ezShape):
     """A dataclass used to create an OMERO polygon.
 
     A dataclass used to represent a Polygon shape and create an OMERO
@@ -226,7 +238,7 @@ class Polygon:
 
 
 @dataclass(frozen=True)
-class Polyline:
+class Polyline(ezShape):
     """A dataclass used to create an OMERO polyline.
 
     A dataclass used to represent a Polyline shape and create an OMERO
@@ -263,7 +275,7 @@ class Polyline:
 
 
 @dataclass(frozen=True)
-class Label:
+class Label(ezShape):
     """A dataclass used to create an OMERO Label.
 
     A dataclass used to represent a Label shape and create an OMERO equivalent.

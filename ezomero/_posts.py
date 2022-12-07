@@ -1,18 +1,22 @@
 import logging
 import mimetypes
+from typing import Optional, List, Union
 import numpy as np
 from uuid import uuid4
 from ._ezomero import do_across_groups, set_group
 from ._misc import link_datasets_to_project
+from omero.gateway import BlitzGateway
 from omero.model import RoiI, PointI, LineI, RectangleI, EllipseI
 from omero.model import PolygonI, PolylineI, LabelI, LengthI, enums
-from omero.model import DatasetI, ProjectI, ScreenI
-from omero.grid import BoolColumn, LongColumn, StringColumn, DoubleColumn
+from omero.model import DatasetI, ProjectI, ScreenI, Shape
+from omero.grid import BoolColumn, LongColumn
+from omero.grid import StringColumn, DoubleColumn, Column
 from omero.gateway import ProjectWrapper, DatasetWrapper
 from omero.gateway import ScreenWrapper, FileAnnotationWrapper
 from omero.gateway import MapAnnotationWrapper, OriginalFileWrapper
 from omero.rtypes import rstring, rint, rdouble
-from .rois import Point, Line, Rectangle, Ellipse, Polygon, Polyline, Label
+from .rois import Point, Line, Rectangle, Ellipse
+from .rois import Polygon, Polyline, Label, ezShape
 import importlib.util
 # try importing pandas
 if (importlib.util.find_spec('pandas')):
@@ -22,8 +26,10 @@ else:
     has_pandas = False
 
 
-def post_dataset(conn, dataset_name, project_id=None, description=None,
-                 across_groups=True):
+def post_dataset(conn: BlitzGateway, dataset_name: str,
+                 project_id: Optional[int] = None,
+                 description: Optional[str] = None,
+                 across_groups: Optional[bool] = True) -> int:
     """Create a new dataset.
 
     Parameters
@@ -93,9 +99,13 @@ def post_dataset(conn, dataset_name, project_id=None, description=None,
     return dataset.getId()
 
 
-def post_image(conn, image, image_name, description=None, dataset_id=None,
-               source_image_id=None, channel_list=None,
-               dim_order=None, across_groups=True):
+def post_image(conn: BlitzGateway, image: np.ndarray, image_name: str,
+               description: Optional[str] = None,
+               dataset_id: Optional[int] = None,
+               source_image_id: Optional[int] = None,
+               channel_list: Optional[List[int]] = None,
+               dim_order: Optional[str] = None,
+               across_groups: Optional[bool] = True) -> int:
     """Create a new OMERO image from numpy array.
 
     Parameters
@@ -110,7 +120,7 @@ def post_image(conn, image, image_name, description=None, dataset_id=None,
         Name of the new image to be created.
     description : str, optional
         Description for the new image.
-    dataset_id : str, optional
+    dataset_id : int, optional
         Id of the Dataset in which to create the image. If no Dataset is
         specified, an orphaned image will be created.
     source_image_id : int, optional
@@ -207,8 +217,9 @@ def post_image(conn, image, image_name, description=None, dataset_id=None,
 
 
 @do_across_groups
-def post_map_annotation(conn, object_type, object_id, kv_dict, ns,
-                        across_groups=True):
+def post_map_annotation(conn: BlitzGateway, object_type: str, object_id: int,
+                        kv_dict: dict, ns: str,
+                        across_groups: Optional[bool] = True) -> int:
     """Create new MapAnnotation and link to images.
 
     Parameters
@@ -217,7 +228,7 @@ def post_map_annotation(conn, object_type, object_id, kv_dict, ns,
         OMERO connection.
     object_type : str
        OMERO object type, passed to ``BlitzGateway.getObjects``
-    object_ids : int
+    object_id : int
         ID of object to which the new MapAnnotation will be linked.
     kv_dict : dict
         key-value pairs that will be included in the MapAnnotation
@@ -287,8 +298,11 @@ def post_map_annotation(conn, object_type, object_id, kv_dict, ns,
 
 
 @do_across_groups
-def post_file_annotation(conn, object_type, object_id, file_path, ns,
-                         mimetype=None, description=None, across_groups=True):
+def post_file_annotation(conn: BlitzGateway, object_type: str, object_id: int,
+                         file_path: str, ns: str,
+                         mimetype: Optional[str] = None,
+                         description: Optional[str] = None,
+                         across_groups: Optional[bool] = True) -> int:
     """Create new FileAnnotation and link to images.
 
     Parameters
@@ -358,7 +372,8 @@ def post_file_annotation(conn, object_type, object_id, file_path, ns,
     return file_ann.getId()
 
 
-def post_project(conn, project_name, description=None):
+def post_project(conn: BlitzGateway, project_name: str,
+                 description: Optional[str] = None) -> int:
     """Create a new project.
 
     Parameters
@@ -400,7 +415,8 @@ def post_project(conn, project_name, description=None):
     return project.getId()
 
 
-def post_screen(conn, screen_name, description=None):
+def post_screen(conn: BlitzGateway, screen_name: str,
+                description: Optional[str] = None) -> int:
     """Create a new screen.
 
     Parameters
@@ -442,9 +458,11 @@ def post_screen(conn, screen_name, description=None):
     return screen.getId()
 
 
-def post_roi(conn, image_id, shapes, name=None, description=None,
-             fill_color=(10, 10, 10, 10), stroke_color=(255, 255, 255, 255),
-             stroke_width=1):
+def post_roi(conn: BlitzGateway, image_id: int, shapes: List[ezShape],
+             name: Optional[str] = None, description: Optional[str] = None,
+             fill_color: Optional[Union[tuple, int]] = (10, 10, 10, 10),
+             stroke_color: Optional[Union[tuple, int]] = (255, 255, 255, 255),
+             stroke_width: Optional[int] = 1) -> int:
     """Create new ROI from a list of shapes and link to an image.
 
     Parameters
@@ -529,7 +547,10 @@ def post_roi(conn, image_id, shapes, name=None, description=None,
     return roi.getId().getValue()
 
 
-def post_table(conn, table, object_type, object_id, title="", headers=True):
+def post_table(conn: BlitzGateway, table: Union[List, pd.core.frame.DataFrame],
+               object_type: str, object_id: int,
+               title: Optional[str] = "",
+               headers: Optional[bool] = True) -> int:
     """Create new table and link it to an OMERO object.
 
     Parameters
@@ -610,7 +631,8 @@ def post_table(conn, table, object_type, object_id, title="", headers=True):
     return file_ann.id
 
 
-def create_columns(table, headers):
+def create_columns(table: Union[List, pd.core.frame.DataFrame],
+                   headers: bool) -> List[Column]:
     """Helper function to create the correct column types from a table"""
     cols = []
     if type(table) == list:
@@ -658,7 +680,10 @@ def create_columns(table, headers):
     return cols
 
 
-def _shape_to_omero_shape(shape, fill_color, stroke_color, stroke_width):
+def _shape_to_omero_shape(shape: ezShape,
+                          fill_color: Union[tuple, int],
+                          stroke_color: Union[tuple, int],
+                          stroke_width: int) -> Shape:
     """ Helper function to convert ezomero shapes into omero shapes"""
     if isinstance(shape, Point):
         omero_shape = PointI()
@@ -721,7 +746,7 @@ def _shape_to_omero_shape(shape, fill_color, stroke_color, stroke_width):
     return omero_shape
 
 
-def _rgba_to_int(color: tuple):
+def _rgba_to_int(color: tuple) -> int:
     """ Helper function returning the color as an Integer in RGBA encoding """
     try:
         r, g, b, a = color
