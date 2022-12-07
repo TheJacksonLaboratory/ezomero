@@ -1,5 +1,7 @@
 from ._ezomero import do_across_groups
+from typing import Optional, List
 from omero.sys import Parameters
+from omero.gateway import BlitzGateway
 from omero.rtypes import rstring
 from omero.model import DatasetImageLinkI, ImageI, ExperimenterI
 from omero.model import DatasetI, ProjectI, ProjectDatasetLinkI
@@ -8,7 +10,9 @@ from omero.model import PlateI, ScreenI, ScreenPlateLinkI
 
 # filters
 @do_across_groups
-def filter_by_filename(conn, im_ids, imported_filename, across_groups=True):
+def filter_by_filename(conn: BlitzGateway, im_ids: List[int],
+                       imported_filename: str,
+                       across_groups: Optional[bool] = True) -> List[int]:
     """Filter list of image ids by originalFile name.
 
     Sometimes we know the filename of an image that has been imported into
@@ -71,7 +75,9 @@ def filter_by_filename(conn, im_ids, imported_filename, across_groups=True):
 
 
 @do_across_groups
-def filter_by_tag_value(conn, im_ids, tag_value, across_groups=True):
+def filter_by_tag_value(conn: BlitzGateway, im_ids: List[int],
+                        tag_value: str, across_groups: Optional[bool] = True
+                        ) -> List[int]:
     """Filter list of image ids by textValue of a TagAnnotation.
 
     Parameters
@@ -113,7 +119,8 @@ def filter_by_tag_value(conn, im_ids, tag_value, across_groups=True):
 
 
 @do_across_groups
-def filter_by_kv(conn, im_ids, key, value, across_groups=True):
+def filter_by_kv(conn: BlitzGateway, im_ids: List[int], key: str, value: str,
+                 across_groups: Optional[bool] = True) -> List[int]:
     """Filter list of image ids by a key-value pair of a MapAnnotation.
 
     Parameters
@@ -164,7 +171,8 @@ def filter_by_kv(conn, im_ids, key, value, across_groups=True):
 
 
 # linking functions
-def link_images_to_dataset(conn, image_ids, dataset_id):
+def link_images_to_dataset(conn: BlitzGateway, image_ids: List[int],
+                           dataset_id: int):
     """Link images to the specified dataset.
 
     Nothing is returned by this function.
@@ -193,7 +201,8 @@ def link_images_to_dataset(conn, image_ids, dataset_id):
         conn.getUpdateService().saveObject(link, conn.SERVICE_OPTS)
 
 
-def link_datasets_to_project(conn, dataset_ids, project_id):
+def link_datasets_to_project(conn: BlitzGateway, dataset_ids: List[int],
+                             project_id: int):
     """Link datasets to the specified project.
 
     Nothing is returned by this function.
@@ -222,7 +231,8 @@ def link_datasets_to_project(conn, dataset_ids, project_id):
         conn.getUpdateService().saveObject(link, conn.SERVICE_OPTS)
 
 
-def link_plates_to_screen(conn, plate_ids, screen_id):
+def link_plates_to_screen(conn: BlitzGateway, plate_ids: List[int],
+                          screen_id: int):
     """Link plates to the specified screen.
 
     Nothing is returned by this function.
@@ -251,7 +261,7 @@ def link_plates_to_screen(conn, plate_ids, screen_id):
         conn.getUpdateService().saveObject(link, conn.SERVICE_OPTS)
 
 
-def _get_current_user(conn):
+def _get_current_user(conn: BlitzGateway) -> int:
     userid = conn.SERVICE_OPTS.getOmeroUser()
     if userid is None:
         userid = conn.getUserId()
@@ -259,7 +269,7 @@ def _get_current_user(conn):
 
 
 # prints
-def print_map_annotation(conn, map_ann_id):
+def print_map_annotation(conn: BlitzGateway, map_ann_id: int):
     """Print some information and value of a map annotation.
 
     Parameters
@@ -280,7 +290,7 @@ def print_map_annotation(conn, map_ann_id):
         print(f'\t{k}:\t{v}')
 
 
-def print_groups(conn):
+def print_groups(conn: BlitzGateway):
     """Print all Groups with IDs and membership info.
 
     Parameters
@@ -304,7 +314,7 @@ def print_groups(conn):
             print(f'{g.getName():>25}: {g.getId()}\t{group_status}')
 
 
-def print_projects(conn):
+def print_projects(conn: BlitzGateway):
     """Print all available Projects.
 
     Parameters
@@ -317,7 +327,7 @@ def print_projects(conn):
         print(f'\t{p.getName()}:\t{p.getId()}')
 
 
-def print_datasets(conn, project=None):
+def print_datasets(conn: BlitzGateway, project: Optional[int] = None):
     """Print all available Datasets for a given Project.
 
     Parameters
