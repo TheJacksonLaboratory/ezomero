@@ -3,12 +3,13 @@ import logging
 import os
 import functools
 import inspect
+from typing import Callable, Optional, Union
 from getpass import getpass
 from omero.gateway import BlitzGateway
 from pathlib import Path
 
 
-def get_default_args(func):
+def get_default_args(func: Callable) -> dict:
     """Retrieves the default arguments of a function.
 
     Parameters
@@ -29,7 +30,7 @@ def get_default_args(func):
     }
 
 
-def do_across_groups(f):
+def do_across_groups(f: Callable) -> object:
     """Decorator functional for making functions work across
     OMERO groups.
 
@@ -69,7 +70,8 @@ def do_across_groups(f):
 
 # puts
 @do_across_groups
-def put_map_annotation(conn, map_ann_id, kv_dict, ns=None, across_groups=True):
+def put_map_annotation(conn: BlitzGateway, map_ann_id: int, kv_dict: dict,
+                       ns: str = None, across_groups: bool = True) -> None:
     """Update an existing map annotation with new values (kv pairs)
 
     Parameters
@@ -130,8 +132,10 @@ def put_map_annotation(conn, map_ann_id, kv_dict, ns=None, across_groups=True):
 
 # functions for managing connection context and service options.
 
-def connect(user=None, password=None, group=None, host=None, port=None,
-            secure=None, config_path=None):
+def connect(user: Optional[str] = None, password: Optional[str] = None,
+            group: Optional[str] = None, host: Optional[str] = None,
+            port: Optional[int] = None, secure: Optional[bool] = None,
+            config_path: Optional[str] = None) -> Optional[BlitzGateway]:
     """Create an OMERO connection
 
     This function will create an OMERO connection by populating certain
@@ -280,8 +284,13 @@ def connect(user=None, password=None, group=None, host=None, port=None,
         return None
 
 
-def store_connection_params(user=None, group=None, host=None, port=None,
-                            secure=None, web_host=False, config_path=None):
+def store_connection_params(user: Optional[str] = None,
+                            group: Optional[str] = None,
+                            host: Optional[str] = None,
+                            port: Optional[int] = None,
+                            secure: Optional[bool] = None,
+                            web_host: Optional[Union[str, bool]] = False,
+                            config_path: Optional[str] = None):
     """Save OMERO connection parameters in a file.
 
     This function creates a config file ('.ezomero') in which
@@ -366,7 +375,7 @@ def store_connection_params(user=None, group=None, host=None, port=None,
         print(f'Connection settings saved to {ezo_file}')
 
 
-def set_group(conn, group_id):
+def set_group(conn: BlitzGateway, group_id: int) -> bool:
     """Safely switch OMERO group.
 
     This function will change the user's current group to that specified by
