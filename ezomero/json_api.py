@@ -1,5 +1,7 @@
 import requests
+from requests import Session
 import os
+from typing import Optional, Tuple, Union
 import configparser
 import numpy as np
 from numbers import Number
@@ -9,9 +11,13 @@ from PIL import Image
 from io import BytesIO
 
 
-def create_json_session(user=None, password=None, web_host=None,
-                        verify=True, server_name='omero',
-                        config_path=None):
+def create_json_session(user: Optional[str] = None,
+                        password: Optional[str] = None,
+                        web_host: Optional[str] = None,
+                        verify: Optional[bool] = True,
+                        server_name: Optional[str] = 'omero',
+                        config_path: Optional[str] = None
+                        ) -> Tuple[dict, Optional[Session], Optional[str]]:
     """Create an OMERO connection using the JSON API
 
     This function will create an OMERO connection by populating certain
@@ -175,7 +181,8 @@ def create_json_session(user=None, password=None, web_host=None,
     return login_rsp, session, base_url
 
 
-def get_rendered_jpeg(session, base_url, img_id, scale):
+def get_rendered_jpeg(session: Session, base_url: str, img_id: int,
+                      scale: Union[float, int]) -> np.ndarray:
     """Get a numpy array from a rendered JPEG at given scale factor
     of an image.
 
