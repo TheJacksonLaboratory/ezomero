@@ -57,7 +57,7 @@ class Point(ezShape):
     z: int = field(default=None)
     c: int = field(default=None)
     t: int = field(default=None)
-    label: str = field(default=None)  
+    label: str = field(default=None)
 
 
 @dataclass(frozen=True)
