@@ -99,7 +99,7 @@ def create_json_session(user: Optional[str] = None,
     else:
         raise TypeError('config_path must be a string')
 
-    config_dict = {}
+    config_dict: Union[None, configparser.SectionProxy] = None
     if config_fp.exists():
         config = configparser.ConfigParser()
         with config_fp.open() as fp:
@@ -111,7 +111,8 @@ def create_json_session(user: Optional[str] = None,
 
     # set user
     if user is None:
-        user = config_dict.get("OMERO_USER", user)
+        if config_dict:
+            user = config_dict.get("OMERO_USER", user)
         user = os.environ.get("OMERO_USER", user)
     if user is None:
         user = input('Enter username: ')
@@ -124,7 +125,8 @@ def create_json_session(user: Optional[str] = None,
 
     # set web host
     if web_host is None:
-        web_host = config_dict.get("OMERO_WEB_HOST", web_host)
+        if config_dict:
+            web_host = config_dict.get("OMERO_WEB_HOST", web_host)
         web_host = os.environ.get("OMERO_WEB_HOST", web_host)
     if web_host is None:
         web_host = input('Enter host: ')
@@ -224,8 +226,8 @@ def get_rendered_jpeg(session: Session, base_url: str, img_id: int,
         r.raise_for_status()
     except requests.exceptions.ConnectionError as e:
         # Whoops it wasn't a 200
-        print("Error {}: received response {} with content: \
-                         {}".format(e, r.status_code, r.content))
+        print("Error {!r}: received response {!r} with content: \
+                         {!r}".format(e, r.status_code, r.content))
         raise
     host = base_url.split("/api")[0]
     # which lists a bunch of urls as starting points
@@ -251,8 +253,8 @@ def get_rendered_jpeg(session: Session, base_url: str, img_id: int,
         jpeg.raise_for_status()
     except requests.exceptions.HTTPError as e:
         # Whoops it wasn't a 200
-        print("Error {}: received response {} with content: \
-                         {}".format(e, jpeg.status_code, jpeg.content))
+        print("Error {!r}: received response {!r} with content: \
+                         {!r}".format(e, jpeg.status_code, jpeg.content))
         raise
 
     # using PIL and BytesIO to open the request content as an image

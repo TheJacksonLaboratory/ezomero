@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from typing import List, Tuple
+from typing import List, Tuple, Union
 
 __all__ = ["Point",
            "Line",
@@ -54,10 +54,10 @@ class Point(ezShape):
 
     x: float = field(metadata={'units': 'PIXELS'})
     y: float = field(metadata={'units': 'PIXELS'})
-    z: int = field(default=None)
-    c: int = field(default=None)
-    t: int = field(default=None)
-    label: str = field(default=None)
+    z: Union[int, None] = field(default=None)
+    c: Union[int, None] = field(default=None)
+    t: Union[int, None] = field(default=None)
+    label: Union[str, None] = field(default=None)
 
 
 @dataclass(frozen=True)
@@ -102,12 +102,12 @@ class Line(ezShape):
     y1: float = field(metadata={'units': 'PIXELS'})
     x2: float = field(metadata={'units': 'PIXELS'})
     y2: float = field(metadata={'units': 'PIXELS'})
-    z: int = field(default=None)
-    c: int = field(default=None)
-    t: int = field(default=None)
-    markerStart: str = field(default=None)
-    markerEnd: str = field(default=None)
-    label: str = field(default=None)
+    z: Union[int, None] = field(default=None)
+    c: Union[int, None] = field(default=None)
+    t: Union[int, None] = field(default=None)
+    markerStart: Union[str, None] = field(default=None)
+    markerEnd: Union[str, None] = field(default=None)
+    label: Union[str, None] = field(default=None)
 
 
 @dataclass(frozen=True)
@@ -149,10 +149,10 @@ class Rectangle(ezShape):
     y: float = field(metadata={'units': 'PIXELS'})
     width: float = field(metadata={'units': 'PIXELS'})
     height: float = field(metadata={'units': 'PIXELS'})
-    z: int = field(default=None)
-    c: int = field(default=None)
-    t: int = field(default=None)
-    label: str = field(default=None)
+    z: Union[int, None] = field(default=None)
+    c: Union[int, None] = field(default=None)
+    t: Union[int, None] = field(default=None)
+    label: Union[str, None] = field(default=None)
 
 
 @dataclass(frozen=True)
@@ -194,10 +194,10 @@ class Ellipse(ezShape):
     y: float = field(metadata={'units': 'PIXELS'})
     x_rad: float = field(metadata={'units': 'PIXELS'})
     y_rad: float = field(metadata={'units': 'PIXELS'})
-    z: int = field(default=None)
-    c: int = field(default=None)
-    t: int = field(default=None)
-    label: str = field(default=None)
+    z: Union[int, None] = field(default=None)
+    c: Union[int, None] = field(default=None)
+    t: Union[int, None] = field(default=None)
+    label: Union[str, None] = field(default=None)
 
 
 @dataclass(frozen=True)
@@ -231,10 +231,10 @@ class Polygon(ezShape):
     """
 
     points: List[Tuple[float, float]] = field(metadata={'units': 'PIXELS'})
-    z: int = field(default=None)
-    c: int = field(default=None)
-    t: int = field(default=None)
-    label: str = field(default=None)
+    z: Union[int, None] = field(default=None)
+    c: Union[int, None] = field(default=None)
+    t: Union[int, None] = field(default=None)
+    label: Union[str, None] = field(default=None)
 
 
 @dataclass(frozen=True)
@@ -268,10 +268,10 @@ class Polyline(ezShape):
     """
 
     points: List[Tuple[float, float]] = field(metadata={'units': 'PIXELS'})
-    z: int = field(default=None)
-    c: int = field(default=None)
-    t: int = field(default=None)
-    label: str = field(default=None)
+    z: Union[int, None] = field(default=None)
+    c: Union[int, None] = field(default=None)
+    t: Union[int, None] = field(default=None)
+    label: Union[str, None] = field(default=None)
 
 
 @dataclass(frozen=True)
@@ -310,6 +310,6 @@ class Label(ezShape):
     y: float = field(metadata={'units': 'PIXELS'})
     label: str = field()
     fontSize: int = field(metadata={'FontSizeUnit': 'pt'})
-    z: int = field(default=None)
-    c: int = field(default=None)
-    t: int = field(default=None)
+    z: Union[int, None] = field(default=None)
+    c: Union[int, None] = field(default=None)
+    t: Union[int, None] = field(default=None)

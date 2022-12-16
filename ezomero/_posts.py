@@ -1,6 +1,6 @@
 import logging
 import mimetypes
-from typing import Optional, List, Union
+from typing import Optional, List, Union, Tuple
 import numpy as np
 from uuid import uuid4
 from ._ezomero import do_across_groups, set_group
@@ -29,7 +29,7 @@ else:
 def post_dataset(conn: BlitzGateway, dataset_name: str,
                  project_id: Optional[int] = None,
                  description: Optional[str] = None,
-                 across_groups: Optional[bool] = True) -> int:
+                 across_groups: Optional[bool] = True) -> Union[int, None]:
     """Create a new dataset.
 
     Parameters
@@ -94,7 +94,7 @@ def post_dataset(conn: BlitzGateway, dataset_name: str,
         dataset.setDescription(description)
     dataset.save()
 
-    if project is not None:
+    if project_id is not None:
         link_datasets_to_project(conn, [dataset.getId()], project_id)
     return dataset.getId()
 
@@ -105,7 +105,7 @@ def post_image(conn: BlitzGateway, image: np.ndarray, image_name: str,
                source_image_id: Optional[int] = None,
                channel_list: Optional[List[int]] = None,
                dim_order: Optional[str] = None,
-               across_groups: Optional[bool] = True) -> int:
+               across_groups: Optional[bool] = True) -> Union[int, None]:
     """Create a new OMERO image from numpy array.
 
     Parameters
@@ -219,7 +219,8 @@ def post_image(conn: BlitzGateway, image: np.ndarray, image_name: str,
 @do_across_groups
 def post_map_annotation(conn: BlitzGateway, object_type: str, object_id: int,
                         kv_dict: dict, ns: str,
-                        across_groups: Optional[bool] = True) -> int:
+                        across_groups: Optional[bool] = True
+                        ) -> Union[int, None]:
     """Create new MapAnnotation and link to images.
 
     Parameters
@@ -289,7 +290,7 @@ def post_map_annotation(conn: BlitzGateway, object_type: str, object_id: int,
     map_ann.save()
     try:
         obj.linkAnnotation(map_ann)
-    except:  # fix this bare exception
+    except ValueError:  # fix this bare exception
         logging.warning(f'Cannot link to object {object_id} - '
                         'check if you have permissions to do so')
         return None
@@ -302,7 +303,8 @@ def post_file_annotation(conn: BlitzGateway, object_type: str, object_id: int,
                          file_path: str, ns: str,
                          mimetype: Optional[str] = None,
                          description: Optional[str] = None,
-                         across_groups: Optional[bool] = True) -> int:
+                         across_groups: Optional[bool] = True
+                         ) -> Union[int, None]:
     """Create new FileAnnotation and link to images.
 
     Parameters
@@ -364,7 +366,7 @@ def post_file_annotation(conn: BlitzGateway, object_type: str, object_id: int,
     else:
         raise TypeError('Object ID cannot be empty')
     if not mimetype:
-        mimetype = mimetypes.guess_type(file_path)
+        mimetype, _ = mimetypes.guess_type(file_path)
     file_ann = conn.createFileAnnfromLocalFile(
         file_path, mimetype=mimetype, ns=ns, desc=description)
     obj.linkAnnotation(file_ann)
@@ -458,10 +460,14 @@ def post_screen(conn: BlitzGateway, screen_name: str,
     return screen.getId()
 
 
-def post_roi(conn: BlitzGateway, image_id: int, shapes: List[ezShape],
+def post_roi(conn: BlitzGateway, image_id: int,
+             shapes: List[Union[Point, Line, Rectangle, Ellipse,
+                                Polygon, Polyline, Label]],
              name: Optional[str] = None, description: Optional[str] = None,
-             fill_color: Optional[Union[tuple, int]] = (10, 10, 10, 10),
-             stroke_color: Optional[Union[tuple, int]] = (255, 255, 255, 255),
+             fill_color: Optional[Union[Tuple[int, int, int, int], int]] =
+             (10, 10, 10, 10),
+             stroke_color: Optional[Union[Tuple[int, int, int, int], int]] =
+             (255, 255, 255, 255),
              stroke_width: Optional[int] = 1) -> int:
     """Create new ROI from a list of shapes and link to an image.
 
@@ -550,7 +556,7 @@ def post_roi(conn: BlitzGateway, image_id: int, shapes: List[ezShape],
 def post_table(conn: BlitzGateway, table: Union[List, pd.core.frame.DataFrame],
                object_type: str, object_id: int,
                title: Optional[str] = "",
-               headers: Optional[bool] = True) -> int:
+               headers: bool = True) -> Union[int, None]:
     """Create new table and link it to an OMERO object.
 
     Parameters
@@ -680,9 +686,10 @@ def create_columns(table: Union[List, pd.core.frame.DataFrame],
     return cols
 
 
-def _shape_to_omero_shape(shape: ezShape,
-                          fill_color: Union[tuple, int],
-                          stroke_color: Union[tuple, int],
+def _shape_to_omero_shape(shape: Union[Point, Line, Rectangle, Ellipse,
+                                       Polygon, Polyline, Label],
+                          fill_color: Tuple[int, int, int, int],
+                          stroke_color: Tuple[int, int, int, int],
                           stroke_width: int) -> Shape:
     """ Helper function to convert ezomero shapes into omero shapes"""
     if isinstance(shape, Point):
@@ -746,12 +753,12 @@ def _shape_to_omero_shape(shape: ezShape,
     return omero_shape
 
 
-def _rgba_to_int(color: tuple) -> int:
+def _rgba_to_int(color: Tuple[int, int, int, int]) -> int:
     """ Helper function returning the color as an Integer in RGBA encoding """
     try:
         r, g, b, a = color
-    except ValueError as e:
-        raise e('The format for the shape color is not addequate')
+    except ValueError:
+        print('The format for the shape color is not addequate')
     r = r << 24
     g = g << 16
     b = b << 8

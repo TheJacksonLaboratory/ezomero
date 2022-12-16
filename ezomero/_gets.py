@@ -25,14 +25,14 @@ else:
 @do_across_groups
 def get_image(conn: BlitzGateway, image_id: int,
               no_pixels: Optional[bool] = False,
-              start_coords: Optional[Union[List[int], Tuple[int]]] = None,
-              axis_lengths: Optional[Union[List[int], Tuple[int]]] = None,
+              start_coords: Optional[Union[List[int], Tuple[int, ...]]] = None,
+              axis_lengths: Optional[Union[List[int], Tuple[int, ...]]] = None,
               xyzct: Optional[bool] = False,
               pad: Optional[bool] = False,
               pyramid_level: Optional[int] = None,
               dim_order: Optional[str] = None,
               across_groups: Optional[bool] = True
-              ) -> Tuple[ImageWrapper, np.ndarray]:
+              ) -> Tuple[Union[ImageWrapper, None], Union[np.ndarray, None]]:
     """Get omero image object along with pixels as a numpy array.
 
     Parameters
@@ -184,24 +184,25 @@ def get_image(conn: BlitzGateway, image_id: int,
                                  'Either adjust axis_lengths or use pad=True')
 
             axis_lengths = [al - oh for al, oh in zip(axis_lengths, overhangs)]
-            zct_list = []
+            zct_tuples: List[Tuple[int, ...]] = []
             for z in range(start_coords[2],
                            start_coords[2] + axis_lengths[2]):
                 for c in range(start_coords[3],
                                start_coords[3] + axis_lengths[3]):
                     for t in range(start_coords[4],
                                    start_coords[4] + axis_lengths[4]):
-                        zct_list.append((z, c, t))
+                        zct_tuples.append((z, c, t))
+            zct_list = [list(zct) for zct in zct_tuples]
 
             if reordered_sizes == [size_t, size_z, size_y, size_x, size_c]:
-                plane_gen = primary_pixels.getPlanes(zct_list)
+                plane_gen = primary_pixels.getPlanes(zct_tuples)
             else:
                 tile = (start_coords[0], start_coords[1],
                         axis_lengths[0], axis_lengths[1])
-                zct_list = [list(zct) for zct in zct_list]
+                zct_tiles: List[Tuple[int, int, int, Tuple[int, ...]]] = []
                 for zct in zct_list:
-                    zct.append(tile)
-                plane_gen = primary_pixels.getTiles(zct_list)
+                    zct_tiles.append((zct[0], zct[1], zct[2], tile))
+                plane_gen = primary_pixels.getTiles(zct_tiles)
 
             for i, plane in enumerate(plane_gen):
                 zct_coords = zct_list[i]
@@ -279,7 +280,7 @@ def get_image(conn: BlitzGateway, image_id: int,
                                start_coords[3] + axis_lengths[3]):
                     for t in range(start_coords[4],
                                    start_coords[4] + axis_lengths[4]):
-                        zct_list.append((z, c, t))
+                        zct_list.append([z, c, t])
 
             dtype = PIXEL_TYPES.get(primary_pixels.getPixelsType().value, None)
             if reordered_sizes == [size_t, size_z, size_h, size_w, size_c]:
@@ -307,7 +308,6 @@ def get_image(conn: BlitzGateway, image_id: int,
                 c = zct_coords[1] - start_coords[3]
                 t = zct_coords[2] - start_coords[4]
                 pixels[t, z, :axis_lengths[1], :axis_lengths[0], c] = plane
-
             if dim_order is not None:
                 order_dict = dict(zip(dim_order, range(5)))
                 order_vector = [order_dict[c.lower()] for c in 'tzyxc']
@@ -697,7 +697,7 @@ def get_file_annotation_ids(conn: BlitzGateway, object_type: str,
 
 @do_across_groups
 def get_well_id(conn: BlitzGateway, plate_id: int, row: int, column: int,
-                across_groups: Optional[bool] = True) -> int:
+                across_groups: Optional[bool] = True) -> Union[int, None]:
     """Get ID of well based on plate ID, row, and column
 
     Parameters
@@ -779,7 +779,8 @@ def get_roi_ids(conn: BlitzGateway, image_id: int,
 
 @do_across_groups
 def get_shape_ids(conn: BlitzGateway, roi_id: int,
-                  across_groups: Optional[bool] = True) -> List[int]:
+                  across_groups: Optional[bool] = True
+                  ) -> Union[List[int], None]:
     """Get IDs of shapes associated with an ROI
 
     Parameters
@@ -928,7 +929,7 @@ def get_file_annotation(conn: BlitzGateway, file_ann_id: int,
     return file_path
 
 
-def get_group_id(conn: BlitzGateway, group_name: str) -> int:
+def get_group_id(conn: BlitzGateway, group_name: str) -> Union[int, None]:
     """Get ID of a group based on group name.
 
     Must be an exact match. Case sensitive.
@@ -961,7 +962,7 @@ def get_group_id(conn: BlitzGateway, group_name: str) -> int:
     return None
 
 
-def get_user_id(conn: BlitzGateway, user_name: str) -> int:
+def get_user_id(conn: BlitzGateway, user_name: str) -> Union[int, None]:
     """Get ID of a user based on user name.
 
     Must be an exact match. Case sensitive.
@@ -1076,7 +1077,7 @@ def get_original_filepaths(conn: BlitzGateway, image_id: int,
 @do_across_groups
 def get_pyramid_levels(conn: BlitzGateway, image_id: int,
                        across_groups: Optional[bool] = True
-                       ) -> List[Tuple[int]]:
+                       ) -> List[Tuple[int, ...]]:
     """Get number of pyramid levels associated with an Image
 
     Parameters
@@ -1107,6 +1108,7 @@ def get_pyramid_levels(conn: BlitzGateway, image_id: int,
     pix = image._conn.c.sf.createRawPixelsStore()
     pid = image.getPixelsId()
     pix.setPixelsId(pid, False)
+    levels: List[Tuple[int, ...]]
     levels = [(r.sizeX, r.sizeY) for r in pix.getResolutionDescriptions()]
     pix.close()
     return levels
@@ -1260,7 +1262,7 @@ def _omero_shape_to_shape(omero_shape: Shape
         mk_end = omero_shape.markerEnd
     except AttributeError:
         mk_end = None
-
+    shape: Union[Point, Line, Rectangle, Ellipse, Polygon, Polyline, Label]
     if shape_type == "Point":
         x = omero_shape.x
         y = omero_shape.y
@@ -1314,7 +1316,7 @@ def _omero_shape_to_shape(omero_shape: Shape
     return shape, fill_color, stroke_color, stroke_width
 
 
-def _int_to_rgba(omero_val: int) -> Tuple[int]:
+def _int_to_rgba(omero_val: int) -> Tuple[int, ...]:
     """ Helper function returning the color as an Integer in RGBA encoding """
     if omero_val < 0:
         omero_val = omero_val + (2**32)
