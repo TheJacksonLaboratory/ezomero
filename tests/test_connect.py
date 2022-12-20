@@ -50,8 +50,8 @@ def test_connect_env(omero_params, tmp_path, monkeypatch):
     # test sanitizing input
     with pytest.raises(TypeError):
         conn = ezomero.connect(config_path=100)
-    with pytest.raises(ValueError):
-        conn = ezomero.connect(group='', secure='dunno')
+    with pytest.raises(TypeError):
+        conn = ezomero.connect(group='testgroup', secure='dunno')
 
     conf_path = Path.home() / '.ezomero'
     conf_path.write_text(conf_txt)

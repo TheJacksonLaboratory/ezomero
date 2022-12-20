@@ -1,8 +1,9 @@
 import logging
+from typing import Optional, Union, List
 from os.path import abspath
 from omero.rtypes import rstring
 from omero.sys import Parameters
-from omero.gateway import MapAnnotationWrapper
+from omero.gateway import MapAnnotationWrapper, BlitzGateway
 from ._gets import get_image_ids
 from ._posts import post_dataset, post_project, post_screen
 from ._misc import link_images_to_dataset
@@ -14,8 +15,12 @@ ImportControl = import_module("omero.plugins.import").ImportControl
 
 
 # import
-def ezimport(conn, target, project=None, dataset=None,
-             screen=None, ln_s=False, ann=None, ns=None):
+def ezimport(conn: BlitzGateway, target: str,
+             project: Optional[Union[str, int]] = None,
+             dataset: Optional[Union[str, int]] = None,
+             screen: Optional[Union[str, int]] = None,
+             ln_s: Optional[bool] = False, ann: Optional[dict] = None,
+             ns: Optional[str] = None) -> Union[List[int], None]:
     """Entry point that creates Importer and runs import.
 
     Parameters
@@ -63,7 +68,8 @@ def ezimport(conn, target, project=None, dataset=None,
         return imp_ctl.image_ids
 
 
-def set_or_create_project(conn, project, across_groups=True):
+def set_or_create_project(conn: BlitzGateway, project: Union[str, int],
+                          across_groups: Optional[bool] = True) -> int:
     """Create or set a Project of interest.
 
     If argument is a string, creates a new Project with that name. If it is
@@ -89,7 +95,10 @@ def set_or_create_project(conn, project, across_groups=True):
     return project_id
 
 
-def set_or_create_dataset(conn, project_id, dataset, across_groups=True):
+def set_or_create_dataset(conn: BlitzGateway, project_id: Union[int, None],
+                          dataset: Union[str, int],
+                          across_groups: Optional[bool] = True
+                          ) -> Union[int, None]:
     """Create or set a Dataset of interest.
 
     If argument is a string, creates a new Dataset with that name. If it is
@@ -121,7 +130,8 @@ def set_or_create_dataset(conn, project_id, dataset, across_groups=True):
     return dataset_id
 
 
-def set_or_create_screen(conn, screen, across_groups=True):
+def set_or_create_screen(conn: BlitzGateway, screen: Union[str, int],
+                         across_groups: Optional[bool] = True) -> int:
     """Create or set a Screen of interest.
 
     If argument is a string, creates a new Screen with that name. If it is
@@ -147,8 +157,10 @@ def set_or_create_screen(conn, screen, across_groups=True):
     return screen_id
 
 
-def multi_post_map_annotation(conn, object_type, object_ids,
-                              kv_dict, ns, across_groups=True):
+def multi_post_map_annotation(conn: BlitzGateway, object_type: str,
+                              object_ids: Union[int, List[int]], kv_dict: dict,
+                              ns: str, across_groups: Optional[bool] = True
+                              ) -> int:
     """Create a single new MapAnnotation and link to multiple images.
     Parameters
     ----------
@@ -181,7 +193,7 @@ def multi_post_map_annotation(conn, object_type, object_ids,
     """
     if type(object_ids) not in [list, int]:
         raise TypeError('object_ids must be list or integer')
-    if type(object_ids) is not list:
+    if isinstance(object_ids, int):
         object_ids = [object_ids]
 
     if len(object_ids) == 0:
@@ -246,8 +258,12 @@ class Importer:
     getting more image IDs than you were expecting!
     """
 
-    def __init__(self, conn, file_path, project, dataset, screen,
-                 ln_s, ann, ns):
+    def __init__(self, conn: BlitzGateway, file_path: str,
+                 project: Optional[Union[str, int]],
+                 dataset: Optional[Union[str, int]],
+                 screen: Optional[Union[str, int]],
+                 ln_s: Optional[bool], ann: Optional[dict],
+                 ns: Optional[str]):
         self.conn = conn
         self.file_path = abspath(file_path)
         self.session_uuid = conn.getSession().getUuid().val
@@ -257,13 +273,13 @@ class Importer:
             raise ValueError("Cannot define project but no dataset!")
         self.screen = screen
         self.imported = False
-        self.image_ids = None
-        self.plate_ids = None
+        self.image_ids: Union[List[int], None] = None
+        self.plate_ids: Union[List[int], None] = None
         self.ln_s = ln_s
         self.ann = ann
         self.ns = ns
 
-    def get_image_ids(self):
+    def get_image_ids(self) -> Union[List[int], None]:
         """Get the Ids of imported images.
 
         Note that this will not find images if they have not been imported.
@@ -295,13 +311,13 @@ class Importer:
             self.image_ids = [r[0].val for r in results]
             return self.image_ids
 
-    def make_substitutions(self):
+    def make_substitutions(self) -> str:
         fpath = self.file_path
         mytable = fpath.maketrans("\"*:<>?\\|", "\'x;[]%/!")
         final_path = fpath.translate(mytable)
         return final_path
 
-    def get_plate_ids(self):
+    def get_plate_ids(self) -> Union[List[int], None]:
         """Get the Ids of imported plates.
         Note that this will not find plates if they have not been imported.
         Also, while plate_ids are returned, this method also sets
@@ -339,7 +355,7 @@ class Importer:
             self.plate_ids = [r[0].val for r in results]
             return self.plate_ids
 
-    def annotate_images(self):
+    def annotate_images(self) -> Union[int, None]:
         """Post map annotation (``self.ann``) to images ``self.image_ids``.
         Returns
         -------
@@ -349,17 +365,20 @@ class Importer:
         if not self.ann or not self.ns:
             logging.warning("Missing annotation or namespace, "
                             "skipping annotations")
-            return
-        if len(self.image_ids) == 0:
-            logging.error('No image ids to annotate')
             return None
-        else:
-            map_ann_id = multi_post_map_annotation(self.conn, "Image",
-                                                   self.image_ids, self.ann,
-                                                   self.ns)
-            return map_ann_id
+        if self.image_ids:
+            if len(self.image_ids) == 0:
+                logging.error('No image ids to annotate')
+                return None
+            else:
+                map_ann_id = multi_post_map_annotation(self.conn, "Image",
+                                                       self.image_ids,
+                                                       self.ann,
+                                                       self.ns)
+                return map_ann_id
+        return None
 
-    def annotate_plates(self):
+    def annotate_plates(self) -> Union[int, None]:
         """Post map annotation (``self.ann``) to plates ``self.plate_ids``.
         Returns
         -------
@@ -369,17 +388,20 @@ class Importer:
         if not self.ann or not self.ns:
             logging.warning("Missing annotation or namespace, "
                             "skipping annotations")
-            return
-        if len(self.plate_ids) == 0:
-            logging.error('No plate ids to annotate')
             return None
-        else:
-            map_ann_id = multi_post_map_annotation(self.conn, "Plate",
-                                                   self.plate_ids, self.ann,
-                                                   self.ns)
-            return map_ann_id
+        if self.plate_ids:
+            if len(self.plate_ids) == 0:
+                logging.error('No plate ids to annotate')
+                return None
+            else:
+                map_ann_id = multi_post_map_annotation(self.conn, "Plate",
+                                                       self.plate_ids,
+                                                       self.ann,
+                                                       self.ns)
+                return map_ann_id
+        return None
 
-    def organize_images(self):
+    def organize_images(self) -> bool:
         """Move images to ``self.project``/``self.dataset``.
         Returns
         -------
@@ -410,24 +432,26 @@ class Importer:
                     print(f'Moved Image:{im_id} to Dataset:{dataset_id}')
         return True
 
-    def organize_plates(self):
+    def organize_plates(self) -> bool:
         """Move plates to ``self.screen``.
         Returns
         -------
         plate_moved : boolean
             True if plates were found and moved, else False.
         """
-        if len(self.plate_ids) == 0:
-            logging.error('No plate ids to organize')
-            return False
-        for pl_id in self.plate_ids:
-            if self.screen:
-                screen_id = set_or_create_screen(self.conn, self.screen)
-                link_plates_to_screen(self.conn, [pl_id], screen_id)
-                print(f'Moved Plate:{pl_id} to Screen:{screen_id}')
-        return True
+        if self.plate_ids:
+            if len(self.plate_ids) == 0:
+                logging.error('No plate ids to organize')
+                return False
+            for pl_id in self.plate_ids:
+                if self.screen:
+                    screen_id = set_or_create_screen(self.conn, self.screen)
+                    link_plates_to_screen(self.conn, [pl_id], screen_id)
+                    print(f'Moved Plate:{pl_id} to Screen:{screen_id}')
+            return True
+        return False
 
-    def ezimport_ln_s(self):
+    def ezimport_ln_s(self) -> bool:
         """Import file using the ``--transfer=ln_s`` option.
         Returns
         -------
@@ -452,7 +476,7 @@ class Importer:
             logging.error(f'Import of {self.file_path} has failed!')
             return False
 
-    def ezimport(self):
+    def ezimport(self) -> bool:
         """Import file.
         Returns
         -------

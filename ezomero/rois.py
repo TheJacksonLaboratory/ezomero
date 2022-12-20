@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from typing import List, Tuple
+from typing import List, Tuple, Union
 
 __all__ = ["Point",
            "Line",
@@ -7,11 +7,23 @@ __all__ = ["Point",
            "Ellipse",
            "Polygon",
            "Polyline",
-           "Label"]
+           "Label",
+           "ezShape"]
 
 
 @dataclass(frozen=True)
-class Point:
+class ezShape:
+    """Generic dataclass used to create an OMERO Shape.
+
+    A dataclass used to represent any shape and create an OMERO equivalent.
+    This class has no fields; it's just extended by all ROIs.
+    This dataclass is frozen and should not be modified after instantiation
+
+    """
+
+
+@dataclass(frozen=True)
+class Point(ezShape):
     """A dataclass used to create an OMERO Point.
 
     A dataclass used to represent a Point shape and create an OMERO equivalent.
@@ -42,14 +54,14 @@ class Point:
 
     x: float = field(metadata={'units': 'PIXELS'})
     y: float = field(metadata={'units': 'PIXELS'})
-    z: int = field(default=None)
-    c: int = field(default=None)
-    t: int = field(default=None)
-    label: str = field(default=None)
+    z: Union[int, None] = field(default=None)
+    c: Union[int, None] = field(default=None)
+    t: Union[int, None] = field(default=None)
+    label: Union[str, None] = field(default=None)
 
 
 @dataclass(frozen=True)
-class Line:
+class Line(ezShape):
     """A dataclass used to create an OMERO Line.
 
     A dataclass used to represent a Line shape and create an OMERO equivalent.
@@ -90,16 +102,16 @@ class Line:
     y1: float = field(metadata={'units': 'PIXELS'})
     x2: float = field(metadata={'units': 'PIXELS'})
     y2: float = field(metadata={'units': 'PIXELS'})
-    z: int = field(default=None)
-    c: int = field(default=None)
-    t: int = field(default=None)
-    markerStart: str = field(default=None)
-    markerEnd: str = field(default=None)
-    label: str = field(default=None)
+    z: Union[int, None] = field(default=None)
+    c: Union[int, None] = field(default=None)
+    t: Union[int, None] = field(default=None)
+    markerStart: Union[str, None] = field(default=None)
+    markerEnd: Union[str, None] = field(default=None)
+    label: Union[str, None] = field(default=None)
 
 
 @dataclass(frozen=True)
-class Rectangle:
+class Rectangle(ezShape):
     """A dataclass used to create an OMERO rectangle.
 
     A dataclass used to represent a Rectangle shape and create an OMERO
@@ -137,14 +149,14 @@ class Rectangle:
     y: float = field(metadata={'units': 'PIXELS'})
     width: float = field(metadata={'units': 'PIXELS'})
     height: float = field(metadata={'units': 'PIXELS'})
-    z: int = field(default=None)
-    c: int = field(default=None)
-    t: int = field(default=None)
-    label: str = field(default=None)
+    z: Union[int, None] = field(default=None)
+    c: Union[int, None] = field(default=None)
+    t: Union[int, None] = field(default=None)
+    label: Union[str, None] = field(default=None)
 
 
 @dataclass(frozen=True)
-class Ellipse:
+class Ellipse(ezShape):
     """A dataclass used to create an OMERO Ellipse.
 
     A dataclass used to represent an Ellipse shape and create an OMERO
@@ -182,14 +194,14 @@ class Ellipse:
     y: float = field(metadata={'units': 'PIXELS'})
     x_rad: float = field(metadata={'units': 'PIXELS'})
     y_rad: float = field(metadata={'units': 'PIXELS'})
-    z: int = field(default=None)
-    c: int = field(default=None)
-    t: int = field(default=None)
-    label: str = field(default=None)
+    z: Union[int, None] = field(default=None)
+    c: Union[int, None] = field(default=None)
+    t: Union[int, None] = field(default=None)
+    label: Union[str, None] = field(default=None)
 
 
 @dataclass(frozen=True)
-class Polygon:
+class Polygon(ezShape):
     """A dataclass used to create an OMERO polygon.
 
     A dataclass used to represent a Polygon shape and create an OMERO
@@ -219,14 +231,14 @@ class Polygon:
     """
 
     points: List[Tuple[float, float]] = field(metadata={'units': 'PIXELS'})
-    z: int = field(default=None)
-    c: int = field(default=None)
-    t: int = field(default=None)
-    label: str = field(default=None)
+    z: Union[int, None] = field(default=None)
+    c: Union[int, None] = field(default=None)
+    t: Union[int, None] = field(default=None)
+    label: Union[str, None] = field(default=None)
 
 
 @dataclass(frozen=True)
-class Polyline:
+class Polyline(ezShape):
     """A dataclass used to create an OMERO polyline.
 
     A dataclass used to represent a Polyline shape and create an OMERO
@@ -256,14 +268,14 @@ class Polyline:
     """
 
     points: List[Tuple[float, float]] = field(metadata={'units': 'PIXELS'})
-    z: int = field(default=None)
-    c: int = field(default=None)
-    t: int = field(default=None)
-    label: str = field(default=None)
+    z: Union[int, None] = field(default=None)
+    c: Union[int, None] = field(default=None)
+    t: Union[int, None] = field(default=None)
+    label: Union[str, None] = field(default=None)
 
 
 @dataclass(frozen=True)
-class Label:
+class Label(ezShape):
     """A dataclass used to create an OMERO Label.
 
     A dataclass used to represent a Label shape and create an OMERO equivalent.
@@ -298,6 +310,6 @@ class Label:
     y: float = field(metadata={'units': 'PIXELS'})
     label: str = field()
     fontSize: int = field(metadata={'FontSizeUnit': 'pt'})
-    z: int = field(default=None)
-    c: int = field(default=None)
-    t: int = field(default=None)
+    z: Union[int, None] = field(default=None)
+    c: Union[int, None] = field(default=None)
+    t: Union[int, None] = field(default=None)
