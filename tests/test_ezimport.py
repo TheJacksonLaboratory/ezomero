@@ -43,7 +43,6 @@ def test_ezimport(conn, monkeypatch):
     id = ezomero.ezimport(conn, fpath, dataset="test_ds")
     assert len(id) == 1
     ds_id = ezomero.get_dataset_ids(conn)[-1]
-    print(ds_id)
     im_ids = ezomero.get_image_ids(conn, dataset=ds_id)
     assert len(im_ids) == 1
     assert im_ids[0] == id[-1]
