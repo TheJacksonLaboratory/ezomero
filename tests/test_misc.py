@@ -5,6 +5,10 @@ from omero.model import PlateI
 from omero.gateway import TagAnnotationWrapper
 
 
+def test_omero_connection(conn, omero_params):
+    assert conn.getUser().getName() == omero_params[0]
+
+
 def test_filter_by_tag_value(conn, project_structure, users_groups):
     proj3_id = project_structure[0][3][1]
     im3_id = project_structure[2][3][1]

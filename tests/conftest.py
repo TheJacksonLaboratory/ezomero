@@ -14,6 +14,13 @@ from omero.plugins.sessions import SessionsControl
 from omero.plugins.user import UserControl
 from omero.plugins.group import GroupControl
 from omero.rtypes import rint
+import importlib.util
+# try importing pandas
+if (importlib.util.find_spec('pandas')):
+    import pandas as pd
+    has_pandas = True
+else:
+    has_pandas = False
 
 
 # Settings for OMERO
@@ -194,6 +201,9 @@ def roi_fixture():
     point = rois.Point(x=100.0, y=100.0, z=0, c=0, t=0, label='test_point')
     line = rois.Line(x1=100.0, y1=100.0, x2=150.0, y2=150.0, z=0, c=0, t=0,
                      label='test_line')
+    arrow = rois.Line(x1=100.0, y1=100.0, x2=150.0, y2=150.0, z=0, c=0, t=0,
+                      label='test_arrow', markerEnd="Arrow",
+                      markerStart="Arrow")
     rectangle = rois.Rectangle(x=100.0, y=100.0, width=50.0, height=40.0, z=0,
                                c=0, t=0, label='test_rectangle')
     ellipse = rois.Ellipse(x=80, y=60, x_rad=20.0, y_rad=40.0, z=0, c=0, t=0,
@@ -202,8 +212,15 @@ def roi_fixture():
                                    (110.0, 150.0),
                                    (100.0, 150.0)],
                            z=0, c=0, t=0, label='test_polygon')
+    polyline = rois.Polyline(points=[(100.0, 100.0),
+                                     (110.0, 150.0),
+                                     (100.0, 150.0)],
+                             z=0, c=0, t=0, label='test_polyline')
+    label = rois.Label(x=100.0, y=100.0, z=0, c=0, t=0,
+                       label='test_label', fontSize=60)
 
-    return {'shapes': [point, line, rectangle, ellipse, polygon],
+    return {'shapes': [point, line, rectangle, ellipse,
+                       polygon, polyline, arrow, label],
             'name': 'ROI_name',
             'desc': 'A description for the ROI',
             'fill_color': (255, 0, 0, 200),
@@ -243,7 +260,8 @@ def project_structure(conn, timestamp, image_fixture, users_groups,
                                                 }
                                             ]
                                         }
-                                    ]
+                                    ],
+                                    'datasets': []
                                 }
                             ]
                         },
@@ -268,7 +286,8 @@ def project_structure(conn, timestamp, image_fixture, users_groups,
                                             'name': f'proj2_{timestamp}',
                                             'datasets': []
                                         }
-                                    ]
+                                    ],
+                                    'datasets': []
                                 },
                                 {
                                     'name': 'test_group_2',
@@ -292,7 +311,8 @@ def project_structure(conn, timestamp, image_fixture, users_groups,
                                                 }
                                             ]
                                         }
-                                    ]
+                                    ],
+                                    'datasets': []
                                 }
                             ]
                         },
@@ -324,7 +344,8 @@ def project_structure(conn, timestamp, image_fixture, users_groups,
                                                 }
                                             ]
                                         }
-                                    ]
+                                    ],
+                                    'datasets': []
                                 },
                                 {
                                     'name': 'test_group_2',
@@ -340,6 +361,11 @@ def project_structure(conn, timestamp, image_fixture, users_groups,
                                                     ]
                                                 }
                                             ]
+                                        }
+                                    ],
+                                    'datasets': [
+                                        {
+                                            'name': f'ds7_{timestamp}'
                                         }
                                     ]
                                 }
@@ -382,6 +408,12 @@ def project_structure(conn, timestamp, image_fixture, users_groups,
                                                    imname,
                                                    dataset_id=ds_id)
                         image_info.append([imname, im_id])
+            for dataset in group['datasets']:
+                dsname = dataset['name']
+                ds_id = ezomero.post_dataset(current_conn,
+                                             dsname,
+                                             description='test dataset')
+                dataset_info.append([dsname, ds_id])
 
             # Close temporary connection if it was created
             if username != 'default_user':
@@ -454,3 +486,45 @@ def screen_structure(conn, timestamp, image_fixture):
     conn.deleteObjects("Screen", [screen_id], deleteAnns=True,
                        deleteChildren=True, wait=True)
     conn.SERVICE_OPTS.setOmeroGroup(current_group)
+
+
+@pytest.fixture(scope='session')
+def tables():
+    table = [
+        ['intcol', 'floatcol', 'stringcol', 'boolcol', 'mixed'],
+        [1, 1.2, 'string1', True, 'mixedstr'],
+        [2, 2.3, 'string2', False, 1],
+        [3, 3.4, 'string3', False, 2.4],
+        [4, 4.5, 'string4', True, True],
+    ]
+    result_table = [
+        ['intcol', 'floatcol', 'stringcol', 'boolcol'],
+        [1, 1.2, 'string1', True],
+        [2, 2.3, 'string2', False],
+        [3, 3.4, 'string3', False],
+        [4, 4.5, 'string4', True],
+    ]
+    return [table, result_table]
+
+
+@pytest.fixture(scope='session')
+def table_dfs():
+    table = [
+        ['intcol', 'floatcol', 'stringcol', 'boolcol', 'mixed'],
+        [1, 1.2, 'string1', True, 'mixedstr'],
+        [2, 2.3, 'string2', False, 1],
+        [3, 3.4, 'string3', False, 2.4],
+        [4, 4.5, 'string4', True, True],
+    ]
+    result_table = [
+        ['intcol', 'floatcol', 'stringcol', 'boolcol'],
+        [1, 1.2, 'string1', True],
+        [2, 2.3, 'string2', False],
+        [3, 3.4, 'string3', False],
+        [4, 4.5, 'string4', True],
+    ]
+    headers = table.pop(0)
+    df = pd.DataFrame(table, columns=headers)
+    headers = result_table.pop(0)
+    result_df = pd.DataFrame(result_table, columns=headers)
+    return [df, result_df]

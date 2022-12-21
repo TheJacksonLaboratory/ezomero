@@ -1,21 +1,38 @@
 import logging
 import os
 import numpy as np
+from typing import Optional, List, Union, Tuple, Literal
 from ._ezomero import do_across_groups
-from omero.gateway import FileAnnotationWrapper
-from omero import ApiUsageException
-from omero.model import MapAnnotationI, TagAnnotationI
+from omero.gateway import FileAnnotationWrapper, BlitzGateway, ImageWrapper
+from omero import ApiUsageException, InternalException
+from omero.model import MapAnnotationI, TagAnnotationI, Shape
+from omero.grid import Table
 from omero.rtypes import rint, rlong
 from omero.sys import Parameters
 from omero.model import enums as omero_enums
-from .rois import Point, Line, Rectangle, Ellipse, Polygon
+from .rois import Point, Line, Rectangle
+from .rois import Ellipse, Polygon, Polyline, Label, ezShape
+import importlib.util
+# try importing pandas
+if (importlib.util.find_spec('pandas')):
+    import pandas as pd
+    has_pandas = True
+else:
+    has_pandas = False
 
 
 # gets
 @do_across_groups
-def get_image(conn, image_id, no_pixels=False, start_coords=None,
-              axis_lengths=None, xyzct=False, pad=False,
-              pyramid_level=None, dim_order=None, across_groups=True):
+def get_image(conn: BlitzGateway, image_id: int,
+              no_pixels: Optional[bool] = False,
+              start_coords: Optional[Union[List[int], Tuple[int, ...]]] = None,
+              axis_lengths: Optional[Union[List[int], Tuple[int, ...]]] = None,
+              xyzct: Optional[bool] = False,
+              pad: Optional[bool] = False,
+              pyramid_level: Optional[int] = None,
+              dim_order: Optional[str] = None,
+              across_groups: Optional[bool] = True
+              ) -> Tuple[Union[ImageWrapper, None], Union[np.ndarray, None]]:
     """Get omero image object along with pixels as a numpy array.
 
     Parameters
@@ -167,24 +184,25 @@ def get_image(conn, image_id, no_pixels=False, start_coords=None,
                                  'Either adjust axis_lengths or use pad=True')
 
             axis_lengths = [al - oh for al, oh in zip(axis_lengths, overhangs)]
-            zct_list = []
+            zct_tuples: List[Tuple[int, ...]] = []
             for z in range(start_coords[2],
                            start_coords[2] + axis_lengths[2]):
                 for c in range(start_coords[3],
                                start_coords[3] + axis_lengths[3]):
                     for t in range(start_coords[4],
                                    start_coords[4] + axis_lengths[4]):
-                        zct_list.append((z, c, t))
+                        zct_tuples.append((z, c, t))
+            zct_list = [list(zct) for zct in zct_tuples]
 
             if reordered_sizes == [size_t, size_z, size_y, size_x, size_c]:
-                plane_gen = primary_pixels.getPlanes(zct_list)
+                plane_gen = primary_pixels.getPlanes(zct_tuples)
             else:
                 tile = (start_coords[0], start_coords[1],
                         axis_lengths[0], axis_lengths[1])
-                zct_list = [list(zct) for zct in zct_list]
+                zct_tiles: List[Tuple[int, int, int, Tuple[int, ...]]] = []
                 for zct in zct_list:
-                    zct.append(tile)
-                plane_gen = primary_pixels.getTiles(zct_list)
+                    zct_tiles.append((zct[0], zct[1], zct[2], tile))
+                plane_gen = primary_pixels.getTiles(zct_tiles)
 
             for i, plane in enumerate(plane_gen):
                 zct_coords = zct_list[i]
@@ -262,7 +280,7 @@ def get_image(conn, image_id, no_pixels=False, start_coords=None,
                                start_coords[3] + axis_lengths[3]):
                     for t in range(start_coords[4],
                                    start_coords[4] + axis_lengths[4]):
-                        zct_list.append((z, c, t))
+                        zct_list.append([z, c, t])
 
             dtype = PIXEL_TYPES.get(primary_pixels.getPixelsType().value, None)
             if reordered_sizes == [size_t, size_z, size_h, size_w, size_c]:
@@ -290,7 +308,6 @@ def get_image(conn, image_id, no_pixels=False, start_coords=None,
                 c = zct_coords[1] - start_coords[3]
                 t = zct_coords[2] - start_coords[4]
                 pixels[t, z, :axis_lengths[1], :axis_lengths[0], c] = plane
-
             if dim_order is not None:
                 order_dict = dict(zip(dim_order, range(5)))
                 order_vector = [order_dict[c.lower()] for c in 'tzyxc']
@@ -309,8 +326,11 @@ def get_image(conn, image_id, no_pixels=False, start_coords=None,
 
 
 @do_across_groups
-def get_image_ids(conn, project=None, dataset=None, plate=None, well=None,
-                  across_groups=True):
+def get_image_ids(conn: BlitzGateway, project: Optional[int] = None,
+                  dataset: Optional[int] = None,
+                  plate: Optional[int] = None,
+                  well: Optional[int] = None,
+                  across_groups: Optional[bool] = True) -> List[int]:
     """Return a list of image ids based on image container
 
     If no container is specified, function will return orphans.
@@ -438,8 +458,100 @@ def get_image_ids(conn, project=None, dataset=None, plate=None, well=None,
 
 
 @do_across_groups
-def get_map_annotation_ids(conn, object_type, object_id, ns=None,
-                           across_groups=True):
+def get_project_ids(conn: BlitzGateway,
+                    across_groups: Optional[bool] = True) -> List[int]:
+    """Return a list with IDs for all available Projects.
+
+    Parameters
+    ----------
+    conn : ``omero.gateway.BlitzGateway`` object
+        OMERO connection.
+    across_groups : bool, optional
+        Defines cross-group behavior of function - set to
+        ``False`` to disable it.
+
+    Returns
+    -------
+    proj_ids : list of ints
+        List of project IDs accessible by current user.
+
+    Examples
+    --------
+   # Return IDs of all projects accessible by current user:
+
+    >>> proj_ids = get_project_ids(conn)
+    """
+    proj_ids = []
+    for p in conn.listProjects():
+        proj_ids.append(p.getId())
+    return proj_ids
+
+
+@do_across_groups
+def get_dataset_ids(conn: BlitzGateway, project: Optional[int] = None,
+                    across_groups: Optional[bool] = True) -> List[int]:
+    """Return a list of dataset ids based on project ID.
+
+    If no project is specified, function will return orphan datasets.
+
+    Parameters
+    ----------
+    conn : ``omero.gateway.BlitzGateway`` object
+        OMERO connection.
+    project : int, optional
+        ID of Project from which to return dataset IDs. This will return IDs of
+        all datasets contained in the specified Project.
+    across_groups : bool, optional
+        Defines cross-group behavior of function - set to
+        ``False`` to disable it.
+
+    Returns
+    -------
+    ds_ids : list of ints
+        List of dataset IDs contained in the specified project.
+
+    Examples
+    --------
+    # Return orphaned datasets:
+
+    >>> orphans = get_dataset_ids(conn)
+
+    # Return IDs of all datasets from Project with ID 224:
+
+    >>> ds_ids = get_dataset_ids(conn, project=224)
+    """
+    q = conn.getQueryService()
+    params = Parameters()
+
+    if project is not None:
+        if not isinstance(project, int):
+            raise TypeError('Project ID must be integer')
+        params.map = {"project": rlong(project)}
+        results = q.projection(
+            "SELECT d.id FROM Project p"
+            " JOIN p.datasetLinks pdl"
+            " JOIN pdl.child d"
+            " WHERE p.id=:project",
+            params,
+            conn.SERVICE_OPTS
+            )
+    else:
+        results = q.projection(
+            "SELECT d.id FROM Dataset d"
+            " WHERE NOT EXISTS ("
+            " SELECT pdl FROM ProjectDatasetLink pdl"
+            " WHERE pdl.child=d.id"
+            " )",
+            params,
+            conn.SERVICE_OPTS
+            )
+    return [r[0].val for r in results]
+
+
+@do_across_groups
+def get_map_annotation_ids(conn: BlitzGateway, object_type: str,
+                           object_id: int, ns: Optional[str] = None,
+                           across_groups: Optional[bool] = True) -> List[int]:
     """Get IDs of map annotations associated with an object
 
     Parameters
@@ -486,8 +598,9 @@ def get_map_annotation_ids(conn, object_type, object_id, ns=None,
 
 
 @do_across_groups
-def get_tag_ids(conn, object_type, object_id, ns=None,
-                across_groups=True):
+def get_tag_ids(conn: BlitzGateway, object_type: str, object_id: int,
+                ns: Optional[str] = None,
+                across_groups: Optional[bool] = True) -> List[int]:
     """Get IDs of tag annotations associated with an object
 
     Parameters
@@ -534,8 +647,9 @@ def get_tag_ids(conn, object_type, object_id, ns=None,
 
 
 @do_across_groups
-def get_file_annotation_ids(conn, object_type, object_id, ns=None,
-                            across_groups=True):
+def get_file_annotation_ids(conn: BlitzGateway, object_type: str,
+                            object_id: int, ns: Optional[str] = None,
+                            across_groups: Optional[bool] = True) -> List[int]:
     """Get IDs of file annotations associated with an object
 
     Parameters
@@ -582,7 +696,8 @@ def get_file_annotation_ids(conn, object_type, object_id, ns=None,
 
 
 @do_across_groups
-def get_well_id(conn, plate_id, row, column, across_groups=True):
+def get_well_id(conn: BlitzGateway, plate_id: int, row: int, column: int,
+                across_groups: Optional[bool] = True) -> Union[int, None]:
     """Get ID of well based on plate ID, row, and column
 
     Parameters
@@ -627,7 +742,8 @@ def get_well_id(conn, plate_id, row, column, across_groups=True):
 
 
 @do_across_groups
-def get_roi_ids(conn, image_id, across_groups=True):
+def get_roi_ids(conn: BlitzGateway, image_id: int,
+                across_groups: Optional[bool] = True) -> List[int]:
     """Get IDs of ROIs associated with an Image
 
     Parameters
@@ -662,7 +778,9 @@ def get_roi_ids(conn, image_id, across_groups=True):
 
 
 @do_across_groups
-def get_shape_ids(conn, roi_id, across_groups=True):
+def get_shape_ids(conn: BlitzGateway, roi_id: int,
+                  across_groups: Optional[bool] = True
+                  ) -> Union[List[int], None]:
     """Get IDs of shapes associated with an ROI
 
     Parameters
@@ -703,7 +821,8 @@ def get_shape_ids(conn, roi_id, across_groups=True):
 
 
 @do_across_groups
-def get_map_annotation(conn, map_ann_id, across_groups=True):
+def get_map_annotation(conn: BlitzGateway, map_ann_id: int,
+                       across_groups: Optional[bool] = True) -> dict:
     """Get the value of a map annotation object
 
     Parameters
@@ -734,7 +853,8 @@ def get_map_annotation(conn, map_ann_id, across_groups=True):
 
 
 @do_across_groups
-def get_tag(conn, tag_id, across_groups=True):
+def get_tag(conn: BlitzGateway, tag_id: int,
+            across_groups: Optional[bool] = True) -> str:
     """Get the value of a tag annotation object
 
     Parameters
@@ -765,8 +885,9 @@ def get_tag(conn, tag_id, across_groups=True):
 
 
 @do_across_groups
-def get_file_annotation(conn, file_ann_id, folder_path=None,
-                        across_groups=True):
+def get_file_annotation(conn: BlitzGateway, file_ann_id: int,
+                        folder_path: Optional[str] = None,
+                        across_groups: Optional[bool] = True) -> str:
     """Get the value of a file annotation object
 
     Parameters
@@ -774,7 +895,7 @@ def get_file_annotation(conn, file_ann_id, folder_path=None,
     conn : ``omero.gateway.BlitzGateway`` object
         OMERO connection.
     file_ann_id : int
-        ID of map annotation to get.
+        ID of file annotation to get.
     folder_path : str
         Path where file annotation will be saved. Defaults to local script
         directory.
@@ -808,7 +929,7 @@ def get_file_annotation(conn, file_ann_id, folder_path=None,
     return file_path
 
 
-def get_group_id(conn, group_name):
+def get_group_id(conn: BlitzGateway, group_name: str) -> Union[int, None]:
     """Get ID of a group based on group name.
 
     Must be an exact match. Case sensitive.
@@ -841,7 +962,7 @@ def get_group_id(conn, group_name):
     return None
 
 
-def get_user_id(conn, user_name):
+def get_user_id(conn: BlitzGateway, user_name: str) -> Union[int, None]:
     """Get ID of a user based on user name.
 
     Must be an exact match. Case sensitive.
@@ -873,7 +994,9 @@ def get_user_id(conn, user_name):
 
 
 @do_across_groups
-def get_original_filepaths(conn, image_id, fpath='repo', across_groups=True):
+def get_original_filepaths(conn: BlitzGateway, image_id: int,
+                           fpath: Optional[Literal["fpath", "repo"]] = 'repo',
+                           across_groups: Optional[bool] = True) -> List[str]:
     """Get paths to original files for specified image.
 
     Parameters
@@ -952,7 +1075,9 @@ def get_original_filepaths(conn, image_id, fpath='repo', across_groups=True):
 
 
 @do_across_groups
-def get_pyramid_levels(conn, image_id, across_groups=True):
+def get_pyramid_levels(conn: BlitzGateway, image_id: int,
+                       across_groups: Optional[bool] = True
+                       ) -> List[Tuple[int, ...]]:
     """Get number of pyramid levels associated with an Image
 
     Parameters
@@ -983,13 +1108,68 @@ def get_pyramid_levels(conn, image_id, across_groups=True):
     pix = image._conn.c.sf.createRawPixelsStore()
     pid = image.getPixelsId()
     pix.setPixelsId(pid, False)
+    levels: List[Tuple[int, ...]]
     levels = [(r.sizeX, r.sizeY) for r in pix.getResolutionDescriptions()]
     pix.close()
     return levels
 
 
+if has_pandas:
+    TableType = pd.core.frame.DataFrame
+else:
+    TableType = List
+
+
 @do_across_groups
-def get_shape(conn, shape_id, across_groups=True):
+def get_table(conn: BlitzGateway, file_ann_id: int,
+              across_groups: Optional[bool] = True
+              ) -> TableType:
+    """Get a table from its FileAnnotation object.
+
+    Parameters
+    ----------
+    conn : ``omero.gateway.BlitzGateway`` object
+        OMERO connection.
+    file_ann_id : int
+        ID of FileAnnotation table to get.
+    across_groups : bool, optional
+        Defines cross-group behavior of function - set to
+        ``False`` to disable it.
+
+    Returns
+    -------
+    table : object
+        Object containing the actual table. It can be either a list of
+        row-lists or a pandas Dataframe in case the optional pandas dependency
+        was installed.
+
+    Examples
+    --------
+    >>> table = get_table(conn, 62)
+    >>> print(table[0])
+    ['ID', 'X', 'Y']
+    """
+    if type(file_ann_id) is not int:
+        raise TypeError('File annotation ID must be an integer')
+    ann = conn.getObject('FileAnnotation', file_ann_id)
+    table = None
+    if ann:
+        orig_table_file = conn.getObject('OriginalFile', ann.getFile().id)
+        resources = conn.c.sf.sharedResources()
+        try:
+            table_obj = resources.openTable(orig_table_file._obj)
+            table = _create_table(table_obj)
+        except InternalException:
+            logging.warning(f" FileAnnotation {file_ann_id} is not a table.")
+    else:
+        logging.warning(f' FileAnnotation {file_ann_id} does not exist.')
+    return table
+
+
+@do_across_groups
+def get_shape(conn: BlitzGateway, shape_id: int,
+              across_groups: Optional[bool] = True
+              ) -> Tuple[ezShape, Tuple, Tuple, float]:
     """Get an ezomero shape object from an OMERO Shape id
 
     Parameters
@@ -1023,7 +1203,45 @@ def get_shape(conn, shape_id, across_groups=True):
     return _omero_shape_to_shape(omero_shape)
 
 
-def _omero_shape_to_shape(omero_shape):
+def _create_table(table_obj: Table
+                  ) -> TableType:
+    if importlib.util.find_spec('pandas'):
+        columns = []
+        for col in table_obj.getHeaders():
+            columns.append(col.name)
+        table = pd.DataFrame(columns=columns)
+        rowCount = table_obj.getNumberOfRows()
+        data = table_obj.read(list(range(len(columns))), 0, rowCount)
+        for col in data.columns:
+            col_data = []
+            for v in col.values:
+                col_data.append(v)
+            table[col.name] = col_data
+
+    else:
+        table = []
+        columns = []
+        data_lists = []
+        for col in table_obj.getHeaders():
+            columns.append(col.name)
+        table.append(columns)
+        rowCount = table_obj.getNumberOfRows()
+        data = table_obj.read(list(range(len(columns))), 0, rowCount)
+        for col in data.columns:
+            col_data = []
+            for v in col.values:
+                col_data.append(v)
+            data_lists.append(col_data)
+        # transpose data_lists
+        data_lists = [list(i) for i in zip(*data_lists)]
+        for row in data_lists:
+            table.append(row)
+
+    return table
+
+
+def _omero_shape_to_shape(omero_shape: Shape
+                          ) -> Tuple[ezShape, Tuple, Tuple, float]:
     """ Helper function to convert ezomero shapes into omero shapes"""
     shape_type = omero_shape.ice_id().split("::omero::model::")[1]
     try:
@@ -1042,6 +1260,15 @@ def _omero_shape_to_shape(omero_shape):
         text = omero_shape.textValue
     except AttributeError:
         text = None
+    try:
+        mk_start = omero_shape.markerStart
+    except AttributeError:
+        mk_start = None
+    try:
+        mk_end = omero_shape.markerEnd
+    except AttributeError:
+        mk_end = None
+    shape: Union[Point, Line, Rectangle, Ellipse, Polygon, Polyline, Label]
     if shape_type == "Point":
         x = omero_shape.x
         y = omero_shape.y
@@ -1051,7 +1278,8 @@ def _omero_shape_to_shape(omero_shape):
         x2 = omero_shape.x2
         y1 = omero_shape.y1
         y2 = omero_shape.y2
-        shape = Line(x1, y1, x2, y2, z_val, c_val, t_val, text)
+        shape = Line(x1, y1, x2, y2, z_val, c_val, t_val,
+                     mk_start, mk_end, text)
     elif shape_type == "Rectangle":
         x = omero_shape.x
         y = omero_shape.y
@@ -1071,6 +1299,18 @@ def _omero_shape_to_shape(omero_shape):
             coords = point.split(',')
             points.append((float(coords[0]), float(coords[1])))
         shape = Polygon(points, z_val, c_val, t_val, text)
+    elif shape_type == "Polyline":
+        omero_points = omero_shape.points.split()
+        points = []
+        for point in omero_points:
+            coords = point.split(',')
+            points.append((float(coords[0]), float(coords[1])))
+        shape = Polyline(points, z_val, c_val, t_val, text)
+    elif shape_type == "Label":
+        x = omero_shape.x
+        y = omero_shape.y
+        fsize = omero_shape.getFontSize().getValue()
+        shape = Label(x, y, text, fsize, z_val, c_val, t_val)
     else:
         err = 'The shape passed for the roi is not a valid shape type'
         raise TypeError(err)
@@ -1082,7 +1322,7 @@ def _omero_shape_to_shape(omero_shape):
     return shape, fill_color, stroke_color, stroke_width
 
 
-def _int_to_rgba(omero_val):
+def _int_to_rgba(omero_val: int) -> Tuple[int, ...]:
     """ Helper function returning the color as an Integer in RGBA encoding """
     if omero_val < 0:
         omero_val = omero_val + (2**32)

@@ -1,3 +1,0 @@
-omero-py==5.9.2
-numpy==1.18.1
-dataclasses

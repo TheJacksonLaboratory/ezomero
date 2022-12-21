@@ -1,11 +1,12 @@
 import setuptools
+import os
 
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setuptools.setup(
     name="ezomero",
-    version="1.0.0",
+    version=os.environ.get('VERSION', '0.0.0'),
     maintainer="Dave Mellert",
     maintainer_email="Dave.Mellert@jax.org",
     description=("A suite of convenience functions for working"
@@ -16,9 +17,12 @@ setuptools.setup(
     url="https://github.com/TheJacksonLaboratory/ezomero",
     packages=setuptools.find_packages(),
     install_requires=[
-        'omero-py',
-        'numpy',
+        'omero-py==5.11.2',
+        'numpy>=1.22',
         'dataclasses;python_version<"3.7"'
     ],
-    python_requires='>=3.6'
+    extras_require={
+        "tables": ["pandas"],
+    },
+    python_requires='>=3.8'
 )
