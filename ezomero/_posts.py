@@ -553,7 +553,13 @@ def post_roi(conn: BlitzGateway, image_id: int,
     return roi.getId().getValue()
 
 
-def post_table(conn: BlitzGateway, table: Union[List, pd.core.frame.DataFrame],
+if has_pandas:
+    TableType = pd.core.frame.DataFrame
+else:
+    TableType = List
+
+
+def post_table(conn: BlitzGateway, table: TableType,
                object_type: str, object_id: int,
                title: Optional[str] = "",
                headers: bool = True) -> Union[int, None]:
@@ -637,7 +643,7 @@ def post_table(conn: BlitzGateway, table: Union[List, pd.core.frame.DataFrame],
     return file_ann.id
 
 
-def create_columns(table: Union[List, pd.core.frame.DataFrame],
+def create_columns(table: TableType,
                    headers: bool) -> List[Column]:
     """Helper function to create the correct column types from a table"""
     cols = []

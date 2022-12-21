@@ -1114,10 +1114,16 @@ def get_pyramid_levels(conn: BlitzGateway, image_id: int,
     return levels
 
 
+if has_pandas:
+    TableType = pd.core.frame.DataFrame
+else:
+    TableType = List
+
+
 @do_across_groups
 def get_table(conn: BlitzGateway, file_ann_id: int,
               across_groups: Optional[bool] = True
-              ) -> Union[List, pd.core.frame.DataFrame]:
+              ) -> TableType:
     """Get a table from its FileAnnotation object.
 
     Parameters
@@ -1198,7 +1204,7 @@ def get_shape(conn: BlitzGateway, shape_id: int,
 
 
 def _create_table(table_obj: Table
-                  ) -> Union[List, pd.core.frame.DataFrame]:
+                  ) -> TableType:
     if importlib.util.find_spec('pandas'):
         columns = []
         for col in table_obj.getHeaders():
