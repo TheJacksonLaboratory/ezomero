@@ -1,6 +1,6 @@
 import logging
 import mimetypes
-from typing import Optional, List, Union, Tuple
+from typing import Optional, List, Union, Tuple, Any
 import numpy as np
 from uuid import uuid4
 from ._ezomero import do_across_groups, set_group
@@ -16,9 +16,9 @@ from omero.gateway import ScreenWrapper, FileAnnotationWrapper
 from omero.gateway import MapAnnotationWrapper, OriginalFileWrapper
 from omero.rtypes import rstring, rint, rdouble
 from .rois import Point, Line, Rectangle, Ellipse
-from .rois import Polygon, Polyline, Label, ezShape
+from .rois import Polygon, Polyline, Label
 import importlib.util
-# try importing pandas
+
 if (importlib.util.find_spec('pandas')):
     import pandas as pd
     has_pandas = True
@@ -553,13 +553,7 @@ def post_roi(conn: BlitzGateway, image_id: int,
     return roi.getId().getValue()
 
 
-if has_pandas:
-    TableType = pd.core.frame.DataFrame
-else:
-    TableType = List
-
-
-def post_table(conn: BlitzGateway, table: TableType,
+def post_table(conn: BlitzGateway, table: Any,
                object_type: str, object_id: int,
                title: Optional[str] = "",
                headers: bool = True) -> Union[int, None]:
@@ -643,7 +637,7 @@ def post_table(conn: BlitzGateway, table: TableType,
     return file_ann.id
 
 
-def create_columns(table: TableType,
+def create_columns(table: Any,
                    headers: bool) -> List[Column]:
     """Helper function to create the correct column types from a table"""
     cols = []

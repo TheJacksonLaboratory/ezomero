@@ -2,6 +2,7 @@ import logging
 import os
 import numpy as np
 from typing import Optional, List, Union, Tuple, Literal
+from typing import Any
 from ._ezomero import do_across_groups
 from omero.gateway import FileAnnotationWrapper, BlitzGateway, ImageWrapper
 from omero import ApiUsageException, InternalException
@@ -13,7 +14,7 @@ from omero.model import enums as omero_enums
 from .rois import Point, Line, Rectangle
 from .rois import Ellipse, Polygon, Polyline, Label, ezShape
 import importlib.util
-# try importing pandas
+
 if (importlib.util.find_spec('pandas')):
     import pandas as pd
     has_pandas = True
@@ -477,7 +478,7 @@ def get_project_ids(conn: BlitzGateway,
 
     Examples
     --------
-   # Return IDs of all projects accessible by current user:
+    # Return IDs of all projects accessible by current user:
 
     >>> proj_ids = get_project_ids(conn)
     """
@@ -1114,16 +1115,10 @@ def get_pyramid_levels(conn: BlitzGateway, image_id: int,
     return levels
 
 
-if has_pandas:
-    TableType = pd.core.frame.DataFrame
-else:
-    TableType = List
-
-
 @do_across_groups
 def get_table(conn: BlitzGateway, file_ann_id: int,
               across_groups: Optional[bool] = True
-              ) -> TableType:
+              ) -> Any:
     """Get a table from its FileAnnotation object.
 
     Parameters
@@ -1187,11 +1182,14 @@ def get_shape(conn: BlitzGateway, shape_id: int,
     shape : obj
         An object of one of ezomero shape classes
     fill_color: tuple
-        Tuple of format (r, g, b, a) containing the shape fill color.
+        Tuple of format (r, g, b, a) containing the shape fill color. Defaults
+        to (0, 0, 0, 0) in case the original Shape doesn't have one.
     stroke_color: tuple
         Tuple of format (r, g, b, a) containing the shape stroke color.
+        Defaults to (0, 0, 0, 0) in case the original Shape doesn't have one.
     stroke_width: float
-        Shape stroke width, in pixels
+        Shape stroke width, in pixels. Defaults to 1 if the Shape doesn't have
+        one.
     Examples
     --------
     >>> shape = get_shape(conn, 634443)
@@ -1204,7 +1202,7 @@ def get_shape(conn: BlitzGateway, shape_id: int,
 
 
 def _create_table(table_obj: Table
-                  ) -> TableType:
+                  ) -> Any:
     if importlib.util.find_spec('pandas'):
         columns = []
         for col in table_obj.getHeaders():
@@ -1317,17 +1315,23 @@ def _omero_shape_to_shape(omero_shape: Shape
 
     fill_color = _int_to_rgba(omero_shape.getFillColor())
     stroke_color = _int_to_rgba(omero_shape.getStrokeColor())
-    stroke_width = omero_shape.getStrokeWidth().getValue()
+    try:
+        stroke_width = omero_shape.getStrokeWidth().getValue()
+    except AttributeError:
+        stroke_width = 1
 
     return shape, fill_color, stroke_color, stroke_width
 
 
-def _int_to_rgba(omero_val: int) -> Tuple[int, ...]:
+def _int_to_rgba(omero_val: Union[int, None]) -> Tuple[int, ...]:
     """ Helper function returning the color as an Integer in RGBA encoding """
-    if omero_val < 0:
-        omero_val = omero_val + (2**32)
-    r = omero_val >> 24
-    g = omero_val - (r << 24) >> 16
-    b = omero_val - (r << 24) - (g << 16) >> 8
-    a = omero_val - (r << 24) - (g << 16) - (b << 8)
-    return (r, g, b, a)
+    if omero_val:
+        if omero_val < 0:
+            omero_val = omero_val + (2**32)
+        r = omero_val >> 24
+        g = omero_val - (r << 24) >> 16
+        b = omero_val - (r << 24) - (g << 16) >> 8
+        a = omero_val - (r << 24) - (g << 16) - (b << 8)
+        return (r, g, b, a)
+    else:
+        return (0, 0, 0, 0)
