@@ -258,18 +258,27 @@ def connect(user: Optional[str] = None, password: Optional[str] = None,
         host = input('Enter host: ')
 
     # set port
+    port_str = None
     if port is None:
         if config_dict:
-            port = config_dict.getint("OMERO_PORT", port)
-        port = int(os.environ.get("OMERO_PORT", str(port)))
+            port_str = config_dict.get("OMERO_PORT", str(port))
+        port_str = os.environ.get("OMERO_PORT", port_str)
+        if port_str:
+            port = int(port_str)
     if port is None:
         port = int(input('Enter port: '))
 
     # set session security
+    secure_str = None
     if secure is None:
         if config_dict:
-            secure = config_dict.getboolean("OMERO_SECURE", secure)
-        secure = bool(os.environ.get("OMERO_SECURE", str(secure)))
+            secure_str = config_dict.get("OMERO_SECURE", str(secure))
+    secure_str = os.environ.get("OMERO_SECURE", secure_str)
+    if secure_str:
+        if secure_str.lower() in ["true", "t"]:
+            secure = True
+        elif secure_str.lower() in ["false", "f"]:
+            secure = False
     if secure is None:
         str_secure: str = input('Secure session (True or False): ')
         if str_secure.lower() in ["true", "t"]:
@@ -278,7 +287,6 @@ def connect(user: Optional[str] = None, password: Optional[str] = None,
             secure = False
         else:
             raise ValueError('secure must be set to either True or False')
-
     # create connection
     conn = BlitzGateway(user, password, group=group, host=host, port=port,
                         secure=secure)
