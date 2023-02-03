@@ -62,7 +62,7 @@ def ezimport(conn: BlitzGateway, target: str,
         return imp_ctl.plate_ids
 
     else:
-        imp_ctl.get_image_ids()
+        imp_ctl.get_my_image_ids()
         imp_ctl.organize_images()
         imp_ctl.annotate_images()
         return imp_ctl.image_ids
@@ -279,7 +279,7 @@ class Importer:
         self.ann = ann
         self.ns = ns
 
-    def get_image_ids(self) -> Union[List[int], None]:
+    def get_my_image_ids(self) -> Union[List[int], None]:
         """Get the Ids of imported images.
 
         Note that this will not find images if they have not been imported.
