@@ -1164,7 +1164,7 @@ def get_table(conn: BlitzGateway, file_ann_id: int,
 @do_across_groups
 def get_shape(conn: BlitzGateway, shape_id: int,
               across_groups: Optional[bool] = True
-              ) -> Tuple[ezShape, Tuple, Tuple, float]:
+              ) -> ezShape:
     """Get an ezomero shape object from an OMERO Shape id
 
     Parameters
@@ -1181,15 +1181,15 @@ def get_shape(conn: BlitzGateway, shape_id: int,
     -------
     shape : obj
         An object of one of ezomero shape classes
-    fill_color: tuple
-        Tuple of format (r, g, b, a) containing the shape fill color. Defaults
-        to (0, 0, 0, 0) in case the original Shape doesn't have one.
-    stroke_color: tuple
-        Tuple of format (r, g, b, a) containing the shape stroke color.
-        Defaults to (0, 0, 0, 0) in case the original Shape doesn't have one.
-    stroke_width: float
-        Shape stroke width, in pixels. Defaults to 1 if the Shape doesn't have
-        one.
+
+    Notes
+    -------
+    ``fill_color`` for the Shape defaults to (0, 0, 0, 0) in case the original
+    Shape doesn't have one.
+    ``stroke_color`` for the Shape defaults to (255, 255, 0, 255) in case the
+    original Shape doesn't have one.
+    ``stroke_width`` for the Shape defaults to 1 in case the original Shape
+    doesn't have one.
     Examples
     --------
     >>> shape = get_shape(conn, 634443)
@@ -1239,9 +1239,15 @@ def _create_table(table_obj: Table
 
 
 def _omero_shape_to_shape(omero_shape: Shape
-                          ) -> Tuple[ezShape, Tuple, Tuple, float]:
+                          ) -> ezShape:
     """ Helper function to convert ezomero shapes into omero shapes"""
     shape_type = omero_shape.ice_id().split("::omero::model::")[1]
+    fill_color = _int_to_rgba(omero_shape.getFillColor(), True)
+    stroke_color = _int_to_rgba(omero_shape.getStrokeColor(), False)
+    try:
+        stroke_width = omero_shape.getStrokeWidth().getValue()
+    except AttributeError:
+        stroke_width = 1
     try:
         z_val = omero_shape.theZ
     except AttributeError:
@@ -1270,60 +1276,59 @@ def _omero_shape_to_shape(omero_shape: Shape
     if shape_type == "Point":
         x = omero_shape.x
         y = omero_shape.y
-        shape = Point(x, y, z_val, c_val, t_val, text)
+        shape = Point(x, y, z_val, c_val, t_val, text, fill_color,
+                      stroke_color, stroke_width)
     elif shape_type == "Line":
         x1 = omero_shape.x1
         x2 = omero_shape.x2
         y1 = omero_shape.y1
         y2 = omero_shape.y2
-        shape = Line(x1, y1, x2, y2, z_val, c_val, t_val,
-                     mk_start, mk_end, text)
+        shape = Line(x1, y1, x2, y2, z_val, c_val, t_val, mk_start, mk_end,
+                     text, fill_color, stroke_color, stroke_width)
     elif shape_type == "Rectangle":
         x = omero_shape.x
         y = omero_shape.y
         width = omero_shape.width
         height = omero_shape.height
-        shape = Rectangle(x, y, width, height, z_val, c_val, t_val, text)
+        shape = Rectangle(x, y, width, height, z_val, c_val, t_val, text,
+                          fill_color, stroke_color, stroke_width)
     elif shape_type == "Ellipse":
         x = omero_shape.x
         y = omero_shape.y
         radiusX = omero_shape.radiusX
         radiusY = omero_shape.radiusY
-        shape = Ellipse(x, y, radiusX, radiusY, z_val, c_val, t_val, text)
+        shape = Ellipse(x, y, radiusX, radiusY, z_val, c_val, t_val, text,
+                        fill_color, stroke_color, stroke_width)
     elif shape_type == "Polygon":
         omero_points = omero_shape.points.split()
         points = []
         for point in omero_points:
             coords = point.split(',')
             points.append((float(coords[0]), float(coords[1])))
-        shape = Polygon(points, z_val, c_val, t_val, text)
+        shape = Polygon(points, z_val, c_val, t_val, text, fill_color,
+                        stroke_color, stroke_width)
     elif shape_type == "Polyline":
         omero_points = omero_shape.points.split()
         points = []
         for point in omero_points:
             coords = point.split(',')
             points.append((float(coords[0]), float(coords[1])))
-        shape = Polyline(points, z_val, c_val, t_val, text)
+        shape = Polyline(points, z_val, c_val, t_val, text, fill_color,
+                         stroke_color, stroke_width)
     elif shape_type == "Label":
         x = omero_shape.x
         y = omero_shape.y
         fsize = omero_shape.getFontSize().getValue()
-        shape = Label(x, y, text, fsize, z_val, c_val, t_val)
+        shape = Label(x, y, text, fsize, z_val, c_val, t_val, fill_color,
+                      stroke_color, stroke_width)
     else:
         err = 'The shape passed for the roi is not a valid shape type'
         raise TypeError(err)
-
-    fill_color = _int_to_rgba(omero_shape.getFillColor())
-    stroke_color = _int_to_rgba(omero_shape.getStrokeColor())
-    try:
-        stroke_width = omero_shape.getStrokeWidth().getValue()
-    except AttributeError:
-        stroke_width = 1
-
-    return shape, fill_color, stroke_color, stroke_width
+    return shape
 
 
-def _int_to_rgba(omero_val: Union[int, None]) -> Tuple[int, ...]:
+def _int_to_rgba(omero_val: Union[int, None], is_fill: bool) -> \
+        Tuple[int, int, int, int]:
     """ Helper function returning the color as an Integer in RGBA encoding """
     if omero_val:
         if omero_val < 0:
@@ -1334,4 +1339,7 @@ def _int_to_rgba(omero_val: Union[int, None]) -> Tuple[int, ...]:
         a = omero_val - (r << 24) - (g << 16) - (b << 8)
         return (r, g, b, a)
     else:
-        return (0, 0, 0, 0)
+        if is_fill:
+            return (0, 0, 0, 0)
+        else:
+            return (255, 255, 0, 255)
