@@ -50,6 +50,22 @@ class Point(ezShape):
         Default is ``None``.
     label : str, optional
         The label of the shape. Default is ``None``.
+    fill_color : Tuple (4 integers), optional
+        The color that will be used as the fill/background of this Shape.
+        Format is RGBA, 0-255.
+        If ``None``, we default to (0, 0, 0, 0) (i.e. transparent) in
+        ``ezomero.get_shape()``.
+        Default is ``None``.
+    stroke_color : Tuple (4 integers), optional
+        The color that will be used as the stroke/perimeter of this Shape.
+        Format is RGBA, 0-255.
+        If ``None``, we default to (255, 255, 0, 255) (i.e. yellow, following
+        OMERO.iViewer default) in ``ezomero.get_shape()``.
+        Default is ``None``.
+    stroke_width : float, optional
+        The line width used for the stroke/perimeter of this Shape.
+        If ``None``, we default to 1.0 in ``ezomero.get_shape()``.
+        Default is ``None``.
     """
 
     x: float = field(metadata={'units': 'PIXELS'})
@@ -58,6 +74,9 @@ class Point(ezShape):
     c: Union[int, None] = field(default=None)
     t: Union[int, None] = field(default=None)
     label: Union[str, None] = field(default=None)
+    fill_color: Union[Tuple[int, int, int, int], None] = field(default=None)
+    stroke_color: Union[Tuple[int, int, int, int], None] = field(default=None)
+    stroke_width: Union[float, None] = field(default=None)
 
 
 @dataclass(frozen=True)
@@ -96,6 +115,22 @@ class Line(ezShape):
         The marker for the end of the line. Default is ``None``.
     label : str, optional
         The label of the shape. Default is ``None``.
+    fill_color : Tuple (4 integers), optional
+        The color that will be used as the fill/background of this Shape.
+        Format is RGBA, 0-255.
+        If ``None``, we default to (0, 0, 0, 0) (i.e. transparent) in
+        ``ezomero.get_shape()``.
+        Default is ``None``.
+    stroke_color : Tuple (4 integers), optional
+        The color that will be used as the stroke/perimeter of this Shape.
+        Format is RGBA, 0-255.
+        If ``None``, we default to (255, 255, 0, 255) (i.e. yellow, following
+        OMERO.iViewer default) in ``ezomero.get_shape()``.
+        Default is ``None``.
+    stroke_width : float, optional
+        The line width used for the stroke/perimeter of this Shape.
+        If ``None``, we default to 1.0 in ``ezomero.get_shape()``.
+        Default is ``None``.
     """
 
     x1: float = field(metadata={'units': 'PIXELS'})
@@ -108,6 +143,9 @@ class Line(ezShape):
     markerStart: Union[str, None] = field(default=None)
     markerEnd: Union[str, None] = field(default=None)
     label: Union[str, None] = field(default=None)
+    fill_color: Union[Tuple[int, int, int, int], None] = field(default=None)
+    stroke_color: Union[Tuple[int, int, int, int], None] = field(default=None)
+    stroke_width: Union[float, None] = field(default=None)
 
 
 @dataclass(frozen=True)
@@ -143,6 +181,22 @@ class Rectangle(ezShape):
         Default is ``None``.
     label : str, optional
         The label of the shape. Default is ``None``.
+    fill_color : Tuple (4 integers), optional
+        The color that will be used as the fill/background of this Shape.
+        Format is RGBA, 0-255.
+        If ``None``, we default to (0, 0, 0, 0) (i.e. transparent) in
+        ``ezomero.get_shape()``.
+        Default is ``None``.
+    stroke_color : Tuple (4 integers), optional
+        The color that will be used as the stroke/perimeter of this Shape.
+        Format is RGBA, 0-255.
+        If ``None``, we default to (255, 255, 0, 255) (i.e. yellow, following
+        OMERO.iViewer default) in ``ezomero.get_shape()``.
+        Default is ``None``.
+    stroke_width : float, optional
+        The line width used for the stroke/perimeter of this Shape.
+        If ``None``, we default to 1.0 in ``ezomero.get_shape()``.
+        Default is ``None``.
     """
 
     x: float = field(metadata={'units': 'PIXELS'})
@@ -153,6 +207,9 @@ class Rectangle(ezShape):
     c: Union[int, None] = field(default=None)
     t: Union[int, None] = field(default=None)
     label: Union[str, None] = field(default=None)
+    fill_color: Union[Tuple[int, int, int, int], None] = field(default=None)
+    stroke_color: Union[Tuple[int, int, int, int], None] = field(default=None)
+    stroke_width: Union[float, None] = field(default=None)
 
 
 @dataclass(frozen=True)
@@ -188,6 +245,22 @@ class Ellipse(ezShape):
         Default is ``None``.
     label : str, optional
         The label of the shape. Default is ``None``.
+    fill_color : Tuple (4 integers), optional
+        The color that will be used as the fill/background of this Shape.
+        Format is RGBA, 0-255.
+        If ``None``, we default to (0, 0, 0, 0) (i.e. transparent) in
+        ``ezomero.get_shape()``.
+        Default is ``None``.
+    stroke_color : Tuple (4 integers), optional
+        The color that will be used as the stroke/perimeter of this Shape.
+        Format is RGBA, 0-255.
+        If ``None``, we default to (255, 255, 0, 255) (i.e. yellow, following
+        OMERO.iViewer default) in ``ezomero.get_shape()``.
+        Default is ``None``.
+    stroke_width : float, optional
+        The line width used for the stroke/perimeter of this Shape.
+        If ``None``, we default to 1.0 in ``ezomero.get_shape()``.
+        Default is ``None``.
     """
 
     x: float = field(metadata={'units': 'PIXELS'})
@@ -198,6 +271,9 @@ class Ellipse(ezShape):
     c: Union[int, None] = field(default=None)
     t: Union[int, None] = field(default=None)
     label: Union[str, None] = field(default=None)
+    fill_color: Union[Tuple[int, int, int, int], None] = field(default=None)
+    stroke_color: Union[Tuple[int, int, int, int], None] = field(default=None)
+    stroke_width: Union[float, None] = field(default=None)
 
 
 @dataclass(frozen=True)
@@ -228,6 +304,22 @@ class Polygon(ezShape):
         Default is ``None``.
     label : str, optional
         The label of the shape. Default is ``None``.
+    fill_color : Tuple (4 integers), optional
+        The color that will be used as the fill/background of this Shape.
+        Format is RGBA, 0-255.
+        If ``None``, we default to (0, 0, 0, 0) (i.e. transparent) in
+        ``ezomero.get_shape()``.
+        Default is ``None``.
+    stroke_color : Tuple (4 integers), optional
+        The color that will be used as the stroke/perimeter of this Shape.
+        Format is RGBA, 0-255.
+        If ``None``, we default to (255, 255, 0, 255) (i.e. yellow, following
+        OMERO.iViewer default) in ``ezomero.get_shape()``.
+        Default is ``None``.
+    stroke_width : float, optional
+        The line width used for the stroke/perimeter of this Shape.
+        If ``None``, we default to 1.0 in ``ezomero.get_shape()``.
+        Default is ``None``.
     """
 
     points: List[Tuple[float, float]] = field(metadata={'units': 'PIXELS'})
@@ -235,6 +327,9 @@ class Polygon(ezShape):
     c: Union[int, None] = field(default=None)
     t: Union[int, None] = field(default=None)
     label: Union[str, None] = field(default=None)
+    fill_color: Union[Tuple[int, int, int, int], None] = field(default=None)
+    stroke_color: Union[Tuple[int, int, int, int], None] = field(default=None)
+    stroke_width: Union[float, None] = field(default=None)
 
 
 @dataclass(frozen=True)
@@ -265,6 +360,22 @@ class Polyline(ezShape):
         Default is ``None``.
     label : str, optional
         The label of the shape. Default is ``None``.
+    fill_color : Tuple (4 integers), optional
+        The color that will be used as the fill/background of this Shape.
+        Format is RGBA, 0-255.
+        If ``None``, we default to (0, 0, 0, 0) (i.e. transparent) in
+        ``ezomero.get_shape()``.
+        Default is ``None``.
+    stroke_color : Tuple (4 integers), optional
+        The color that will be used as the stroke/perimeter of this Shape.
+        Format is RGBA, 0-255.
+        If ``None``, we default to (255, 255, 0, 255) (i.e. yellow, following
+        OMERO.iViewer default) in ``ezomero.get_shape()``.
+        Default is ``None``.
+    stroke_width : float, optional
+        The line width used for the stroke/perimeter of this Shape.
+        If ``None``, we default to 1.0 in ``ezomero.get_shape()``.
+        Default is ``None``.
     """
 
     points: List[Tuple[float, float]] = field(metadata={'units': 'PIXELS'})
@@ -272,6 +383,9 @@ class Polyline(ezShape):
     c: Union[int, None] = field(default=None)
     t: Union[int, None] = field(default=None)
     label: Union[str, None] = field(default=None)
+    fill_color: Union[Tuple[int, int, int, int], None] = field(default=None)
+    stroke_color: Union[Tuple[int, int, int, int], None] = field(default=None)
+    stroke_width: Union[float, None] = field(default=None)
 
 
 @dataclass(frozen=True)
@@ -304,6 +418,22 @@ class Label(ezShape):
         The time frame to which the shape is linked.
         If ``None``, the Label will not be linked to any time frame.
         Default is ``None``.
+    fill_color : Tuple (4 integers), optional
+        The color that will be used as the fill/background of this Shape.
+        Format is RGBA, 0-255.
+        If ``None``, we default to (0, 0, 0, 0) (i.e. transparent) in
+        ``ezomero.get_shape()``.
+        Default is ``None``.
+    stroke_color : Tuple (4 integers), optional
+        The color that will be used as the stroke/perimeter of this Shape.
+        Format is RGBA, 0-255.
+        If ``None``, we default to (255, 255, 0, 255) (i.e. yellow, following
+        OMERO.iViewer default) in ``ezomero.get_shape()``.
+        Default is ``None``.
+    stroke_width : float, optional
+        The line width used for the stroke/perimeter of this Shape.
+        If ``None``, we default to 1.0 in ``ezomero.get_shape()``.
+        Default is ``None``.
     """
 
     x: float = field(metadata={'units': 'PIXELS'})
@@ -313,3 +443,6 @@ class Label(ezShape):
     z: Union[int, None] = field(default=None)
     c: Union[int, None] = field(default=None)
     t: Union[int, None] = field(default=None)
+    fill_color: Union[Tuple[int, int, int, int], None] = field(default=None)
+    stroke_color: Union[Tuple[int, int, int, int], None] = field(default=None)
+    stroke_width: Union[float, None] = field(default=None)
