@@ -36,7 +36,9 @@ extensions = ['sphinx.ext.autodoc',
 autodoc_default_options = {'exclude-members': ('c, z, t, x1, y1, x2,'
                                                ' y2, x, y, width, x_rad,'
                                                ' y_rad, points, label,'
-                                               ' height')}
+                                               ' height, fontSize, markerEnd,'
+                                               ' markerStart, fill_color,'
+                                               ' stroke_color, stroke_width')}
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
