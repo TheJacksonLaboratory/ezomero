@@ -1,4 +1,3 @@
-from attr import dataclass
 import pytest
 import numpy as np
 import ezomero
