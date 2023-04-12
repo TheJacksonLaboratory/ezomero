@@ -1,4 +1,3 @@
-from attr import dataclass
 import pytest
 import numpy as np
 import ezomero
@@ -316,74 +315,22 @@ def test_post_roi(conn, project_structure, roi_fixture, users_groups):
         _ = ezomero.post_roi(conn, '10',
                              shapes=roi_fixture['shapes'],
                              name=roi_fixture['name'],
-                             description=roi_fixture['desc'],
-                             fill_color=roi_fixture['fill_color'],
-                             stroke_color=roi_fixture['stroke_color'],
-                             stroke_width=roi_fixture['stroke_width'])
+                             description=roi_fixture['desc'])
     with pytest.raises(TypeError):
         _ = ezomero.post_roi(conn, im_id,
                              shapes='10',
                              name=roi_fixture['name'],
-                             description=roi_fixture['desc'],
-                             fill_color=roi_fixture['fill_color'],
-                             stroke_color=roi_fixture['stroke_color'],
-                             stroke_width=roi_fixture['stroke_width'])
+                             description=roi_fixture['desc'])
     with pytest.raises(TypeError):
         _ = ezomero.post_roi(conn, im_id,
                              shapes=['10'],
                              name=roi_fixture['name'],
-                             description=roi_fixture['desc'],
-                             fill_color=roi_fixture['fill_color'],
-                             stroke_color=roi_fixture['stroke_color'],
-                             stroke_width=roi_fixture['stroke_width'])
-    with pytest.raises(TypeError):
-        _ = ezomero.post_roi(conn, im_id,
-                             shapes=roi_fixture['shapes'],
-                             name=roi_fixture['name'],
-                             description=roi_fixture['desc'],
-                             fill_color=[10, 10, 10, 10],
-                             stroke_color=roi_fixture['stroke_color'],
-                             stroke_width=roi_fixture['stroke_width'])
-    with pytest.raises(ValueError):
-        _ = ezomero.post_roi(conn, im_id,
-                             shapes=roi_fixture['shapes'],
-                             name=roi_fixture['name'],
-                             description=roi_fixture['desc'],
-                             fill_color=(10, 10, 10),
-                             stroke_color=roi_fixture['stroke_color'],
-                             stroke_width=roi_fixture['stroke_width'])
-    with pytest.raises(TypeError):
-        _ = ezomero.post_roi(conn, im_id,
-                             shapes=roi_fixture['shapes'],
-                             name=roi_fixture['name'],
-                             description=roi_fixture['desc'],
-                             fill_color=roi_fixture['fill_color'],
-                             stroke_color=[10, 10, 10, 10],
-                             stroke_width=roi_fixture['stroke_width'])
-    with pytest.raises(ValueError):
-        _ = ezomero.post_roi(conn, im_id,
-                             shapes=roi_fixture['shapes'],
-                             name=roi_fixture['name'],
-                             description=roi_fixture['desc'],
-                             fill_color=roi_fixture['fill_color'],
-                             stroke_color=(10, 10, 10),
-                             stroke_width=roi_fixture['stroke_width'])
-    with pytest.raises(TypeError):
-        _ = ezomero.post_roi(conn, im_id,
-                             shapes=roi_fixture['shapes'],
-                             name=roi_fixture['name'],
-                             description=roi_fixture['desc'],
-                             fill_color=roi_fixture['fill_color'],
-                             stroke_color=roi_fixture['stroke_color'],
-                             stroke_width='width')
+                             description=roi_fixture['desc'])
 # "regular" test
     roi_id = ezomero.post_roi(conn, im_id,
                               shapes=roi_fixture['shapes'],
                               name=roi_fixture['name'],
-                              description=roi_fixture['desc'],
-                              fill_color=roi_fixture['fill_color'],
-                              stroke_color=roi_fixture['stroke_color'],
-                              stroke_width=roi_fixture['stroke_width'])
+                              description=roi_fixture['desc'])
     roi_in_omero = conn.getObject('Roi', roi_id)
     assert roi_in_omero.getName() == roi_fixture['name']
     assert roi_in_omero.getDescription() == roi_fixture['desc']

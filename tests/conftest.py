@@ -198,34 +198,49 @@ def pyramid_fixture(conn, omero_params):
 
 @pytest.fixture(scope='session')
 def roi_fixture():
-    point = rois.Point(x=100.0, y=100.0, z=0, c=0, t=0, label='test_point')
+    point = rois.Point(x=100.0, y=100.0, z=0, c=0, t=0, label='test_point',
+                       fill_color=(0, 1, 2, 3), stroke_color=(4, 5, 6, 100),
+                       stroke_width=1.0)
     line = rois.Line(x1=100.0, y1=100.0, x2=150.0, y2=150.0, z=0, c=0, t=0,
-                     label='test_line')
+                     label='test_line', fill_color=(7, 8, 9, 10),
+                     stroke_color=(11, 12, 13, 106), stroke_width=2.0)
     arrow = rois.Line(x1=100.0, y1=100.0, x2=150.0, y2=150.0, z=0, c=0, t=0,
                       label='test_arrow', markerEnd="Arrow",
                       markerStart="Arrow")
     rectangle = rois.Rectangle(x=100.0, y=100.0, width=50.0, height=40.0, z=0,
-                               c=0, t=0, label='test_rectangle')
+                               c=0, t=0, label='test_rectangle',
+                               fill_color=(14, 15, 16, 17),
+                               stroke_color=(18, 19, 20, 101),
+                               stroke_width=3.0)
     ellipse = rois.Ellipse(x=80, y=60, x_rad=20.0, y_rad=40.0, z=0, c=0, t=0,
-                           label='test_ellipse')
+                           label='test_ellipse',
+                           fill_color=(21, 22, 23, 24),
+                           stroke_color=(25, 26, 27, 102),
+                           stroke_width=4.0)
     polygon = rois.Polygon(points=[(100.0, 100.0),
                                    (110.0, 150.0),
                                    (100.0, 150.0)],
-                           z=0, c=0, t=0, label='test_polygon')
+                           z=0, c=0, t=0, label='test_polygon',
+                           fill_color=(28, 29, 30, 31),
+                           stroke_color=(32, 33, 34, 103),
+                           stroke_width=5.0)
     polyline = rois.Polyline(points=[(100.0, 100.0),
                                      (110.0, 150.0),
                                      (100.0, 150.0)],
-                             z=0, c=0, t=0, label='test_polyline')
+                             z=0, c=0, t=0, label='test_polyline',
+                             fill_color=(35, 36, 37, 38),
+                             stroke_color=(39, 40, 41, 104),
+                             stroke_width=6.0)
     label = rois.Label(x=100.0, y=100.0, z=0, c=0, t=0,
-                       label='test_label', fontSize=60)
+                       label='test_label', fontSize=60,
+                       fill_color=(42, 43, 44, 45),
+                       stroke_color=(46, 47, 48, 105),
+                       stroke_width=7.0)
 
     return {'shapes': [point, line, rectangle, ellipse,
                        polygon, polyline, arrow, label],
             'name': 'ROI_name',
-            'desc': 'A description for the ROI',
-            'fill_color': (255, 0, 0, 200),
-            'stroke_color': (255, 0, 0, 0),
-            'stroke_width': 2
+            'desc': 'A description for the ROI'
             }
 
 

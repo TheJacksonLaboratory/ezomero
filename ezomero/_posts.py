@@ -1,6 +1,6 @@
 import logging
 import mimetypes
-from typing import Optional, List, Union, Tuple
+from typing import Optional, List, Union, Tuple, Any
 import numpy as np
 from uuid import uuid4
 from ._ezomero import do_across_groups, set_group
@@ -16,9 +16,9 @@ from omero.gateway import ScreenWrapper, FileAnnotationWrapper
 from omero.gateway import MapAnnotationWrapper, OriginalFileWrapper
 from omero.rtypes import rstring, rint, rdouble
 from .rois import Point, Line, Rectangle, Ellipse
-from .rois import Polygon, Polyline, Label, ezShape
+from .rois import Polygon, Polyline, Label
 import importlib.util
-# try importing pandas
+
 if (importlib.util.find_spec('pandas')):
     import pandas as pd
     has_pandas = True
@@ -463,12 +463,8 @@ def post_screen(conn: BlitzGateway, screen_name: str,
 def post_roi(conn: BlitzGateway, image_id: int,
              shapes: List[Union[Point, Line, Rectangle, Ellipse,
                                 Polygon, Polyline, Label]],
-             name: Optional[str] = None, description: Optional[str] = None,
-             fill_color: Optional[Union[Tuple[int, int, int, int], int]] =
-             (10, 10, 10, 10),
-             stroke_color: Optional[Union[Tuple[int, int, int, int], int]] =
-             (255, 255, 255, 255),
-             stroke_width: Optional[int] = 1) -> int:
+             name: Optional[str] = None, description: Optional[str] = None)\
+                -> int:
     """Create new ROI from a list of shapes and link to an image.
 
     Parameters
@@ -483,17 +479,6 @@ def post_roi(conn: BlitzGateway, image_id: int,
         Name for the new ROI.
     description : str, optional
         Description of the new ROI.
-    fill_color: tuple of int, optional
-        The color fill of the shape. Color is specified as a a tuple containing
-        4 integers from 0 to 255, representing red, green, blue and alpha
-        levels. Default is (10, 10, 10, 10).
-    stroke_color: tuple of int, optional
-        The color of the shape edge. Color is specified as a a tuple containing
-        4 integers from 0 to 255, representing red, green, blue and alpha
-        levels. Default is (255, 255, 255, 255).
-    stroke_width: int, optional
-        The width of the shape stroke in pixels. Default is 1.
-
 
     Returns
     -------
@@ -510,13 +495,13 @@ def post_roi(conn: BlitzGateway, image_id: int,
                               width=90,
                               height=40,
                               z=3,
-                              label='The place')
+                              label='The place',
+                              fill_color=(255, 10, 10, 150),
+                              stroke_color=(255, 0, 0, 0),
+                              stroke_width=2)
     >>> shapes.append(rectangle)
     >>> post_roi(conn, 23, shapes, name='My Cell',
-                 description='Very important',
-                 fill_color=(255, 10, 10, 150),
-                 stroke_color=(255, 0, 0, 0),
-                 stroke_width=2)
+                 description='Very important')
     234
     """
 
@@ -526,40 +511,20 @@ def post_roi(conn: BlitzGateway, image_id: int,
     if not isinstance(shapes, list):
         raise TypeError('Shapes must be a list')
 
-    if not isinstance(fill_color, tuple):
-        raise TypeError('Fill color must be a tuple')
-    if len(fill_color) != 4:
-        raise ValueError('Fill color must contain 4 integers')
-
-    if not isinstance(stroke_color, tuple):
-        raise TypeError('Stroke color must be a tuple')
-    if len(stroke_color) != 4:
-        raise ValueError('Stroke color must contain 4 integers')
-
-    if type(stroke_width) is not int:
-        raise TypeError('Stroke width must be an integer')
-
     roi = RoiI()
     if name is not None:
         roi.setName(rstring(name))
     if description is not None:
         roi.setDescription(rstring(description))
     for shape in shapes:
-        roi.addShape(_shape_to_omero_shape(shape, fill_color, stroke_color,
-                                           stroke_width))
+        roi.addShape(_shape_to_omero_shape(shape))
     image = conn.getObject('Image', image_id)
     roi.setImage(image._obj)
     roi = conn.getUpdateService().saveAndReturnObject(roi)
     return roi.getId().getValue()
 
 
-if has_pandas:
-    TableType = pd.core.frame.DataFrame
-else:
-    TableType = List
-
-
-def post_table(conn: BlitzGateway, table: TableType,
+def post_table(conn: BlitzGateway, table: Any,
                object_type: str, object_id: int,
                title: Optional[str] = "",
                headers: bool = True) -> Union[int, None]:
@@ -643,7 +608,7 @@ def post_table(conn: BlitzGateway, table: TableType,
     return file_ann.id
 
 
-def create_columns(table: TableType,
+def create_columns(table: Any,
                    headers: bool) -> List[Column]:
     """Helper function to create the correct column types from a table"""
     cols = []
@@ -693,10 +658,7 @@ def create_columns(table: TableType,
 
 
 def _shape_to_omero_shape(shape: Union[Point, Line, Rectangle, Ellipse,
-                                       Polygon, Polyline, Label],
-                          fill_color: Tuple[int, int, int, int],
-                          stroke_color: Tuple[int, int, int, int],
-                          stroke_width: int) -> Shape:
+                                       Polygon, Polyline, Label]) -> Shape:
     """ Helper function to convert ezomero shapes into omero shapes"""
     if isinstance(shape, Point):
         omero_shape = PointI()
@@ -752,14 +714,23 @@ def _shape_to_omero_shape(shape: Union[Point, Line, Rectangle, Ellipse,
         omero_shape.theT = rint(shape.t)
     if shape.label is not None:
         omero_shape.setTextValue(rstring(shape.label))
-    omero_shape.setFillColor(rint(_rgba_to_int(fill_color)))
-    omero_shape.setStrokeColor(rint(_rgba_to_int(stroke_color)))
-    omero_shape.setStrokeWidth(LengthI(stroke_width, enums.UnitsLength.PIXEL))
-
+    if shape.fill_color is not None:
+        omero_shape.setFillColor(rint(_rgba_to_int(shape.fill_color)))
+    else:
+        omero_shape.setFillColor(rint(_rgba_to_int((0, 0, 0, 0))))
+    if shape.stroke_color is not None:
+        omero_shape.setStrokeColor(rint(_rgba_to_int(shape.stroke_color)))
+    else:
+        omero_shape.setFillColor(rint(_rgba_to_int((255, 255, 0, 255))))
+    if shape.stroke_width is not None:
+        omero_shape.setStrokeWidth(LengthI(shape.stroke_width,
+                                           enums.UnitsLength.PIXEL))
+    else:
+        omero_shape.setStrokeWidth(LengthI(1.0, enums.UnitsLength.PIXEL))
     return omero_shape
 
 
-def _rgba_to_int(color: Tuple[int, int, int, int]) -> int:
+def _rgba_to_int(color: Tuple[int, ...]) -> int:
     """ Helper function returning the color as an Integer in RGBA encoding """
     try:
         r, g, b, a = color

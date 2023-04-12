@@ -24,7 +24,6 @@ def test_connect_params(omero_params, tmp_path, monkeypatch):
                 "omero_secure = True\n")
     conf_path = tmp_path / '.ezomero'
     conf_path.write_text(conf_txt)
-
     conn = ezomero.connect(user, password, host=host, group='', port=port,
                            secure=True, config_path=str(tmp_path))
     assert conn.getUser().getName() == user

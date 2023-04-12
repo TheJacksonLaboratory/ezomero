@@ -1,4 +1,3 @@
-from attr import dataclass
 import pytest
 import numpy as np
 import ezomero
@@ -452,10 +451,7 @@ def test_get_roi_ids(conn, project_structure, roi_fixture, users_groups):
     roi_id = ezomero.post_roi(conn, im_id,
                               shapes=roi_fixture['shapes'],
                               name=roi_fixture['name'],
-                              description=roi_fixture['desc'],
-                              fill_color=roi_fixture['fill_color'],
-                              stroke_color=roi_fixture['stroke_color'],
-                              stroke_width=roi_fixture['stroke_width'])
+                              description=roi_fixture['desc'])
     return_ids = ezomero.get_roi_ids(conn, im_id)
     assert roi_id in return_ids
 
@@ -486,22 +482,30 @@ def test_get_shape_and_get_shape_ids(conn, project_structure,
     # test normal usage
     image_info = project_structure[2]
     im_id = image_info[0][1]
+    shapes = roi_fixture['shapes']
+    arrow = shapes.pop(6)
     roi_id = ezomero.post_roi(conn, im_id,
-                              shapes=roi_fixture['shapes'],
+                              shapes=shapes,
                               name=roi_fixture['name'],
-                              description=roi_fixture['desc'],
-                              fill_color=roi_fixture['fill_color'],
-                              stroke_color=roi_fixture['stroke_color'],
-                              stroke_width=roi_fixture['stroke_width'])
+                              description=roi_fixture['desc'])
     shape_ids = ezomero.get_shape_ids(conn, roi_id)
     assert len(shape_ids) == len(roi_fixture['shapes'])
     for i in range(len(shape_ids)):
-        shape, fill, stroke, width = ezomero.get_shape(conn, shape_ids[i])
+        shape = ezomero.get_shape(conn, shape_ids[i])
         assert hasattr(shape, 'label')
-        assert fill == roi_fixture['fill_color']
-        assert stroke == roi_fixture['stroke_color']
-        assert width == roi_fixture['stroke_width']
-
+        for pre_shape in shapes:
+            if type(shape) == type(pre_shape):
+                assert shape.fill_color == pre_shape.fill_color
+                assert shape.stroke_color == pre_shape.stroke_color
+                assert shape.stroke_width == pre_shape.stroke_width
+    roi_id2 = ezomero.post_roi(conn, im_id,
+                               shapes=[arrow],
+                               name=roi_fixture['name'],
+                               description=roi_fixture['desc'])
+    shape_ids2 = ezomero.get_shape_ids(conn, roi_id2)
+    assert len(shape_ids2) == 1
+    shape = ezomero.get_shape(conn, shape_ids2[0])
+    assert shape.markerStart == "Arrow"
     # Test getting from an invalid cross-group
     username = users_groups[1][2][0]  # test_user3
     groupname = users_groups[0][1][0]  # test_group_2
