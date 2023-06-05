@@ -23,6 +23,7 @@ services:
       CONFIG_omero_db_pass: omero
       CONFIG_omero_db_name: omero
       CONFIG_omero_policy_binary__access: +read,+write,+image,+plate
+      CONFIG_omero_glacier2_IceSSL_Ciphers: "HIGH:!DH"
       ROOTPASS: omero
     networks:
       - omero
