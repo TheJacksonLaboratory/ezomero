@@ -142,8 +142,8 @@ def put_description(conn: BlitzGateway, obj_type: str, obj_id: int, desc: str,
         OMERO connection.
     obj_type: str
         The OMERO object type to have its description changed. Valid object
-        types are 'Image', 'Dataset', 'Project', 'FileAnnotation', 
-        'CommentAnnotation', 'MapAnnotation', 'TagAnnotation, 'Plate', 
+        types are 'Image', 'Dataset', 'Project', 'FileAnnotation',
+        'CommentAnnotation', 'MapAnnotation', 'TagAnnotation', 'Plate',
         'Screen' and 'Roi'.
     obj_id : int
         ID of the object whose description will be replaced.
@@ -168,25 +168,31 @@ def put_description(conn: BlitzGateway, obj_type: str, obj_id: int, desc: str,
 
     >>> put_description(conn, 'TagAnnotation', 16, 'new tag description')
     """
-    if type(map_ann_id) is not int:
-        raise TypeError('Map annotation ID must be an integer')
+    VALID_TYPES = ['Image',
+                   'Dataset',
+                   'Project',
+                   'FileAnnotation',
+                   'CommentAnnotation',
+                   'MapAnnotation',
+                   'TagAnnotation',
+                   'Plate',
+                   'Screen',
+                   'Roi',
+                   ]
+    if type(obj_type) is not str:
+        raise TypeError('Object type must be a string')
+    if type(obj_id) is not int:
+        raise TypeError('Object ID must be an integer')
+    if obj_type not in VALID_TYPES:
+        raise ValueError('Object type specified is not valid')
 
-    map_ann = conn.getObject('MapAnnotation', map_ann_id)
-    if map_ann is None:
-        raise ValueError("MapAnnotation is non-existent or you do not have "
+    obj = conn.getObject(obj_type, obj_id)
+    if obj is None:
+        raise ValueError("Object is non-existent or you do not have "
                          "permissions to change it.")
 
-    if ns is None:
-        ns = map_ann.getNs()
-    map_ann.setNs(ns)
-
-    kv_pairs = []
-    for k, v in kv_dict.items():
-        k = str(k)
-        v = str(v)
-        kv_pairs.append([k, v])
-    map_ann.setValue(kv_pairs)
-    map_ann.save()
+    obj.setDescription(str(desc))
+    obj.save()
     return None
 
 
