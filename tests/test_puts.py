@@ -70,7 +70,7 @@ def test_put_map_annotation(conn, project_structure, users_groups):
                        deleteAnns=True,
                        deleteChildren=True,
                        wait=True)
-    
+
 
 def test_put_description(conn, project_structure, users_groups):
     desc = "test description"
@@ -112,4 +112,3 @@ def test_put_description(conn, project_structure, users_groups):
     # test non-existent ID
     with pytest.raises(ValueError):
         ezomero.put_description(conn, 'Image', 9999999, desc)
-
