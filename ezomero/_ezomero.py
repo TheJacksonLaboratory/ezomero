@@ -131,6 +131,65 @@ def put_map_annotation(conn: BlitzGateway, map_ann_id: int, kv_dict: dict,
     return None
 
 
+@do_across_groups
+def put_description(conn: BlitzGateway, obj_type: str, obj_id: int, desc: str,
+                    across_groups: bool = True) -> None:
+    """Update an existing object description with a new value (string)
+
+    Parameters
+    ----------
+    conn : ``omero.gateway.BlitzGateway`` object
+        OMERO connection.
+    obj_type: str
+        The OMERO object type to have its description changed. Valid object
+        types are 'Image', 'Dataset', 'Project', 'FileAnnotation', 
+        'CommentAnnotation', 'MapAnnotation', 'TagAnnotation, 'Plate', 
+        'Screen' and 'Roi'.
+    obj_id : int
+        ID of the object whose description will be replaced.
+    desc : str
+        New description for the object.
+    across_groups : bool, optional
+        Defines cross-group behavior of function - set to
+        ``False`` to disable it.
+
+    Returns
+    -------
+    Returns None.
+
+    Examples
+    --------
+    # Change an image description:
+
+    >>> new_desc = "This is a new description"
+    >>> put_description(conn, 'Image', 15, new_desc)
+
+    # Change a TagAnnotation description:
+
+    >>> put_description(conn, 'TagAnnotation', 16, 'new tag description')
+    """
+    if type(map_ann_id) is not int:
+        raise TypeError('Map annotation ID must be an integer')
+
+    map_ann = conn.getObject('MapAnnotation', map_ann_id)
+    if map_ann is None:
+        raise ValueError("MapAnnotation is non-existent or you do not have "
+                         "permissions to change it.")
+
+    if ns is None:
+        ns = map_ann.getNs()
+    map_ann.setNs(ns)
+
+    kv_pairs = []
+    for k, v in kv_dict.items():
+        k = str(k)
+        v = str(v)
+        kv_pairs.append([k, v])
+    map_ann.setValue(kv_pairs)
+    map_ann.save()
+    return None
+
+
 # functions for managing connection context and service options.
 
 def connect(user: Optional[str] = None, password: Optional[str] = None,
