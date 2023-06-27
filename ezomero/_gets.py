@@ -936,6 +936,38 @@ def get_tag(conn: BlitzGateway, tag_id: int,
 
 
 @do_across_groups
+def get_comment(conn: BlitzGateway, comment_id: int,
+                across_groups: Optional[bool] = True) -> str:
+    """Get the value of a comment annotation object
+
+    Parameters
+    ----------
+    conn : ``omero.gateway.BlitzGateway`` object
+        OMERO connection.
+    comment_id : int
+        ID of comment annotation to get.
+    across_groups : bool, optional
+        Defines cross-group behavior of function - set to
+        ``False`` to disable it.
+
+    Returns
+    -------
+    comment : str
+        The value of the specified tag annotation object.
+
+    Examples
+    --------
+    >>> comment = get_tag(conn, 62)
+    >>> print(comment)
+    This is a comment
+    """
+    if type(comment_id) is not int:
+        raise TypeError('Comment ID must be an integer')
+
+    return conn.getObject('CommentAnnotation', comment_id).getValue()
+
+
+@do_across_groups
 def get_file_annotation(conn: BlitzGateway, file_ann_id: int,
                         folder_path: Optional[str] = None,
                         across_groups: Optional[bool] = True) -> str:
