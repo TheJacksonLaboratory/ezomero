@@ -345,9 +345,11 @@ def test_get_comment_annotation_and_ids(conn, project_structure):
     with pytest.raises(TypeError):
         _ = ezomero.get_comment_annotation_ids(conn, 10, 10)
     with pytest.raises(TypeError):
-        _ = ezomero.get_commen_annotationt_ids(conn, 'Image', '10')
+        _ = ezomero.get_comment_annotation_ids(conn, 'Image', '10')
     with pytest.raises(TypeError):
         _ = ezomero.get_comment_annotation_ids(conn, 'Image', 10, ns=10)
+    with pytest.raises(TypeError):
+        _ = ezomero.get_comment_annotation(conn, 'Image')
 
     comm_ann_id = ezomero.post_comment_annotation(conn, "Image", im_id,
                                                   comment, ns)
