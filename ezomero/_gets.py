@@ -649,9 +649,10 @@ def get_tag_ids(conn: BlitzGateway, object_type: str, object_id: int,
 
 
 @do_across_groups
-def get_comment_ids(conn: BlitzGateway, object_type: str, object_id: int,
-                    ns: Optional[str] = None,
-                    across_groups: Optional[bool] = True) -> List[int]:
+def get_comment_annotation_ids(conn: BlitzGateway, object_type: str,
+                               object_id: int, ns: Optional[str] = None,
+                               across_groups: Optional[bool] = True
+                               ) -> List[int]:
     """Get IDs of comment annotations associated with an object
 
     Parameters
@@ -936,8 +937,8 @@ def get_tag(conn: BlitzGateway, tag_id: int,
 
 
 @do_across_groups
-def get_comment(conn: BlitzGateway, comment_id: int,
-                across_groups: Optional[bool] = True) -> str:
+def get_comment_annotation(conn: BlitzGateway, comment_id: int,
+                           across_groups: Optional[bool] = True) -> str:
     """Get the value of a comment annotation object
 
     Parameters
