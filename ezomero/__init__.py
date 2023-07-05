@@ -1,4 +1,5 @@
 from ._ezomero import (put_map_annotation,
+                       put_description,
                        connect,
                        store_connection_params,
                        set_group)
@@ -69,6 +70,7 @@ __all__ = ['post_dataset',
            'get_table',
            'get_shape',
            'put_map_annotation',
+           'put_description',
            'filter_by_filename',
            'filter_by_kv',
            'filter_by_tag_value',

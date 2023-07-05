@@ -131,6 +131,71 @@ def put_map_annotation(conn: BlitzGateway, map_ann_id: int, kv_dict: dict,
     return None
 
 
+@do_across_groups
+def put_description(conn: BlitzGateway, obj_type: str, obj_id: int, desc: str,
+                    across_groups: bool = True) -> None:
+    """Update an existing object description with a new value (string)
+
+    Parameters
+    ----------
+    conn : ``omero.gateway.BlitzGateway`` object
+        OMERO connection.
+    obj_type: str
+        The OMERO object type to have its description changed. Valid object
+        types are 'Image', 'Dataset', 'Project', 'FileAnnotation',
+        'CommentAnnotation', 'MapAnnotation', 'TagAnnotation', 'Plate',
+        'Screen' and 'Roi'.
+    obj_id : int
+        ID of the object whose description will be replaced.
+    desc : str
+        New description for the object.
+    across_groups : bool, optional
+        Defines cross-group behavior of function - set to
+        ``False`` to disable it.
+
+    Returns
+    -------
+    Returns None.
+
+    Examples
+    --------
+    # Change an image description:
+
+    >>> new_desc = "This is a new description"
+    >>> put_description(conn, 'Image', 15, new_desc)
+
+    # Change a TagAnnotation description:
+
+    >>> put_description(conn, 'TagAnnotation', 16, 'new tag description')
+    """
+    VALID_TYPES = ['Image',
+                   'Dataset',
+                   'Project',
+                   'FileAnnotation',
+                   'CommentAnnotation',
+                   'MapAnnotation',
+                   'TagAnnotation',
+                   'Plate',
+                   'Screen',
+                   'Roi',
+                   ]
+    if type(obj_type) is not str:
+        raise TypeError('Object type must be a string')
+    if type(obj_id) is not int:
+        raise TypeError('Object ID must be an integer')
+    if obj_type not in VALID_TYPES:
+        raise ValueError('Object type specified is not valid')
+
+    obj = conn.getObject(obj_type, obj_id)
+    if obj is None:
+        raise ValueError("Object is non-existent or you do not have "
+                         "permissions to change it.")
+
+    obj.setDescription(str(desc))
+    obj.save()
+    return None
+
+
 # functions for managing connection context and service options.
 
 def connect(user: Optional[str] = None, password: Optional[str] = None,
