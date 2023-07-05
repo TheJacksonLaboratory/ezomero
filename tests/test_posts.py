@@ -234,6 +234,69 @@ def test_post_get_map_annotation(conn, project_structure, users_groups):
                        deleteAnns=True, deleteChildren=True, wait=True)
 
 
+def test_post_get_comment_annotation(conn, project_structure, users_groups):
+    image_info = project_structure[2]
+    im_id = image_info[0][1]
+    # This test both ezomero.post_comment_annotation
+    # and ezomero.get_comment_annotation
+    comment = "sample comment for testing"
+    ns = "jax.org/omeroutils/tests/v0"
+
+    # test sanitized input on post
+    with pytest.raises(TypeError):
+        _ = ezomero.post_comment_annotation(conn, "Image", im_id, 1, ns)
+    with pytest.raises(TypeError):
+        _ = ezomero.post_comment_annotation(conn, 1, '10', comment, ns)
+    with pytest.raises(TypeError):
+        _ = ezomero.post_comment_annotation(conn, "Image", None, comment, ns)
+
+    comm_ann_id = ezomero.post_comment_annotation(conn, "Image", im_id,
+                                                  comment, ns)
+    comm = ezomero.get_comment_annotation(conn, comm_ann_id)
+    assert comm == comment
+
+    # Test posting to non-existing object
+    im_id2 = 999999999
+    comm_ann_id2 = ezomero.post_comment_annotation(conn, "Image", im_id2,
+                                                   comment, ns)
+    assert comm_ann_id2 is None
+
+    # Test posting cross-group
+    username = users_groups[1][0][0]  # test_user1
+    groupname = users_groups[0][0][0]  # test_group_1
+    current_conn = conn.suConn(username, groupname)
+    im_id3 = image_info[2][1]  # im2, in test_group_2
+    comm_ann_id3 = ezomero.post_comment_annotation(current_conn, "Image",
+                                                   im_id3, comment, ns)
+    comm = ezomero.get_comment_annotation(current_conn, comm_ann_id3)
+    assert comm == comment
+    current_conn.close()
+
+    # Test posting to an invalid cross-group
+    username = users_groups[1][2][0]  # test_user3
+    groupname = users_groups[0][1][0]  # test_group_2
+    current_conn = conn.suConn(username, groupname)
+    im_id4 = image_info[1][1]  # im1(in test_group_1)
+    comm_ann_id4 = ezomero.post_comment_annotation(current_conn, "Image",
+                                                   im_id4, comment, ns)
+    assert comm_ann_id4 is None
+    current_conn.close()
+
+    # Test posting cross-group, across_groups unset
+    username = users_groups[1][0][0]  # test_user1
+    groupname = users_groups[0][0][0]  # test_group_1
+    current_conn = conn.suConn(username, groupname)
+    im_id5 = image_info[2][1]  # im2, in test_group_2
+    comm_ann_id5 = ezomero.post_comment_annotation(current_conn, "Image",
+                                                   im_id5, comment, ns,
+                                                   across_groups=False)
+    assert comm_ann_id5 is None
+    current_conn.close()
+
+    conn.deleteObjects("Annotation", [comm_ann_id, comm_ann_id3],
+                       deleteAnns=True, deleteChildren=True, wait=True)
+
+
 def test_post_get_file_annotation(conn, project_structure, users_groups,
                                   tmp_path):
 

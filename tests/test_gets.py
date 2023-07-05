@@ -335,6 +335,50 @@ def test_get_map_annotation_and_ids(conn, project_structure):
                        wait=True)
 
 
+def test_get_comment_annotation_and_ids(conn, project_structure):
+    comment = "comment annotation test"
+    ns = "jax.org/omeroutils/tests/v0"
+    image_info = project_structure[2]
+    im_id = image_info[0][1]
+
+    # Test sanitizing inputs
+    with pytest.raises(TypeError):
+        _ = ezomero.get_comment_annotation_ids(conn, 10, 10)
+    with pytest.raises(TypeError):
+        _ = ezomero.get_comment_annotation_ids(conn, 'Image', '10')
+    with pytest.raises(TypeError):
+        _ = ezomero.get_comment_annotation_ids(conn, 'Image', 10, ns=10)
+    with pytest.raises(TypeError):
+        _ = ezomero.get_comment_annotation(conn, 'Image')
+
+    comm_ann_id = ezomero.post_comment_annotation(conn, "Image", im_id,
+                                                  comment, ns)
+    comm_ann_id2 = ezomero.post_comment_annotation(conn, "Image", im_id,
+                                                   comment, ns)
+    comm_ann_id3 = ezomero.post_comment_annotation(conn, "Image", im_id,
+                                                   comment, ns)
+    ns2 = "different namespace"
+    comm_ann_id4 = ezomero.post_comment_annotation(conn, "Image", im_id,
+                                                   comment, ns2)
+    comm_ann_ids = ezomero.get_comment_annotation_ids(conn, "Image", im_id,
+                                                      ns=ns)
+
+    good_ids = [comm_ann_id, comm_ann_id2, comm_ann_id3]
+    assert all([mid in comm_ann_ids for mid in good_ids])
+    assert comm_ann_id4 not in comm_ann_ids
+
+    # Test sanitizing input
+    with pytest.raises(TypeError):
+        _ = ezomero.get_comment_annotation(conn, '10')
+    mpann = ezomero.get_comment_annotation(conn, comm_ann_ids[0])
+    assert mpann == comment
+    conn.deleteObjects("Annotation",
+                       [comm_ann_id, comm_ann_id2, comm_ann_id3, comm_ann_id4],
+                       deleteAnns=True,
+                       deleteChildren=True,
+                       wait=True)
+
+
 def test_get_file_annotation_and_ids(conn, project_structure, tmp_path):
     image_info = project_structure[2]
     im_id = image_info[0][1]
