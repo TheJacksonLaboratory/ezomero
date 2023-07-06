@@ -798,7 +798,7 @@ def _shape_to_omero_shape(shape: Union[Point, Line, Rectangle, Ellipse,
     if shape.stroke_color is not None:
         omero_shape.setStrokeColor(rint(_rgba_to_int(shape.stroke_color)))
     else:
-        omero_shape.setFillColor(rint(_rgba_to_int((255, 255, 0, 255))))
+        omero_shape.setStrokeColor(rint(_rgba_to_int((255, 255, 0, 255))))
     if shape.stroke_width is not None:
         omero_shape.setStrokeWidth(LengthI(shape.stroke_width,
                                            enums.UnitsLength.PIXEL))
