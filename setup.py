@@ -17,9 +17,8 @@ setuptools.setup(
     url="https://github.com/TheJacksonLaboratory/ezomero",
     packages=setuptools.find_packages(),
     install_requires=[
-        'omero-py==5.11.2',
-        'numpy>=1.22',
-        'dataclasses;python_version<"3.7"'
+        'omero-py==5.13.1',
+        'numpy>=1.22'
     ],
     extras_require={
         "tables": ["pandas"],

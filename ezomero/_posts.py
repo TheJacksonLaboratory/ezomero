@@ -14,6 +14,7 @@ from omero.grid import StringColumn, DoubleColumn, Column
 from omero.gateway import ProjectWrapper, DatasetWrapper
 from omero.gateway import ScreenWrapper, FileAnnotationWrapper
 from omero.gateway import MapAnnotationWrapper, OriginalFileWrapper
+from omero.gateway import CommentAnnotationWrapper
 from omero.rtypes import rstring, rint, rdouble
 from .rois import Point, Line, Rectangle, Ellipse
 from .rois import Polygon, Polyline, Label
@@ -221,7 +222,7 @@ def post_map_annotation(conn: BlitzGateway, object_type: str, object_id: int,
                         kv_dict: dict, ns: str,
                         across_groups: Optional[bool] = True
                         ) -> Union[int, None]:
-    """Create new MapAnnotation and link to images.
+    """Create new MapAnnotation and link to an object.
 
     Parameters
     ----------
@@ -296,6 +297,82 @@ def post_map_annotation(conn: BlitzGateway, object_type: str, object_id: int,
         return None
 
     return map_ann.getId()
+
+
+@do_across_groups
+def post_comment_annotation(conn: BlitzGateway, object_type: str,
+                            object_id: int,
+                            comment: str, ns: Optional[str] = None,
+                            across_groups: Optional[bool] = True
+                            ) -> Union[int, None]:
+    """Create new MapAnnotation and link to an object.
+
+    Parameters
+    ----------
+    conn : ``omero.gateway.BlitzGateway`` object
+        OMERO connection.
+    object_type : str
+       OMERO object type, passed to ``BlitzGateway.getObjects``
+    object_id : int
+        ID of object to which the new CommentAnnotation will be linked.
+    comment : str
+        string that will be passed as the CommentAnnotation value
+    ns : str, optional
+        Namespace for the CommentAnnotation
+    across_groups : bool, optional
+        Defines cross-group behavior of function - set to
+        ``False`` to disable it.
+
+    Returns
+    -------
+    comment_ann_id : int
+        IDs of newly created CommentAnnotation
+
+    Examples
+    --------
+    >>> ns = 'jax.org/jax/example/namespace'
+    >>> d = {'species': 'human',
+    ...      'occupation': 'time traveler'
+    ...      'first name': 'Kyle',
+    ...      'surname': 'Reese'}
+    >>> post_map_annotation(conn, "Image", 56, d, ns)
+    234
+    """
+    if type(comment) is not str:
+        raise TypeError('Comment must be a string')
+    if type(object_type) is not str:
+        raise TypeError('Object type must be a string')
+
+    obj = None
+    if object_id is not None:
+        if type(object_id) is not int:
+            raise TypeError('object_ids must be integer')
+        obj = conn.getObject(object_type, object_id)
+        if obj is not None:
+            ret = set_group(conn, obj.getDetails().group.id.val)
+            if ret is False:
+                logging.warning('Cannot change into group '
+                                f'where object {object_id} is.')
+                return None
+        else:
+            logging.warning(f'Object {object_id} could not be found '
+                            '(check if you have permissions to it)')
+            return None
+    else:
+        raise TypeError('Object ID cannot be empty')
+    comment_ann = CommentAnnotationWrapper(conn)
+    if ns:
+        comment_ann.setNs(str(ns))
+    comment_ann.setValue(comment)
+    comment_ann.save()
+    try:
+        obj.linkAnnotation(comment_ann)
+    except ValueError:  # fix this bare exception
+        logging.warning(f'Cannot link to object {object_id} - '
+                        'check if you have permissions to do so')
+        return None
+
+    return comment_ann.getId()
 
 
 @do_across_groups
@@ -721,7 +798,7 @@ def _shape_to_omero_shape(shape: Union[Point, Line, Rectangle, Ellipse,
     if shape.stroke_color is not None:
         omero_shape.setStrokeColor(rint(_rgba_to_int(shape.stroke_color)))
     else:
-        omero_shape.setFillColor(rint(_rgba_to_int((255, 255, 0, 255))))
+        omero_shape.setStrokeColor(rint(_rgba_to_int((255, 255, 0, 255))))
     if shape.stroke_width is not None:
         omero_shape.setStrokeWidth(LengthI(shape.stroke_width,
                                            enums.UnitsLength.PIXEL))
