@@ -70,3 +70,45 @@ def test_put_map_annotation(conn, project_structure, users_groups):
                        deleteAnns=True,
                        deleteChildren=True,
                        wait=True)
+
+
+def test_put_description(conn, project_structure, users_groups):
+    desc = "test description"
+
+    # test sanitized input
+    with pytest.raises(TypeError):
+        _ = ezomero.put_description(conn, 10, 'Image', desc)
+    with pytest.raises(TypeError):
+        _ = ezomero.put_description(conn, 'Image', '10', desc)
+    with pytest.raises(ValueError):
+        _ = ezomero.put_description(conn, 'FakeImage', 1, desc)
+
+    image_info = project_structure[2]
+    im_id = image_info[0][1]
+    ezomero.put_description(conn, 'Image', im_id, desc)
+    img, _ = ezomero.get_image(conn, im_id, no_pixels=True)
+    assert img.getDescription() == desc
+
+    # test cross-group
+    username = users_groups[1][0][0]  # test_user1
+    groupname = users_groups[0][0][0]  # test_group_1
+    current_conn = conn.suConn(username, groupname)
+    im_id2 = image_info[2][1]  # im2, in test_group_2
+    ezomero.put_description(conn, 'Image', im_id2, desc)
+    img, _ = ezomero.get_image(conn, im_id2, no_pixels=True)
+    assert img.getDescription() == desc
+    current_conn.close()
+
+    # test cross-group, across_groups unset
+    username = users_groups[1][0][0]  # test_user1
+    groupname = users_groups[0][0][0]  # test_group_1
+    current_conn = conn.suConn(username, groupname)
+    im_id3 = image_info[2][1]  # im2, in test_group_2
+    ezomero.put_description(conn, 'Image', im_id3, desc)
+    img, _ = ezomero.get_image(conn, im_id3, no_pixels=True)
+    assert img.getDescription() == desc
+    current_conn.close()
+
+    # test non-existent ID
+    with pytest.raises(ValueError):
+        ezomero.put_description(conn, 'Image', 9999999, desc)

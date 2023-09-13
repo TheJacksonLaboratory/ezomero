@@ -7,6 +7,7 @@ from ._ezomero import do_across_groups
 from omero.gateway import FileAnnotationWrapper, BlitzGateway, ImageWrapper
 from omero import ApiUsageException, InternalException
 from omero.model import MapAnnotationI, TagAnnotationI, Shape
+from omero.model import CommentAnnotationI
 from omero.grid import Table
 from omero.rtypes import rint, rlong
 from omero.sys import Parameters
@@ -563,7 +564,7 @@ def get_map_annotation_ids(conn: BlitzGateway, object_type: str,
         OMERO object type, passed to ``BlitzGateway.getObject``
     object_id : int
         ID of object of ``object_type``.
-    ns : str
+    ns : str, optional
         Namespace with which to filter results
     across_groups : bool, optional
         Defines cross-group behavior of function - set to
@@ -612,7 +613,7 @@ def get_tag_ids(conn: BlitzGateway, object_type: str, object_id: int,
         OMERO object type, passed to ``BlitzGateway.getObject``
     object_id : int
         ID of object of ``object_type``.
-    ns : str
+    ns : str, optional
         Namespace with which to filter results
     across_groups : bool, optional
         Defines cross-group behavior of function - set to
@@ -648,6 +649,56 @@ def get_tag_ids(conn: BlitzGateway, object_type: str, object_id: int,
 
 
 @do_across_groups
+def get_comment_annotation_ids(conn: BlitzGateway, object_type: str,
+                               object_id: int, ns: Optional[str] = None,
+                               across_groups: Optional[bool] = True
+                               ) -> List[int]:
+    """Get IDs of comment annotations associated with an object
+
+    Parameters
+    ----------
+    conn : ``omero.gateway.BlitzGateway`` object
+        OMERO connection.
+    object_type : str
+        OMERO object type, passed to ``BlitzGateway.getObject``
+    object_id : int
+        ID of object of ``object_type``.
+    ns : str, optional
+        Namespace with which to filter results
+    across_groups : bool, optional
+        Defines cross-group behavior of function - set to
+        ``False`` to disable it.
+
+    Returns
+    -------
+    comment_ids : list of ints
+
+    Examples
+    --------
+    # Return IDs of all comments linked to an image:
+
+    >>> comment_ids = get_comment_ids(conn, 'Image', 42)
+
+    # Return IDs of comments with namespace "test" linked to a Dataset:
+
+    >>> tag_ids = get_tag_ids(conn, 'Dataset', 16, ns='test')
+    """
+    if type(object_type) is not str:
+        raise TypeError('Object type must be a string')
+    if type(object_id) is not int:
+        raise TypeError('Object id must be an integer')
+    if ns is not None and type(ns) is not str:
+        raise TypeError('Namespace must be a string or None')
+
+    target_object = conn.getObject(object_type, object_id)
+    comment_ids = []
+    for ann in target_object.listAnnotations(ns):
+        if ann.OMERO_TYPE is CommentAnnotationI:
+            comment_ids.append(ann.getId())
+    return comment_ids
+
+
+@do_across_groups
 def get_file_annotation_ids(conn: BlitzGateway, object_type: str,
                             object_id: int, ns: Optional[str] = None,
                             across_groups: Optional[bool] = True) -> List[int]:
@@ -661,7 +712,7 @@ def get_file_annotation_ids(conn: BlitzGateway, object_type: str,
         OMERO object type, passed to ``BlitzGateway.getObject``
     object_id : int
         ID of object of ``object_type``.
-    ns : str
+    ns : str, optional
         Namespace with which to filter results
     across_groups : bool, optional
         Defines cross-group behavior of function - set to
@@ -883,6 +934,38 @@ def get_tag(conn: BlitzGateway, tag_id: int,
         raise TypeError('Tag ID must be an integer')
 
     return conn.getObject('TagAnnotation', tag_id).getValue()
+
+
+@do_across_groups
+def get_comment_annotation(conn: BlitzGateway, comment_id: int,
+                           across_groups: Optional[bool] = True) -> str:
+    """Get the value of a comment annotation object
+
+    Parameters
+    ----------
+    conn : ``omero.gateway.BlitzGateway`` object
+        OMERO connection.
+    comment_id : int
+        ID of comment annotation to get.
+    across_groups : bool, optional
+        Defines cross-group behavior of function - set to
+        ``False`` to disable it.
+
+    Returns
+    -------
+    comment : str
+        The value of the specified tag annotation object.
+
+    Examples
+    --------
+    >>> comment = get_tag(conn, 62)
+    >>> print(comment)
+    This is a comment
+    """
+    if type(comment_id) is not int:
+        raise TypeError('Comment ID must be an integer')
+
+    return conn.getObject('CommentAnnotation', comment_id).getValue()
 
 
 @do_across_groups
