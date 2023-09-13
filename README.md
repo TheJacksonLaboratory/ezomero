@@ -1,4 +1,4 @@
-![Run Tests](https://github.com/TheJacksonLaboratory/ezomero/workflows/Run%20Tests/badge.svg?event=push) ![](https://raw.githubusercontent.com/TheJacksonLaboratory/ezomero/main/coverage.svg)
+![](https://raw.githubusercontent.com/TheJacksonLaboratory/ezomero/main/coverage.svg) ![https://doi.org/10.1101/2023.06.29.546930](https://img.shields.io/badge/Publication-ezomero-blue)
 
 # ezomero
 A module with convenience functions for writing Python code that interacts with OMERO.
