@@ -1,0 +1,80 @@
+# This CITATION.cff file was generated with cffinit.
+# Visit https://bit.ly/cffinit to generate yours today!
+
+cff-version: 1.2.0
+title: ezomero
+message: >-
+  If you use this software, please cite it using the
+  metadata from this file.
+type: software
+authors:
+  - given-names: Erick
+    orcid: 'https://orcid.org/0000-0002-7545-3675'
+    family-names: Martins Ratamero
+    affiliation: The Jackson Laboratory
+  - given-names: Kiya
+    family-names: Govek
+    affiliation: The Jackson Laboratory
+    orcid: 'https://orcid.org/0000-0002-2105-0715'
+  - given-names: Julio
+    family-names: Mateos-Langerak
+    affiliation: 'University of Montpellier, CNRS, INSERM'
+    orcid: 'https://orcid.org/0000-0003-1579-0773'
+  - given-names: Fernando
+    family-names: Cervantes Sanchez
+    affiliation: The Jackson Laboratory
+    orcid: 'https://orcid.org/0000-0003-0652-2750'
+  - given-names: David
+    family-names: Mellert
+    affiliation: The Jackson Laboratory
+    orcid: 'https://orcid.org/0000-0001-6606-0274'
+repository-code: 'https://github.com/TheJacksonLaboratory/ezomero'
+abstract: >-
+  Many research laboratories need to manage, process, and
+  analyze the increasingly large volumes and complexity of
+  data being produced by state-of-the-art bioimaging
+  platforms. OMERO is a popular open-source client-server
+  application that provides a unified interface for managing
+  and working with bioimages and their associated
+  measurements and metadata. Integrating OMERO into analysis
+  pipelines, such as those developed around the scientific
+  Python ecosystem, will thus be a common pattern across the
+  field of bioimaging. While OMERO has a powerful Python
+  API, it provides minimal abstraction from the underlying
+  OMERO object model and associated methods, which represent
+  more complexity than most users are interested in for the
+  context of an analysis script. We introduce ezomero, which
+  was designed to provide a convenience layer on top of
+  existing OMERO APIs and return data types that are either
+  Python primitive or commonly used in scientific Python.
+  Ezomero has minimal dependencies in addition to the OMERO
+  Python library itself and is installable directly from
+  PyPI. Here, we provide an overview of ezomero as well as
+  several vignettes to illustrate how it can be used to
+  accelerate discovery.
+license: GPL-2.0
+preferred-citation:
+  type: article
+  authors:
+  - given-names: Erick
+    orcid: 'https://orcid.org/0000-0002-7545-3675'
+    family-names: Martins Ratamero
+    affiliation: The Jackson Laboratory
+  - given-names: Kiya
+    family-names: Govek
+    affiliation: The Jackson Laboratory
+    orcid: 'https://orcid.org/0000-0002-2105-0715'
+  - given-names: Julio
+    family-names: Mateos-Langerak
+    affiliation: 'University of Montpellier, CNRS, INSERM'
+    orcid: 'https://orcid.org/0000-0003-1579-0773'
+  - given-names: Fernando
+    family-names: Cervantes Sanchez
+    affiliation: The Jackson Laboratory
+    orcid: 'https://orcid.org/0000-0003-0652-2750'
+  - given-names: David
+    family-names: Mellert
+    affiliation: The Jackson Laboratory
+    orcid: 'https://orcid.org/0000-0001-6606-0274'
+  title: "Easing OMERO adoption with ezomero"
+  doi: 10.1101/2023.06.29.546930
