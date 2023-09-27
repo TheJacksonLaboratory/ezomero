@@ -94,10 +94,19 @@ def post_dataset(conn: BlitzGateway, dataset_name: str,
     if description is not None:
         dataset.setDescription(description)
     dataset.save()
+    print(dataset.getId())
 
     if project_id is not None:
-        link_datasets_to_project(conn, [dataset.getId()], project_id)
-    return dataset.getId()
+        try:
+            link_datasets_to_project(conn, [dataset.getId()], project_id)
+            return dataset.getId()
+        except:
+            logging.warning('You do not have permission to create new '
+                            f'datasets in project {project_id}.')
+            conn.deleteObject("Dataset", dataset.getId())
+            return None
+    else:
+        return dataset.getId()
 
 
 def post_image(conn: BlitzGateway, image: np.ndarray, image_name: str,

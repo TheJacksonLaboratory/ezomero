@@ -38,7 +38,9 @@ def test_post_dataset(conn, project_structure, users_groups, timestamp):
     ds_test_name3 = 'test_post_dataset3_' + timestamp
     pid = 99999999
     did3 = ezomero.post_dataset(conn, ds_test_name3, project_id=pid)
+    ds_ids = ezomero.get_dataset_ids(conn)
     assert did3 is None
+    assert len(ds_ids) == 2
 
     # Dataset in cross-group project, valid permissions
     username = users_groups[1][0][0]  # test_user1
@@ -62,6 +64,8 @@ def test_post_dataset(conn, project_structure, users_groups, timestamp):
     project_info = project_structure[0]
     pid = project_info[1][1]  # proj1 (in test_group_1)
     did5 = ezomero.post_dataset(current_conn, ds_test_name5, project_id=pid)
+    ds_ids = ezomero.get_dataset_ids(current_conn)
+    assert len(ds_ids) == 1
     current_conn.close()
     assert did5 is None
 
