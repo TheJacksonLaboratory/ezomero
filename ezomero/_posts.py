@@ -95,7 +95,6 @@ def post_dataset(conn: BlitzGateway, dataset_name: str,
     if description is not None:
         dataset.setDescription(description)
     dataset.save()
-    print(dataset.getId())
 
     if project_id is not None:
         try:
