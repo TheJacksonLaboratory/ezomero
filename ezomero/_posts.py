@@ -16,6 +16,7 @@ from omero.gateway import ScreenWrapper, FileAnnotationWrapper
 from omero.gateway import MapAnnotationWrapper, OriginalFileWrapper
 from omero.gateway import CommentAnnotationWrapper
 from omero.rtypes import rstring, rint, rdouble
+from omero import SecurityViolation
 from .rois import Point, Line, Rectangle, Ellipse
 from .rois import Polygon, Polyline, Label
 import importlib.util
@@ -96,8 +97,16 @@ def post_dataset(conn: BlitzGateway, dataset_name: str,
     dataset.save()
 
     if project_id is not None:
-        link_datasets_to_project(conn, [dataset.getId()], project_id)
-    return dataset.getId()
+        try:
+            link_datasets_to_project(conn, [dataset.getId()], project_id)
+            return dataset.getId()
+        except SecurityViolation:
+            logging.warning('You do not have permission to create new '
+                            f'datasets in project {project_id}.')
+            conn.deleteObject("Dataset", dataset.getId())
+            return None
+    else:
+        return dataset.getId()
 
 
 def post_image(conn: BlitzGateway, image: np.ndarray, image_name: str,
@@ -689,7 +698,7 @@ def create_columns(table: Any,
                    headers: bool) -> List[Column]:
     """Helper function to create the correct column types from a table"""
     cols = []
-    if type(table) == list:
+    if isinstance(table, list):
         if headers:
             titles = table[0]
             data = table[1:]
@@ -712,7 +721,7 @@ def create_columns(table: Any,
                 max_size = len(max(data[i], key=len))
                 cols.append(StringColumn(titles[i], '',
                             max_size, data[i]))
-    elif type(table) == pd.core.frame.DataFrame:
+    elif isinstance(table, pd.core.frame.DataFrame):
         df = table.convert_dtypes()
         ints = df.select_dtypes(include='int')
         for col in ints:

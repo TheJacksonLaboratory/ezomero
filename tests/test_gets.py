@@ -538,7 +538,7 @@ def test_get_shape_and_get_shape_ids(conn, project_structure,
         shape = ezomero.get_shape(conn, shape_ids[i])
         assert hasattr(shape, 'label')
         for pre_shape in shapes:
-            if type(shape) == type(pre_shape):
+            if type(shape) is type(pre_shape):
                 assert shape.fill_color == pre_shape.fill_color
                 assert shape.stroke_color == pre_shape.stroke_color
                 assert shape.stroke_width == pre_shape.stroke_width

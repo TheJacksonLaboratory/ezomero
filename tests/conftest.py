@@ -92,7 +92,7 @@ def omero_params(request):
     web_host = request.config.getoption("--omero-web-host")
     port = request.config.getoption("--omero-port")
     secure = request.config.getoption("--omero-secure")
-    return(user, password, host, web_host, port, secure)
+    return (user, password, host, web_host, port, secure)
 
 
 @pytest.fixture(scope='session')
