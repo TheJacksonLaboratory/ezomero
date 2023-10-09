@@ -1283,6 +1283,65 @@ def get_shape(conn: BlitzGateway, shape_id: int,
     omero_shape = conn.getObject('Shape', shape_id)
     return _omero_shape_to_shape(omero_shape)
 
+@do_across_groups
+def get_object_ids_by_tag(conn: BlitzGateway,
+                         obj_type: str,
+                         tag_ids: Union[List[int], Tuple[int, ...], int],
+                         set_operation: Optional[Literal["union",
+                                                         "intersection",
+                                                         "difference"]] = "union",
+                         across_groups: Optional[bool] = True) -> List[int]:
+    """
+    Get the IDs of the objects retrived by the given tags, combined by a given set operation.
+
+    Parameters
+    ----------
+    conn : ``omero.gateway.BlitzGateway`` object
+        OMERO connection.
+    object_type : str
+        OMERO object type, passed to ``BlitzGateway.getObject``
+    tag_ids : int
+        ID of the tags to retrieve object ids from.
+    set_operation : {'union', 'intersection', 'difference'}, optional
+        Specify the rule to combine the list of ids retrieved by each tag_id.
+        ('union') will retrieve all object_ids found under all combined tags, ('intersection')
+        will retrieve the object_ids present in all tags, and ('difference') will substract
+        from the first tag object_ids the object_ids found under the subsequent tags.
+        Default to ('union').
+    across_groups : bool, optional
+        Defines cross-group behavior of function - set to
+        ``False`` to disable it.
+
+    Returns
+    -------
+    object_ids : list of ints
+
+    Examples
+    --------
+    # Return IDs of all dataset with the tag_id 10:
+
+    >>> dataset_ids = get_object_ids_by_tag(conn, 'Dataset', 10)
+
+    # Return IDs of all images having all three tag_id 10, 20 and 30:
+
+    >>> dataset_ids = get_object_ids_by_tag(conn, 'Image', [10, 20, 30], 'intersection')
+    """
+    if isinstance(tag_ids, int):
+        tag_ids = [tag_ids]
+
+    assert set_operation in ["union", "difference", "intersection"], "set_operation must be one of ('union', 'intersection', 'difference')."
+
+    if set_operation == "union":
+        return [obj.getId() for obj in conn.getObjectsByAnnotations(obj_type, tag_ids)]
+    elif set_operation in ["intersection", "difference"]:
+        obj_ids = set([obj.getId() for obj in conn.getObjectsByAnnotations(obj_type, tag_ids[0:1])])
+        for tag_id in tag_ids[1:]:
+            new_ids = set([obj.getId() for obj in conn.getObjectsByAnnotations(obj_type, [tag_id])])
+            if set_operation == "intersection":
+                obj_ids.intersection_update(new_ids)
+            else:
+                obj_ids.difference_update(new_ids)
+        return list(obj_ids)
 
 def _create_table(table_obj: Table
                   ) -> Any:
