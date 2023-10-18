@@ -1332,7 +1332,8 @@ def get_object_ids_by_tag(conn: BlitzGateway,
     assert set_operation in ["union", "difference", "intersection"], "set_operation must be one of ('union', 'intersection', 'difference')."
 
     if set_operation == "union":
-        return [obj.getId() for obj in conn.getObjectsByAnnotations(obj_type, tag_ids)]
+        id_l = [obj.getId() for obj in conn.getObjectsByAnnotations(obj_type, tag_ids)]
+        return list(set(id_l)) # Removing duplicates
     elif set_operation in ["intersection", "difference"]:
         obj_ids = set([obj.getId() for obj in conn.getObjectsByAnnotations(obj_type, tag_ids[0:1])])
         for tag_id in tag_ids[1:]:
