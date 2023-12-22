@@ -774,13 +774,13 @@ def _shape_to_omero_shape(shape: Union[Point, Line, Rectangle, Ellipse,
         omero_shape.radiusY = rdouble(shape.y_rad)
     elif isinstance(shape, Polygon):
         omero_shape = PolygonI()
-        points_str = "".join("".join([str(x), ',', str(y), ', '])
-                             for x, y in shape.points)[:-2]
+        points_str = "".join("".join([str(x), ',', str(y), ' '])
+                             for x, y in shape.points).rstrip()
         omero_shape.points = rstring(points_str)
     elif isinstance(shape, Polyline):
         omero_shape = PolylineI()
-        points_str = "".join("".join([str(x), ',', str(y), ', '])
-                             for x, y in shape.points)[:-2]
+        points_str = "".join("".join([str(x), ',', str(y), ' '])
+                             for x, y in shape.points).rstrip()
         omero_shape.points = rstring(points_str)
     elif isinstance(shape, Label):
         omero_shape = LabelI()
