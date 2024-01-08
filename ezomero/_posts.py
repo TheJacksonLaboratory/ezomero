@@ -385,8 +385,10 @@ def post_comment_annotation(conn: BlitzGateway, object_type: str,
 
 
 @do_across_groups
-def post_file_annotation(conn: BlitzGateway, object_type: str, object_id: int,
+def post_file_annotation(conn: BlitzGateway,
                          file_path: str, ns: str,
+                         object_type: Optional[str] = None,
+                         object_id: Optional[int] = None,
                          mimetype: Optional[str] = None,
                          description: Optional[str] = None,
                          across_groups: Optional[bool] = True
@@ -397,18 +399,18 @@ def post_file_annotation(conn: BlitzGateway, object_type: str, object_id: int,
     ----------
     conn : ``omero.gateway.BlitzGateway`` object
         OMERO connection.
-    object_type : str
-       OMERO object type, passed to ``BlitzGateway.getObjects``
-    object_ids : int
-        ID of object to which the new MapAnnotation will be linked.
     file_path : string
         local path to file to be added as FileAnnotation
     ns : str
         Namespace for the FileAnnotation
-    mimetype : str
+    object_type : str, optional
+       OMERO object type, passed to ``BlitzGateway.getObject``
+    object_id : int, optional
+        ID of object to which the new FileAnnotation will be linked.
+    mimetype : str, optional
         String of the form 'type/subtype', usable for a MIME content-type
         header.
-    description : str
+    description : str, optional
         File description to be added to FileAnnotation
     across_groups : bool, optional
         Defines cross-group behavior of function - set to
@@ -427,7 +429,7 @@ def post_file_annotation(conn: BlitzGateway, object_type: str, object_id: int,
     --------
     >>> ns = 'jax.org/jax/example/namespace'
     >>> path = '/home/user/Downloads/file_ann.txt'
-    >>> post_file_annotation(conn, "Image", 56, path, ns)
+    >>> post_file_annotation(conn, path, ns, "Image", 56)
     234
     """
 
@@ -435,7 +437,7 @@ def post_file_annotation(conn: BlitzGateway, object_type: str, object_id: int,
         raise TypeError('file_path must be of type `str`')
 
     obj = None
-    if object_id is not None:
+    if object_id is not None and object_type is not None:
         if type(object_id) is not int:
             raise TypeError('object_ids must be integer')
         obj = conn.getObject(object_type, object_id)
@@ -450,13 +452,13 @@ def post_file_annotation(conn: BlitzGateway, object_type: str, object_id: int,
                             '(check if you have permissions to it)')
             return None
     else:
-        raise TypeError('Object ID cannot be empty')
+        set_group(conn, conn.getGroupFromContext().id)
     if not mimetype:
         mimetype, _ = mimetypes.guess_type(file_path)
     file_ann = conn.createFileAnnfromLocalFile(
         file_path, mimetype=mimetype, ns=ns, desc=description)
-    obj.linkAnnotation(file_ann)
-
+    if object_id is not None and object_type is not None:
+        obj.linkAnnotation(file_ann)
     return file_ann.getId()
 
 
