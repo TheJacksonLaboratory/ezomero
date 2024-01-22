@@ -16,6 +16,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install flake8 pytest
+          pip install https://github.com/glencoesoftware/zeroc-ice-py-linux-x86_64/releases/download/20231130/zeroc_ice-3.6.5-cp38-cp38-manylinux_2_28_x86_64.whl
           pip install .[tables]
       - name: Test with pytest
         run: |
