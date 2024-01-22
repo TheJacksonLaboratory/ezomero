@@ -423,7 +423,7 @@ def post_file_annotation(conn: BlitzGateway,
     Returns
     -------
     file_ann_id : int
-        IDs of newly created MapAnnotation
+        IDs of newly created FileAnnotation
 
     Examples
     --------
