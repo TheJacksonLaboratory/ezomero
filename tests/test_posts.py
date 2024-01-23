@@ -38,7 +38,9 @@ def test_post_dataset(conn, project_structure, users_groups, timestamp):
     ds_test_name3 = 'test_post_dataset3_' + timestamp
     pid = 99999999
     did3 = ezomero.post_dataset(conn, ds_test_name3, project_id=pid)
+    ds_ids = ezomero.get_dataset_ids(conn)
     assert did3 is None
+    assert len(ds_ids) == 2
 
     # Dataset in cross-group project, valid permissions
     username = users_groups[1][0][0]  # test_user1
@@ -62,6 +64,8 @@ def test_post_dataset(conn, project_structure, users_groups, timestamp):
     project_info = project_structure[0]
     pid = project_info[1][1]  # proj1 (in test_group_1)
     did5 = ezomero.post_dataset(current_conn, ds_test_name5, project_id=pid)
+    ds_ids = ezomero.get_dataset_ids(current_conn)
+    assert len(ds_ids) == 1
     current_conn.close()
     assert did5 is None
 
@@ -314,22 +318,21 @@ def test_post_get_file_annotation(conn, project_structure, users_groups,
     ns = "jax.org/omeroutils/tests/v0"
     # test sanitized input on post
     with pytest.raises(TypeError):
-        _ = ezomero.post_file_annotation(conn, "Image", im_id, 10, ns)
+        _ = ezomero.post_file_annotation(conn, 10, ns, "Image", im_id)
     with pytest.raises(TypeError):
-        _ = ezomero.post_file_annotation(conn, "Image", '10', file_ann, ns)
-    with pytest.raises(TypeError):
-        _ = ezomero.post_file_annotation(conn, "Image", None, file_ann, ns)
+        _ = ezomero.post_file_annotation(conn, file_ann, ns, "Image", '10')
 
-    file_ann_id = ezomero.post_file_annotation(conn, "Image", im_id, file_ann,
-                                               ns)
+    file_ann_id = ezomero.post_file_annotation(conn, file_ann, ns,
+                                               "Image", im_id)
     return_ann = ezomero.get_file_annotation(conn, file_ann_id)
     assert filecmp.cmp(return_ann, file_ann)
     os.remove(return_ann)
 
     # Test posting to non-existing object
     im_id2 = 999999999
-    file_ann_id2 = ezomero.post_file_annotation(conn, "Image", im_id2,
-                                                file_ann, ns)
+    file_ann_id2 = ezomero.post_file_annotation(conn,
+                                                file_ann, ns,
+                                                "Image", im_id2)
     assert file_ann_id2 is None
 
     # Test posting cross-group
@@ -337,8 +340,9 @@ def test_post_get_file_annotation(conn, project_structure, users_groups,
     groupname = users_groups[0][0][0]  # test_group_1
     current_conn = conn.suConn(username, groupname)
     im_id3 = image_info[2][1]  # im2, in test_group_2
-    file_ann_id3 = ezomero.post_file_annotation(current_conn, "Image", im_id3,
-                                                file_ann, ns)
+    file_ann_id3 = ezomero.post_file_annotation(current_conn,
+                                                file_ann, ns,
+                                                "Image", im_id3)
     return_ann3 = ezomero.get_file_annotation(current_conn, file_ann_id3)
     assert filecmp.cmp(return_ann3, file_ann)
     os.remove(return_ann3)
@@ -349,8 +353,9 @@ def test_post_get_file_annotation(conn, project_structure, users_groups,
     groupname = users_groups[0][1][0]  # test_group_2
     current_conn = conn.suConn(username, groupname)
     im_id4 = image_info[1][1]  # im1(in test_group_1)
-    file_ann_id4 = ezomero.post_file_annotation(current_conn, "Image", im_id4,
-                                                file_ann, ns)
+    file_ann_id4 = ezomero.post_file_annotation(current_conn,
+                                                file_ann, ns,
+                                                "Image", im_id4)
     assert file_ann_id4 is None
     current_conn.close()
 
@@ -359,13 +364,36 @@ def test_post_get_file_annotation(conn, project_structure, users_groups,
     groupname = users_groups[0][0][0]  # test_group_1
     current_conn = conn.suConn(username, groupname)
     im_id5 = image_info[2][1]  # im2, in test_group_2
-    file_ann_id5 = ezomero.post_file_annotation(current_conn, "Image", im_id5,
+    file_ann_id5 = ezomero.post_file_annotation(current_conn,
                                                 file_ann, ns,
+                                                "Image", im_id5,
                                                 across_groups=False)
     assert file_ann_id5 is None
     current_conn.close()
 
-    conn.deleteObjects("Annotation", [file_ann_id, file_ann_id3],
+    # Test posting orphaned
+    current_conn = conn.suConn(username, groupname)
+    file_ann_id6 = ezomero.post_file_annotation(current_conn, file_ann, ns)
+    print(file_ann_id6)
+    return_ann6 = ezomero.get_file_annotation(current_conn, file_ann_id6)
+    assert filecmp.cmp(return_ann6, file_ann)
+    os.remove(return_ann6)
+
+    # Test posting orphaned, partial completion
+    file_ann_id7 = ezomero.post_file_annotation(conn, file_ann, ns, "Image")
+    return_ann7 = ezomero.get_file_annotation(conn, file_ann_id7)
+    assert filecmp.cmp(return_ann7, file_ann)
+    os.remove(return_ann7)
+
+    # Test posting orphaned, partial completion
+    file_ann_id8 = ezomero.post_file_annotation(conn, file_ann, ns,
+                                                object_id=10)
+    return_ann8 = ezomero.get_file_annotation(conn, file_ann_id8)
+    assert filecmp.cmp(return_ann8, file_ann)
+    os.remove(return_ann8)
+
+    conn.deleteObjects("Annotation", [file_ann_id, file_ann_id3, file_ann_id6,
+                                      file_ann_id7, file_ann_id8],
                        deleteAnns=True, deleteChildren=True, wait=True)
 
 

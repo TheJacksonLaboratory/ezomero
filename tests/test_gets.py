@@ -389,15 +389,19 @@ def test_get_file_annotation_and_ids(conn, project_structure, tmp_path):
     file_path.write_text("hello world!")
     file_ann = str(file_path)
     ns = "jax.org/omeroutils/tests/v0"
-    file_ann_id = ezomero.post_file_annotation(conn, "Image", im_id,
-                                               file_ann, ns)
-    file_ann_id2 = ezomero.post_file_annotation(conn, "Image", im_id,
-                                                file_ann, ns)
-    file_ann_id3 = ezomero.post_file_annotation(conn, "Image", im_id,
-                                                file_ann, ns)
+    file_ann_id = ezomero.post_file_annotation(conn,
+                                               file_ann, ns,
+                                               "Image", im_id)
+    file_ann_id2 = ezomero.post_file_annotation(conn,
+                                                file_ann, ns,
+                                                "Image", im_id)
+    file_ann_id3 = ezomero.post_file_annotation(conn,
+                                                file_ann, ns,
+                                                "Image", im_id)
     ns2 = "different namespace"
-    file_ann_id4 = ezomero.post_file_annotation(conn, "Image", im_id,
-                                                file_ann, ns2)
+    file_ann_id4 = ezomero.post_file_annotation(conn,
+                                                file_ann, ns2,
+                                                "Image", im_id)
 
     # Test sanitizing inputs
     with pytest.raises(TypeError):
@@ -538,7 +542,7 @@ def test_get_shape_and_get_shape_ids(conn, project_structure,
         shape = ezomero.get_shape(conn, shape_ids[i])
         assert hasattr(shape, 'label')
         for pre_shape in shapes:
-            if type(shape) == type(pre_shape):
+            if type(shape) is type(pre_shape):
                 assert shape.fill_color == pre_shape.fill_color
                 assert shape.stroke_color == pre_shape.stroke_color
                 assert shape.stroke_width == pre_shape.stroke_width

@@ -16,6 +16,7 @@ from omero.gateway import ScreenWrapper, FileAnnotationWrapper
 from omero.gateway import MapAnnotationWrapper, OriginalFileWrapper
 from omero.gateway import CommentAnnotationWrapper
 from omero.rtypes import rstring, rint, rdouble
+from omero import SecurityViolation
 from .rois import Point, Line, Rectangle, Ellipse
 from .rois import Polygon, Polyline, Label
 import importlib.util
@@ -96,8 +97,16 @@ def post_dataset(conn: BlitzGateway, dataset_name: str,
     dataset.save()
 
     if project_id is not None:
-        link_datasets_to_project(conn, [dataset.getId()], project_id)
-    return dataset.getId()
+        try:
+            link_datasets_to_project(conn, [dataset.getId()], project_id)
+            return dataset.getId()
+        except SecurityViolation:
+            logging.warning('You do not have permission to create new '
+                            f'datasets in project {project_id}.')
+            conn.deleteObject("Dataset", dataset.getId())
+            return None
+    else:
+        return dataset.getId()
 
 
 def post_image(conn: BlitzGateway, image: np.ndarray, image_name: str,
@@ -376,8 +385,10 @@ def post_comment_annotation(conn: BlitzGateway, object_type: str,
 
 
 @do_across_groups
-def post_file_annotation(conn: BlitzGateway, object_type: str, object_id: int,
+def post_file_annotation(conn: BlitzGateway,
                          file_path: str, ns: str,
+                         object_type: Optional[str] = None,
+                         object_id: Optional[int] = None,
                          mimetype: Optional[str] = None,
                          description: Optional[str] = None,
                          across_groups: Optional[bool] = True
@@ -388,18 +399,18 @@ def post_file_annotation(conn: BlitzGateway, object_type: str, object_id: int,
     ----------
     conn : ``omero.gateway.BlitzGateway`` object
         OMERO connection.
-    object_type : str
-       OMERO object type, passed to ``BlitzGateway.getObjects``
-    object_ids : int
-        ID of object to which the new MapAnnotation will be linked.
     file_path : string
         local path to file to be added as FileAnnotation
     ns : str
         Namespace for the FileAnnotation
-    mimetype : str
+    object_type : str, optional
+       OMERO object type, passed to ``BlitzGateway.getObject``
+    object_id : int, optional
+        ID of object to which the new FileAnnotation will be linked.
+    mimetype : str, optional
         String of the form 'type/subtype', usable for a MIME content-type
         header.
-    description : str
+    description : str, optional
         File description to be added to FileAnnotation
     across_groups : bool, optional
         Defines cross-group behavior of function - set to
@@ -412,13 +423,13 @@ def post_file_annotation(conn: BlitzGateway, object_type: str, object_id: int,
     Returns
     -------
     file_ann_id : int
-        IDs of newly created MapAnnotation
+        IDs of newly created FileAnnotation
 
     Examples
     --------
     >>> ns = 'jax.org/jax/example/namespace'
     >>> path = '/home/user/Downloads/file_ann.txt'
-    >>> post_file_annotation(conn, "Image", 56, path, ns)
+    >>> post_file_annotation(conn, path, ns, "Image", 56)
     234
     """
 
@@ -426,7 +437,7 @@ def post_file_annotation(conn: BlitzGateway, object_type: str, object_id: int,
         raise TypeError('file_path must be of type `str`')
 
     obj = None
-    if object_id is not None:
+    if object_id is not None and object_type is not None:
         if type(object_id) is not int:
             raise TypeError('object_ids must be integer')
         obj = conn.getObject(object_type, object_id)
@@ -441,13 +452,13 @@ def post_file_annotation(conn: BlitzGateway, object_type: str, object_id: int,
                             '(check if you have permissions to it)')
             return None
     else:
-        raise TypeError('Object ID cannot be empty')
+        set_group(conn, conn.getGroupFromContext().id)
     if not mimetype:
         mimetype, _ = mimetypes.guess_type(file_path)
     file_ann = conn.createFileAnnfromLocalFile(
         file_path, mimetype=mimetype, ns=ns, desc=description)
-    obj.linkAnnotation(file_ann)
-
+    if object_id is not None and object_type is not None:
+        obj.linkAnnotation(file_ann)
     return file_ann.getId()
 
 
@@ -689,7 +700,7 @@ def create_columns(table: Any,
                    headers: bool) -> List[Column]:
     """Helper function to create the correct column types from a table"""
     cols = []
-    if type(table) == list:
+    if isinstance(table, list):
         if headers:
             titles = table[0]
             data = table[1:]
@@ -712,7 +723,7 @@ def create_columns(table: Any,
                 max_size = len(max(data[i], key=len))
                 cols.append(StringColumn(titles[i], '',
                             max_size, data[i]))
-    elif type(table) == pd.core.frame.DataFrame:
+    elif isinstance(table, pd.core.frame.DataFrame):
         df = table.convert_dtypes()
         ints = df.select_dtypes(include='int')
         for col in ints:
@@ -765,13 +776,13 @@ def _shape_to_omero_shape(shape: Union[Point, Line, Rectangle, Ellipse,
         omero_shape.radiusY = rdouble(shape.y_rad)
     elif isinstance(shape, Polygon):
         omero_shape = PolygonI()
-        points_str = "".join("".join([str(x), ',', str(y), ', '])
-                             for x, y in shape.points)[:-2]
+        points_str = "".join("".join([str(x), ',', str(y), ' '])
+                             for x, y in shape.points).rstrip()
         omero_shape.points = rstring(points_str)
     elif isinstance(shape, Polyline):
         omero_shape = PolylineI()
-        points_str = "".join("".join([str(x), ',', str(y), ', '])
-                             for x, y in shape.points)[:-2]
+        points_str = "".join("".join([str(x), ',', str(y), ' '])
+                             for x, y in shape.points).rstrip()
         omero_shape.points = rstring(points_str)
     elif isinstance(shape, Label):
         omero_shape = LabelI()
