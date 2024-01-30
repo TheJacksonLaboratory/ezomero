@@ -301,6 +301,8 @@ class Importer:
             params = Parameters()
             path_query = self.make_substitutions()
             path_query = path_query.strip('/')
+            if path_query.endswith(".zarr"):
+                path_query = f"{path_query}/.zattrs"
             params.map = {"cpath": rstring(path_query)}
             results = q.projection(
                 "SELECT i.id FROM Image i"
@@ -468,6 +470,7 @@ class Importer:
                     '-k', self.conn.getSession().getUuid().val,
                     '-s', self.conn.host,
                     '-p', str(self.conn.port),
+                    '--depth', '10',
                     '--transfer', 'ln_s',
                     str(self.file_path)])
         if cli.rv == 0:
