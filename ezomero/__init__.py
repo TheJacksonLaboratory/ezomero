@@ -43,7 +43,8 @@ from ._gets import (get_image,
                     get_original_filepaths,
                     get_pyramid_levels,
                     get_table,
-                    get_shape)
+                    get_shape,
+                    get_object_ids_by_tag)
 
 __all__ = ['post_dataset',
            'post_image',
@@ -75,6 +76,7 @@ __all__ = ['post_dataset',
            'get_pyramid_levels',
            'get_table',
            'get_shape',
+           'get_object_ids_by_tag',
            'put_map_annotation',
            'put_description',
            'filter_by_filename',
