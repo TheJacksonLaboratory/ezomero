@@ -332,6 +332,7 @@ def get_image_ids(conn: BlitzGateway, project: Optional[int] = None,
                   dataset: Optional[int] = None,
                   plate: Optional[int] = None,
                   well: Optional[int] = None,
+                  run: Optional[int] = None,
                   across_groups: Optional[bool] = True) -> List[int]:
     """Return a list of image ids based on image container
 
@@ -351,6 +352,8 @@ def get_image_ids(conn: BlitzGateway, project: Optional[int] = None,
         all images contained in all Wells belonging to the specified Plate.
     well : int, optional
         ID of Well from which to return image IDs.
+    run : int, optional
+        ID of Run from which to return image IDs.
     across_groups : bool, optional
         Defines cross-group behavior of function - set to
         ``False`` to disable it.
@@ -366,8 +369,8 @@ def get_image_ids(conn: BlitzGateway, project: Optional[int] = None,
     ``ezomero.set_group`` to specify group prior to passing
     the `conn` object to this function.
 
-    Only one of Project, Dataset, Plate, or Well can be specified. If none of
-    those are specified, orphaned images are returned.
+    Only one of Project, Dataset, Plate, Well or Run can be specified. If
+    none of those are specified, orphaned images are returned.
 
     Examples
     --------
@@ -380,11 +383,11 @@ def get_image_ids(conn: BlitzGateway, project: Optional[int] = None,
     >>> ds_ims = get_image_ids(conn, dataset=448)
     """
     arg_counter = 0
-    for arg in [project, dataset, plate, well]:
+    for arg in [project, dataset, plate, well, run]:
         if arg is not None:
             arg_counter += 1
     if arg_counter > 1:
-        raise ValueError('Only one of Project/Dataset/Plate/Well'
+        raise ValueError('Only one of Project/Dataset/Plate/Well/Run'
                          ' can be specified')
 
     q = conn.getQueryService()
@@ -438,6 +441,18 @@ def get_image_ids(conn: BlitzGateway, project: Optional[int] = None,
             " JOIN w.wellSamples ws"
             " JOIN ws.image i"
             " WHERE w.id=:well",
+            params,
+            conn.SERVICE_OPTS
+            )
+    elif run is not None:
+        if not isinstance(run, int):
+            raise TypeError('Run ID must be integer')
+        params.map = {"run": rlong(run)}
+        results = q.projection(
+            "SELECT i.id FROM WellSample ws"
+            " JOIN ws.image i"
+            " JOIN ws.plateAcquisition pa"
+            " WHERE pa.id=:run",
             params,
             conn.SERVICE_OPTS
             )
