@@ -18,3 +18,23 @@ In general, you will need to create a `BlitzGateway` object using `ezomero.conne
 # Documentation
 
 Documentation is available at https://thejacksonlaboratory.github.io/ezomero/
+
+# Development
+
+You will need Docker installed and running to run the tests.
+
+Setup your "omero" python environment with a local ezomero and pytest:
+```
+> conda activate omero  # Activate your omero environment with conda or pip
+(omero) > cd /your_local_clone/ezomero
+(omero) > pip install -e .
+(omero) > pip install pytest
+```
+
+To run the tests, startup the test OMERO server with Docker and run pytest
+```
+> cd /your_local_clone/ezomero
+> docker-compose -f tests/docker-compose.yml up -d
+> conda activate omero
+(omero) > python -m pytest .\tests
+```
