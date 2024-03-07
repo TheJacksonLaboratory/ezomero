@@ -573,13 +573,21 @@ def test_get_file_annotation_and_ids(conn, project_structure, tmp_path):
 
 def test_get_well_id(conn, screen_structure):
     plate_id = screen_structure[1]
-    well_id1 = screen_structure[4]
-    well_id2 = screen_structure[7]
+    plate2_id = screen_structure[1]
+    plate3_id = screen_structure[1]
+    well_id1 = screen_structure[7]
+    well_id2 = screen_structure[10]
+    well_id3 = screen_structure[13]
+    well_id4 = screen_structure[15]
 
     well1_id_result = ezomero.get_well_id(conn, plate_id, row=1, column=1)
     well2_id_result = ezomero.get_well_id(conn, plate_id, row=2, column=2)
+    well3_id_result = ezomero.get_well_id(conn, plate2_id, row=2, column=2)
+    well4_id_result = ezomero.get_well_id(conn, plate3_id, row=1, column=1)
     assert well_id1 == well1_id_result
     assert well_id2 == well2_id_result
+    assert well_id3 == well3_id_result
+    assert well_id4 == well4_id_result
     assert ezomero.get_well_id(conn, plate_id, row=5, column=9) is None
 
 
