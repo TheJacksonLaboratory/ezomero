@@ -454,7 +454,7 @@ def screen_structure(conn, timestamp, image_fixture):
     screen.save()
     screen_id = screen.getId()
     # Create Plate
-    plate_name = "plate_" + timestamp
+    plate_name = "plate1_" + timestamp
     plate = PlateWrapper(conn, PlateI())
     plate.setName(plate_name)
     plate.save()
@@ -465,7 +465,7 @@ def screen_structure(conn, timestamp, image_fixture):
     update_service.saveObject(link)
 
     # Create second Plate
-    plate2_name = "plate_" + timestamp
+    plate2_name = "plate2_" + timestamp
     plate2 = PlateWrapper(conn, PlateI())
     plate2.setName(plate2_name)
     plate2.save()
@@ -476,10 +476,10 @@ def screen_structure(conn, timestamp, image_fixture):
     update_service.saveObject(link)
 
     # Create Well (row 1, col 1)
-    well = WellI()
-    well.setPlate(PlateI(plate_id, False))
-    well.setColumn(rint(1))
-    well.setRow(rint(1))
+    well1 = WellI()
+    well1.setPlate(PlateI(plate_id, False))
+    well1.setColumn(rint(1))
+    well1.setRow(rint(1))
 
     # Create another Well (row 2, col 2)
     well2 = WellI()
@@ -494,8 +494,8 @@ def screen_structure(conn, timestamp, image_fixture):
     well3.setRow(rint(2))
 
     # Create PlateAcquisition/Run for plate 1
-    run = PlateAcquisitionI()
-    run.setPlate(PlateI(plate_id, False))
+    run1 = PlateAcquisitionI()
+    run1.setPlate(PlateI(plate_id, False))
     run2 = PlateAcquisitionI()
     run2.setPlate(PlateI(plate_id, False))
 
@@ -503,23 +503,37 @@ def screen_structure(conn, timestamp, image_fixture):
     run3 = PlateAcquisitionI()
     run3.setPlate(PlateI(plate2_id, False))
 
+    well1 = update_service.saveAndReturnObject(well1)
+    well2 = update_service.saveAndReturnObject(well2)
+    well3 = update_service.saveAndReturnObject(well3)
+    well1_id = well1.getId().getValue()
+    well2_id = well2.getId().getValue()
+    well3_id = well3.getId().getValue()
+
+    run1 = update_service.saveAndReturnObject(run1)
+    run2 = update_service.saveAndReturnObject(run2)
+    run3 = update_service.saveAndReturnObject(run3)
+    run1_id = run1.getId().getValue()
+    run2_id = run2.getId().getValue()
+    run3_id = run3.getId().getValue()
+
     # Create Well Sample with Image for both wells
     ws = WellSampleI()
     im_id1 = ezomero.post_image(conn, image_fixture, "well image")
     ws.setImage(ImageI(im_id1, False))
-    well.addWellSample(ws)
-    run.addWellSample(ws)
+    well1.addWellSample(ws)
+    run1.addWellSample(ws)
 
     ws2 = WellSampleI()
     im_id2 = ezomero.post_image(conn, image_fixture, "well image2")
     ws2.setImage(ImageI(im_id2, False))
     well2.addWellSample(ws2)
-    run.addWellSample(ws2)
+    run1.addWellSample(ws2)
 
     ws3 = WellSampleI()
     im_id3 = ezomero.post_image(conn, image_fixture, "well image3")
     ws3.setImage(ImageI(im_id3, False))
-    well.addWellSample(ws3)
+    well1.addWellSample(ws3)
     run2.addWellSample(ws3)
 
     ws4 = WellSampleI()
@@ -534,22 +548,12 @@ def screen_structure(conn, timestamp, image_fixture):
     well3.addWellSample(ws5)
     run3.addWellSample(ws5)
 
-    well_obj = update_service.saveAndReturnObject(well)
-    well2_obj = update_service.saveAndReturnObject(well2)
-    well3_obj = update_service.saveAndReturnObject(well3)
-    well_id = well_obj.getId().getValue()
-    well2_id = well2_obj.getId().getValue()
-    well3_id = well3_obj.getId().getValue()
-
-    run_obj = update_service.saveAndReturnObject(run)
-    run2_obj = update_service.saveAndReturnObject(run2)
-    run3_obj = update_service.saveAndReturnObject(run3)
-    run_id = run_obj.getId().getValue()
-    run2_id = run2_obj.getId().getValue()
-    run3_id = run3_obj.getId().getValue()
+    # One call for each plate is enough to update
+    well1 = update_service.saveAndReturnObject(well1)
+    well3 = update_service.saveAndReturnObject(well3)
 
     # Create OrphanPlate
-    plate3_name = "plate_" + timestamp
+    plate3_name = "plate3_" + timestamp
     plate3 = PlateWrapper(conn, PlateI())
     plate3.setName(plate3_name)
     plate3.save()
@@ -567,12 +571,12 @@ def screen_structure(conn, timestamp, image_fixture):
     ws6.setImage(ImageI(im_id6, False))
     well4.addWellSample(ws6)
 
-    well4_obj = update_service.saveAndReturnObject(well4)
-    well4_id = well4_obj.getId().getValue()
+    well4 = update_service.saveAndReturnObject(well4)
+    well4_id = well4.getId().getValue()
 
     yield [screen_id, plate_id, plate2_id, plate3_id,
-           run_id, run2_id, run3_id,
-           well_id, im_id1, im_id3,
+           run1_id, run2_id, run3_id,
+           well1_id, im_id1, im_id3,
            well2_id, im_id2, im_id4,
            well3_id, im_id5,
            well4_id, im_id6]

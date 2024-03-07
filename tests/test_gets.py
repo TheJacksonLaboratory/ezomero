@@ -573,8 +573,8 @@ def test_get_file_annotation_and_ids(conn, project_structure, tmp_path):
 
 def test_get_well_id(conn, screen_structure):
     plate_id = screen_structure[1]
-    plate2_id = screen_structure[1]
-    plate3_id = screen_structure[1]
+    plate2_id = screen_structure[2]
+    plate3_id = screen_structure[3]
     well_id1 = screen_structure[7]
     well_id2 = screen_structure[10]
     well_id3 = screen_structure[13]
