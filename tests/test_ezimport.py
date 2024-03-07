@@ -4,6 +4,24 @@ from io import StringIO
 # Test imports
 
 
+def test_cleanup(conn):
+    ids = ezomero.get_project_ids(conn)
+    if len(ids) > 0:
+        conn.deleteObjects("Project", ids, deleteChildren=True)
+    ids = ezomero.get_dataset_ids(conn)
+    if len(ids) > 0:
+        conn.deleteObjects("Dataset", ids, deleteChildren=True)
+    ids = ezomero.get_image_ids(conn)
+    if len(ids) > 0:
+        conn.deleteObjects("Image", ids)
+    ids = ezomero.get_screen_ids(conn)
+    if len(ids) > 0:
+        conn.deleteObjects("Screen", ids, deleteChildren=True)
+    ids = ezomero.get_plate_ids(conn)
+    if len(ids) > 0:
+        conn.deleteObjects("Plate", ids, deleteChildren=True)
+
+
 def test_ezimport(conn, monkeypatch):
 
     # test simple import, single file
@@ -30,6 +48,7 @@ def test_ezimport(conn, monkeypatch):
     monkeypatch.setattr('sys.stdin', io)
     id = ezomero.ezimport(conn, fpath)
     assert len(id) == 2
+    conn.deleteObjects("Image", id)
 
 #     # test simple import, new orphan dataset
     fpath = "tests/data/test_pyramid.ome.tif"

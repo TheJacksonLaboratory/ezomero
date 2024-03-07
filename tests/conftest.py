@@ -437,6 +437,9 @@ def project_structure(conn, timestamp, image_fixture, users_groups,
     yield [project_info, dataset_info, image_info]
     current_group = conn.getGroupFromContext().getId()
     conn.SERVICE_OPTS.setOmeroGroup(-1)
+    for dname, did in dataset_info:
+        conn.deleteObjects("Dataset", [did], deleteAnns=True,
+                           deleteChildren=True, wait=True)
     for pname, pid in project_info:
         conn.deleteObjects("Project", [pid], deleteAnns=True,
                            deleteChildren=True, wait=True)
@@ -583,6 +586,8 @@ def screen_structure(conn, timestamp, image_fixture):
     current_group = conn.getGroupFromContext().getId()
     conn.SERVICE_OPTS.setOmeroGroup(-1)
     conn.deleteObjects("Screen", [screen_id], deleteAnns=True,
+                       deleteChildren=True, wait=True)
+    conn.deleteObjects("Plate", [plate3_id], deleteAnns=True,
                        deleteChildren=True, wait=True)
     conn.SERVICE_OPTS.setOmeroGroup(current_group)
 
