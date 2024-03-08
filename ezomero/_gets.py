@@ -332,6 +332,7 @@ def get_image_ids(conn: BlitzGateway, project: Optional[int] = None,
                   dataset: Optional[int] = None,
                   plate: Optional[int] = None,
                   well: Optional[int] = None,
+                  annotation: Optional[int] = None,
                   across_groups: Optional[bool] = True) -> List[int]:
     """Return a list of image ids based on image container
 
@@ -351,6 +352,9 @@ def get_image_ids(conn: BlitzGateway, project: Optional[int] = None,
         all images contained in all Wells belonging to the specified Plate.
     well : int, optional
         ID of Well from which to return image IDs.
+    annotation : int, optional
+        ID of Annotation from which to return image IDs. This will return IDs
+        of all images linked to the specified annotation.
     across_groups : bool, optional
         Defines cross-group behavior of function - set to
         ``False`` to disable it.
@@ -366,8 +370,8 @@ def get_image_ids(conn: BlitzGateway, project: Optional[int] = None,
     ``ezomero.set_group`` to specify group prior to passing
     the `conn` object to this function.
 
-    Only one of Project, Dataset, Plate, or Well can be specified. If none of
-    those are specified, orphaned images are returned.
+    Only one of Project, Dataset, Plate, Well or Annotation can be specified.
+    If none of those are specified, orphaned images are returned.
 
     Examples
     --------
@@ -378,13 +382,17 @@ def get_image_ids(conn: BlitzGateway, project: Optional[int] = None,
     # Return IDs of all images from Dataset with ID 448:
 
     >>> ds_ims = get_image_ids(conn, dataset=448)
+
+    # Return IDs of all images annotated with Tag ID 876:
+
+    >>> tag_ims = get_image_ids(conn, annotation=876)
     """
     arg_counter = 0
-    for arg in [project, dataset, plate, well]:
+    for arg in [project, dataset, plate, well, annotation]:
         if arg is not None:
             arg_counter += 1
     if arg_counter > 1:
-        raise ValueError('Only one of Project/Dataset/Plate/Well'
+        raise ValueError('Only one of Project/Dataset/Plate/Well/Annotation'
                          ' can be specified')
 
     q = conn.getQueryService()
@@ -441,6 +449,16 @@ def get_image_ids(conn: BlitzGateway, project: Optional[int] = None,
             params,
             conn.SERVICE_OPTS
             )
+    elif annotation is not None:
+        if not isinstance(annotation, int):
+            raise TypeError('Annotation ID must be integer')
+        params.map = {"annotation": rlong(annotation)}
+        results = q.projection(
+            "SELECT l.parent.id FROM ImageAnnotationLink l"
+            " WHERE l.child.id=:annotation",
+            params,
+            conn.SERVICE_OPTS
+            )
     else:
         results = q.projection(
             "SELECT i.id FROM Image i"
@@ -461,6 +479,7 @@ def get_image_ids(conn: BlitzGateway, project: Optional[int] = None,
 
 @do_across_groups
 def get_project_ids(conn: BlitzGateway,
+                    annotation: Optional[int] = None,
                     across_groups: Optional[bool] = True) -> List[int]:
     """Return a list with IDs for all available Projects.
 
@@ -468,6 +487,9 @@ def get_project_ids(conn: BlitzGateway,
     ----------
     conn : ``omero.gateway.BlitzGateway`` object
         OMERO connection.
+    annotation : int, optional
+        ID of Annotation from which to return project IDs. This will return IDs
+        of all projects linked to the specified annotation.
     across_groups : bool, optional
         Defines cross-group behavior of function - set to
         ``False`` to disable it.
@@ -482,19 +504,41 @@ def get_project_ids(conn: BlitzGateway,
     # Return IDs of all projects accessible by current user:
 
     >>> proj_ids = get_project_ids(conn)
+
+    # Return IDs of all projects annotated with tag id 576:
+
+    >>> proj_ids = get_project_ids(conn, annotation=576)
     """
-    proj_ids = []
-    for p in conn.listProjects():
-        proj_ids.append(p.getId())
+
+    q = conn.getQueryService()
+    params = Parameters()
+
+    if annotation is not None:
+        if not isinstance(annotation, int):
+            raise TypeError('Annotation ID must be integer')
+        params.map = {"annotation": rlong(annotation)}
+        results = q.projection(
+            "SELECT l.parent.id FROM ProjectAnnotationLink l"
+            " WHERE l.child.id=:annotation",
+            params,
+            conn.SERVICE_OPTS
+            )
+        proj_ids = [r[0].val for r in results]
+    else:
+        proj_ids = []
+        for p in conn.listProjects():
+            proj_ids.append(p.getId())
     return proj_ids
 
 
 @do_across_groups
 def get_dataset_ids(conn: BlitzGateway, project: Optional[int] = None,
+                    annotation: Optional[int] = None,
                     across_groups: Optional[bool] = True) -> List[int]:
     """Return a list of dataset ids based on project ID.
 
-    If no project is specified, function will return orphan datasets.
+    If no project or annotation is specified, function will return
+    orphan datasets.
 
     Parameters
     ----------
@@ -503,6 +547,9 @@ def get_dataset_ids(conn: BlitzGateway, project: Optional[int] = None,
     project : int, optional
         ID of Project from which to return dataset IDs. This will return IDs of
         all datasets contained in the specified Project.
+    annotation : int, optional
+        ID of Annotation from which to return dataset IDs. This will return IDs
+        of all datasets linked to the specified annotation.
     across_groups : bool, optional
         Defines cross-group behavior of function - set to
         ``False`` to disable it.
@@ -522,6 +569,14 @@ def get_dataset_ids(conn: BlitzGateway, project: Optional[int] = None,
 
     >>> ds_ids = get_dataset_ids(conn, project=224)
     """
+    arg_counter = 0
+    for arg in [project, annotation]:
+        if arg is not None:
+            arg_counter += 1
+    if arg_counter > 1:
+        raise ValueError('Only one of Project/Annotation'
+                         ' can be specified')
+
     q = conn.getQueryService()
     params = Parameters()
 
@@ -534,6 +589,16 @@ def get_dataset_ids(conn: BlitzGateway, project: Optional[int] = None,
             " JOIN p.datasetLinks pdl"
             " JOIN pdl.child d"
             " WHERE p.id=:project",
+            params,
+            conn.SERVICE_OPTS
+            )
+    elif annotation is not None:
+        if not isinstance(annotation, int):
+            raise TypeError('Annotation ID must be integer')
+        params.map = {"annotation": rlong(annotation)}
+        results = q.projection(
+            "SELECT l.parent.id FROM DatasetAnnotationLink l"
+            " WHERE l.child.id=:annotation",
             params,
             conn.SERVICE_OPTS
             )
