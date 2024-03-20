@@ -19,8 +19,10 @@ def ezimport(conn: BlitzGateway, target: str,
              project: Optional[Union[str, int]] = None,
              dataset: Optional[Union[str, int]] = None,
              screen: Optional[Union[str, int]] = None,
-             ln_s: Optional[bool] = False, ann: Optional[dict] = None,
-             ns: Optional[str] = None) -> Union[List[int], None]:
+             ann: Optional[dict] = None,
+             ns: Optional[str] = None, *args: str,
+             **kwargs: str
+             ) -> Union[List[int], None]:
     """Entry point that creates Importer and runs import.
 
     Parameters
@@ -35,12 +37,15 @@ def ezimport(conn: BlitzGateway, target: str,
         The name or ID of the Dataset data will be imported into.
     screen : str or int, optional
         The name or ID of the Screen data will be imported into.
-    ln_s : boolean, optional
-        Whether to use ``ln_s`` softlinking during imports or not.
     ann : dict, optional
         Dictionary with key-value pairs to be added to imported images.
     ns : str, optional
         Namespace for the added key-value pairs.
+    *args, **kwargs : str, optional
+        You can also add any extra arguments you would like to pass to
+        ``omero import`` to the end of the argument list in ``ezimport``.
+        For example, an in-place import can be done by adding
+        ``transfer="ln_s"`` as an extra argument when calling `ezimport``.
 
     Returns
     -------
@@ -55,7 +60,7 @@ def ezimport(conn: BlitzGateway, target: str,
     """
 
     imp_ctl = Importer(conn, target, project, dataset, screen,
-                       ln_s, ann, ns)
+                       ann, ns, *args, **kwargs)
     imp_ctl.ezimport()
     if imp_ctl.screen:
         imp_ctl.get_plate_ids()
@@ -234,8 +239,6 @@ class Importer:
         The name or ID of the Dataset data will be imported into.
     screen : str or int, optional
         The name or ID of the Screen data will be imported into.
-    ln_s : boolean, optional
-        Whether to use ``ln_s`` softlinking during imports or not.
     ann : dict, optional
         Dictionary with key-value pairs to be added to imported images.
     ns : str, optional
@@ -244,6 +247,9 @@ class Importer:
         Hostname of the OMERO server to which data will be imported.
     port : int, optional
         Port of the OMERO server to which data will be imported.
+    *args, **kwargs : str, optional
+        Receives the ``*args``, ``**kwargs`` from ``ezimport`` to pass it
+        onto ``omero import``.
 
     Important notes:
     1) Setting ``project`` also requires setting ``dataset``. Failing to do so
@@ -264,20 +270,22 @@ class Importer:
                  project: Optional[Union[str, int]],
                  dataset: Optional[Union[str, int]],
                  screen: Optional[Union[str, int]],
-                 ln_s: Optional[bool], ann: Optional[dict],
-                 ns: Optional[str]):
+                 ann: Optional[dict],
+                 ns: Optional[str], *args, **kwargs):
         self.conn = conn
         self.file_path = abspath(file_path)
         self.session_uuid = conn.getSession().getUuid().val
         self.project = project
         self.dataset = dataset
+        self.common_args = args
+        self.named_args = kwargs
+
         if self.project and not self.dataset:
             raise ValueError("Cannot define project but no dataset!")
         self.screen = screen
         self.imported = False
         self.image_ids: Union[List[int], None] = None
         self.plate_ids: Union[List[int], None] = None
-        self.ln_s = ln_s
         self.ann = ann
         self.ns = ns
 
@@ -455,32 +463,6 @@ class Importer:
             return True
         return False
 
-    def ezimport_ln_s(self) -> bool:
-        """Import file using the ``--transfer=ln_s`` option.
-        Returns
-        -------
-        import_status : boolean
-            True if OMERO import returns a 0 exit status, else False.
-        """
-
-        cli = CLI()
-        cli.register('import', ImportControl, '_')
-        cli.register('sessions', SessionsControl, '_')
-        cli.invoke(['import',
-                    '-k', self.conn.getSession().getUuid().val,
-                    '-s', self.conn.host,
-                    '-p', str(self.conn.port),
-                    '--depth', '10',
-                    '--transfer', 'ln_s',
-                    str(self.file_path)])
-        if cli.rv == 0:
-            self.imported = True
-            print(f'Imported {self.file_path}')
-            return True
-        else:
-            logging.error(f'Import of {self.file_path} has failed!')
-            return False
-
     def ezimport(self) -> bool:
         """Import file.
         Returns
@@ -488,18 +470,29 @@ class Importer:
         import_status : boolean
             True if OMERO import returns a 0 exit status, else False.
         """
-        if self.ln_s:
-            rs = self.ezimport_ln_s()
-            return rs
-        else:
-            cli = CLI()
-            cli.register('import', ImportControl, '_')
-            cli.register('sessions', SessionsControl, '_')
-            cli.invoke(['import',
-                        '-k', self.conn.getSession().getUuid().val,
-                        '-s', self.conn.host,
-                        '-p', str(self.conn.port),
-                        str(self.file_path)])
+        args = ""
+        if self.common_args:
+            args = args + " ".join(self.common_args)
+        if self.named_args:
+            for k, v in self.named_args.items():
+                args = args + " " + str(k) + "=" + str(v)
+        cli = CLI()
+        cli.register('import', ImportControl, '_')
+        cli.register('sessions', SessionsControl, '_')
+        arguments = ['import',
+                     '-k', self.conn.getSession().getUuid().val,
+                     '-s', self.conn.host,
+                     '-p', str(self.conn.port)]
+        if self.common_args:
+            str_args = ['--{}'.format(v) for v in self.common_args]
+            arguments.extend(str_args)
+        if self.named_args:
+            str_kwargs = ['--{}={}'.format(k, v) for k, v in
+                          self.named_args.items()]
+            arguments.extend(str_kwargs)
+        arguments.append(str(self.file_path))
+        print(arguments)
+        cli.invoke(arguments)
         if cli.rv == 0:
             self.imported = True
             print(f'Imported {self.file_path}')
