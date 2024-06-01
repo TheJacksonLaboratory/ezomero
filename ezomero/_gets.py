@@ -332,7 +332,7 @@ def get_image_ids(conn: BlitzGateway, project: Optional[int] = None,
                   dataset: Optional[int] = None,
                   plate: Optional[int] = None,
                   well: Optional[int] = None,
-                  run: Optional[int] = None,
+                  plate_acquisition: Optional[int] = None,
                   across_groups: Optional[bool] = True) -> List[int]:
     """Return a list of image ids based on image container
 
@@ -352,8 +352,8 @@ def get_image_ids(conn: BlitzGateway, project: Optional[int] = None,
         all images contained in all Wells belonging to the specified Plate.
     well : int, optional
         ID of Well from which to return image IDs.
-    run : int, optional
-        ID of Run from which to return image IDs.
+    plate_acquisition : int, optional
+        ID of Plate acquisition from which to return image IDs.
     across_groups : bool, optional
         Defines cross-group behavior of function - set to
         ``False`` to disable it.
@@ -369,8 +369,8 @@ def get_image_ids(conn: BlitzGateway, project: Optional[int] = None,
     ``ezomero.set_group`` to specify group prior to passing
     the `conn` object to this function.
 
-    Only one of Project, Dataset, Plate, Well or Run can be specified. If
-    none of those are specified, orphaned images are returned.
+    Only one of Project, Dataset, Plate, Well or Plate acquisition can be
+    specified. If none of those are specified, orphaned images are returned.
 
     Examples
     --------
@@ -383,12 +383,12 @@ def get_image_ids(conn: BlitzGateway, project: Optional[int] = None,
     >>> ds_ims = get_image_ids(conn, dataset=448)
     """
     arg_counter = 0
-    for arg in [project, dataset, plate, well, run]:
+    for arg in [project, dataset, plate, well, plate_acquisition]:
         if arg is not None:
             arg_counter += 1
     if arg_counter > 1:
-        raise ValueError('Only one of Project/Dataset/Plate/Well/Run'
-                         ' can be specified')
+        raise ValueError('Only one of Project/Dataset/Plate/Well'
+                         '/PlateAcquisition can be specified')
 
     q = conn.getQueryService()
     params = Parameters()
@@ -444,15 +444,15 @@ def get_image_ids(conn: BlitzGateway, project: Optional[int] = None,
             params,
             conn.SERVICE_OPTS
             )
-    elif run is not None:
-        if not isinstance(run, int):
-            raise TypeError('Run ID must be integer')
-        params.map = {"run": rlong(run)}
+    elif plate_acquisition is not None:
+        if not isinstance(plate_acquisition, int):
+            raise TypeError('Plate acquisition ID must be integer')
+        params.map = {"plate_acquisition": rlong(plate_acquisition)}
         results = q.projection(
             "SELECT i.id FROM WellSample ws"
             " JOIN ws.image i"
             " JOIN ws.plateAcquisition pa"
-            " WHERE pa.id=:run",
+            " WHERE pa.id=:plate_acquisition",
             params,
             conn.SERVICE_OPTS
             )
@@ -731,35 +731,39 @@ def get_well_ids(conn: BlitzGateway, screen: Optional[int] = None,
 
 
 @do_across_groups
-def get_run_ids(conn: BlitzGateway, screen: Optional[int] = None,
-                plate: Optional[int] = None,
-                across_groups: Optional[bool] = True) -> List[int]:
-    """Return a list of run ids based on a container
+def get_plate_acquisition_ids(
+    conn: BlitzGateway, screen: Optional[int] = None,
+    plate: Optional[int] = None,
+    across_groups: Optional[bool] = True
+) -> List[int]:
+    """Return a list of plate acquisition ids based on a container
 
     Parameters
     ----------
     conn : ``omero.gateway.BlitzGateway`` object
         OMERO connection.
     screen : int, optional
-        ID of Screen from which to return run IDs. This will return IDs of
-        all runs contained in the specified Screen.
+        ID of Screen from which to return plate acquisition IDs.
+        This will return IDs of all plate acquisitions contained
+        in the specified Screen.
     plate : int, optional
-        ID of Plate from which to return run IDs. This will return IDs of
-        all runs belonging to the specified Plate.
+        ID of Plate from which to return plate acquisition IDs.
+        This will return IDs of all plate acquisitions belonging
+        to the specified Plate.
     across_groups : bool, optional
         Defines cross-group behavior of function - set to
         ``False`` to disable it.
 
     Returns
     -------
-    run_ids : list of ints
-        List of runs IDs contained in the specified container.
+    plate_acquisition_ids : list of ints
+        List of plate acquisitions IDs contained in the specified container.
 
     Examples
     --------
-    # Return IDs of all runs from Screen with ID 224:
+    # Return IDs of all plate acquisitions from Screen with ID 224:
 
-    >>> run_ids = get_run_ids(conn, screen=224)
+    >>> plate_acquisition_ids = get_plate_acquisition_ids(conn, screen=224)
     """
     arg_counter = 0
     for arg in [screen, plate]:
