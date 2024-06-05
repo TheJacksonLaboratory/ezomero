@@ -229,17 +229,68 @@ def test_get_image_ids(conn, project_structure, screen_structure,
     bad_im_ids = ezomero.get_image_ids(conn, dataset=999999)
     assert not bad_im_ids
 
+    # screen_id = screen_structure[0]
+    plate_id = screen_structure[1]
+    plate2_id = screen_structure[2]
+    plate3_id = screen_structure[3]
+    pacq_1_id = screen_structure[4]
+    pacq_2_id = screen_structure[5]
+    pacq_3_id = screen_structure[6]
+    well_id1 = screen_structure[7]
+    well_im_id1 = screen_structure[8]
+    well_im_id3 = screen_structure[9]
+    well_id2 = screen_structure[10]
+    well_im_id2 = screen_structure[11]
+    well_im_id4 = screen_structure[12]
+    well_id3 = screen_structure[13]
+    well_im_id5 = screen_structure[14]
+    well_id4 = screen_structure[15]
+    well_im_id6 = screen_structure[16]
+
     # Based on well ID
-    well_id = screen_structure[1]
-    plate_im_id1 = screen_structure[2]
-    well_im_ids = ezomero.get_image_ids(conn, well=well_id)
-    assert set(well_im_ids) == set([plate_im_id1])
+    well_im_ids = ezomero.get_image_ids(conn, well=well_id1)
+    assert set(well_im_ids) == set([well_im_id1, well_im_id3])
+    well_im_ids = ezomero.get_image_ids(conn, well=well_id2)
+    assert set(well_im_ids) == set([well_im_id2, well_im_id4])
+    well_im_ids = ezomero.get_image_ids(conn, well=well_id3)
+    assert set(well_im_ids) == set([well_im_id5])
+    well_im_ids = ezomero.get_image_ids(conn, well=well_id4)
+    assert set(well_im_ids) == set([well_im_id6])
+
+    # Based on plateAcquistion ID
+    pacq_im_ids = ezomero.get_image_ids(conn, plate_acquisition=pacq_1_id)
+    assert set(pacq_im_ids) == set([well_im_id1, well_im_id2])
+    pacq_im_ids = ezomero.get_image_ids(conn, plate_acquisition=pacq_2_id)
+    assert set(pacq_im_ids) == set([well_im_id3, well_im_id4])
+    pacq_im_ids = ezomero.get_image_ids(conn, plate_acquisition=pacq_3_id)
+    assert set(pacq_im_ids) == set([well_im_id5])
 
     # Based on plate ID
-    plate_id = screen_structure[0]
-    plate_im_id2 = screen_structure[5]
     plate_im_ids = ezomero.get_image_ids(conn, plate=plate_id)
-    assert set(plate_im_ids) == set([plate_im_id1, plate_im_id2])
+    assert set(plate_im_ids) == set([well_im_id1, well_im_id2,
+                                     well_im_id3, well_im_id4])
+    plate_im_ids = ezomero.get_image_ids(conn, plate=plate2_id)
+    assert set(plate_im_ids) == set([well_im_id5])
+    plate_im_ids = ezomero.get_image_ids(conn, plate=plate3_id)
+    assert set(plate_im_ids) == set([well_im_id6])
+
+    # Based on screen ID: not implemented
+    # screen_im_ids = ezomero.get_image_ids(conn, screen=screen_id)
+    # assert set(screen_im_ids) == set([well_im_id1, well_im_id2,
+    #                                   well_im_id3, well_im_id4])
+
+    with pytest.raises(TypeError):
+        _ = ezomero.get_image_ids(conn, project='test')
+    with pytest.raises(TypeError):
+        _ = ezomero.get_image_ids(conn, dataset='test')
+    # with pytest.raises(TypeError):
+    #     _ = ezomero.get_image_ids(conn, screen='test')
+    with pytest.raises(TypeError):
+        _ = ezomero.get_image_ids(conn, plate='test')
+    with pytest.raises(TypeError):
+        _ = ezomero.get_image_ids(conn, well='test')
+    with pytest.raises(TypeError):
+        _ = ezomero.get_image_ids(conn, plate_acquisition='test')
 
 
 def test_get_project_ids(conn, project_structure, users_groups):
@@ -280,6 +331,99 @@ def test_get_dataset_ids(conn, project_structure, users_groups):
     # Return nothing on bad input
     bad_im_ids = ezomero.get_dataset_ids(conn, project=999999)
     assert not bad_im_ids
+
+
+def test_get_screen_ids(conn, screen_structure):
+
+    screen_id = screen_structure[0]
+
+    screen_ids = ezomero.get_screen_ids(conn)
+    assert set(screen_ids) == set([screen_id])
+
+
+def test_get_plate_ids(conn, screen_structure):
+
+    screen_id = screen_structure[0]
+    plate_id = screen_structure[1]
+    plate2_id = screen_structure[2]
+    orphan_plate_id = screen_structure[3]
+
+    with pytest.raises(TypeError):
+        _ = ezomero.get_plate_ids(conn, screen='test')
+
+    # Test orphans
+    orphan_ids = ezomero.get_plate_ids(conn)
+    assert set(orphan_ids) == set([orphan_plate_id])
+
+    # Based on screen ID
+    screen_pl_ids = ezomero.get_plate_ids(conn, screen=screen_id)
+    assert set(screen_pl_ids) == set([plate_id, plate2_id])
+
+    # Return nothing on bad input
+    bad_pl_ids = ezomero.get_plate_ids(conn, screen=999999)
+    assert not bad_pl_ids
+
+
+def test_get_well_ids(conn, screen_structure):
+
+    screen_id = screen_structure[0]
+    plate_id = screen_structure[1]
+    plate2_id = screen_structure[2]
+    plate3_id = screen_structure[3]
+    well_id1 = screen_structure[7]
+    well_id2 = screen_structure[10]
+    well_id3 = screen_structure[13]
+    well_id4 = screen_structure[15]
+
+    with pytest.raises(TypeError):
+        _ = ezomero.get_well_ids(conn, screen='test')
+    with pytest.raises(TypeError):
+        _ = ezomero.get_well_ids(conn, plate='test')
+
+    # Based on screen ID
+    screen_wl_ids = ezomero.get_well_ids(conn, screen=screen_id)
+    assert set(screen_wl_ids) == set([well_id1, well_id2, well_id3])
+
+    # Based on plate ID
+    plate_wl_ids = ezomero.get_well_ids(conn, plate=plate_id)
+    assert set(plate_wl_ids) == set([well_id1, well_id2])
+    plate_wl_ids = ezomero.get_well_ids(conn, plate=plate2_id)
+    assert set(plate_wl_ids) == set([well_id3])
+    plate_wl_ids = ezomero.get_well_ids(conn, plate=plate3_id)
+    assert set(plate_wl_ids) == set([well_id4])
+
+    # Return nothing on bad input
+    bad_ids = ezomero.get_well_ids(conn, screen=999999)
+    assert not bad_ids
+
+
+def test_get_plate_acquisition_ids(conn, screen_structure):
+
+    screen_id = screen_structure[0]
+    plate_id = screen_structure[1]
+    plate2_id = screen_structure[2]
+    pacq_id1 = screen_structure[4]
+    pacq_id2 = screen_structure[5]
+    pacq_id3 = screen_structure[6]
+
+    with pytest.raises(TypeError):
+        _ = ezomero.get_plate_acquisition_ids(conn, screen='test')
+    with pytest.raises(TypeError):
+        _ = ezomero.get_plate_acquisition_ids(conn, plate='test')
+
+    # Based on screen ID
+    screen_pacq_ids = ezomero.get_plate_acquisition_ids(conn, screen=screen_id)
+    assert set(screen_pacq_ids) == set([pacq_id1, pacq_id2, pacq_id3])
+
+    # Based on plate ID
+    plate_pacq_ids = ezomero.get_plate_acquisition_ids(conn, plate=plate_id)
+    assert set(plate_pacq_ids) == set([pacq_id1, pacq_id2])
+    plate_pacq_ids = ezomero.get_plate_acquisition_ids(conn, plate=plate2_id)
+    assert set(plate_pacq_ids) == set([pacq_id3])
+
+    # Return nothing on bad input
+    bad_ids = ezomero.get_plate_acquisition_ids(conn, screen=999999)
+    assert not bad_ids
 
 
 def test_get_image_ids_params(conn):
@@ -428,13 +572,22 @@ def test_get_file_annotation_and_ids(conn, project_structure, tmp_path):
 
 
 def test_get_well_id(conn, screen_structure):
-    plate_id = screen_structure[0]
-    well_id = screen_structure[1]
-    well2_id = screen_structure[4]
-    well_id_result = ezomero.get_well_id(conn, plate_id, row=1, column=1)
+    plate_id = screen_structure[1]
+    plate2_id = screen_structure[2]
+    plate3_id = screen_structure[3]
+    well_id1 = screen_structure[7]
+    well_id2 = screen_structure[10]
+    well_id3 = screen_structure[13]
+    well_id4 = screen_structure[15]
+
+    well1_id_result = ezomero.get_well_id(conn, plate_id, row=1, column=1)
     well2_id_result = ezomero.get_well_id(conn, plate_id, row=2, column=2)
-    assert well_id == well_id_result
-    assert well2_id == well2_id_result
+    well3_id_result = ezomero.get_well_id(conn, plate2_id, row=2, column=2)
+    well4_id_result = ezomero.get_well_id(conn, plate3_id, row=1, column=1)
+    assert well_id1 == well1_id_result
+    assert well_id2 == well2_id_result
+    assert well_id3 == well3_id_result
+    assert well_id4 == well4_id_result
     assert ezomero.get_well_id(conn, plate_id, row=5, column=9) is None
 
 

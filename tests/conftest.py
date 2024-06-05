@@ -9,7 +9,7 @@ from omero.cli import CLI
 from omero.gateway import BlitzGateway
 from omero.gateway import ScreenWrapper, PlateWrapper
 from omero.model import ScreenI, PlateI, WellI, WellSampleI, ImageI
-from omero.model import ScreenPlateLinkI
+from omero.model import ScreenPlateLinkI, PlateAcquisitionI
 from omero.plugins.sessions import SessionsControl
 from omero.plugins.user import UserControl
 from omero.plugins.group import GroupControl
@@ -437,6 +437,9 @@ def project_structure(conn, timestamp, image_fixture, users_groups,
     yield [project_info, dataset_info, image_info]
     current_group = conn.getGroupFromContext().getId()
     conn.SERVICE_OPTS.setOmeroGroup(-1)
+    for dname, did in dataset_info:
+        conn.deleteObjects("Dataset", [did], deleteAnns=True,
+                           deleteChildren=True, wait=True)
     for pname, pid in project_info:
         conn.deleteObjects("Project", [pid], deleteAnns=True,
                            deleteChildren=True, wait=True)
@@ -454,7 +457,7 @@ def screen_structure(conn, timestamp, image_fixture):
     screen.save()
     screen_id = screen.getId()
     # Create Plate
-    plate_name = "plate_" + timestamp
+    plate_name = "plate1_" + timestamp
     plate = PlateWrapper(conn, PlateI())
     plate.setName(plate_name)
     plate.save()
@@ -464,41 +467,127 @@ def screen_structure(conn, timestamp, image_fixture):
     link.setChild(PlateI(plate_id, False))
     update_service.saveObject(link)
 
+    # Create second Plate
+    plate2_name = "plate2_" + timestamp
+    plate2 = PlateWrapper(conn, PlateI())
+    plate2.setName(plate2_name)
+    plate2.save()
+    plate2_id = plate2.getId()
+    link = ScreenPlateLinkI()
+    link.setParent(ScreenI(screen_id, False))
+    link.setChild(PlateI(plate2_id, False))
+    update_service.saveObject(link)
+
     # Create Well (row 1, col 1)
-    well = WellI()
-    well.setPlate(PlateI(plate_id, False))
-    well.setColumn(rint(1))
-    well.setRow(rint(1))
-    well.setPlate(PlateI(plate_id, False))
+    well1 = WellI()
+    well1.setPlate(PlateI(plate_id, False))
+    well1.setColumn(rint(1))
+    well1.setRow(rint(1))
 
     # Create another Well (row 2, col 2)
     well2 = WellI()
     well2.setPlate(PlateI(plate_id, False))
     well2.setColumn(rint(2))
     well2.setRow(rint(2))
-    well2.setPlate(PlateI(plate_id, False))
+
+    # Create Well for second plate
+    well3 = WellI()
+    well3.setPlate(PlateI(plate2_id, False))
+    well3.setColumn(rint(2))
+    well3.setRow(rint(2))
+
+    # Create PlateAcquisition/Run for plate 1
+    run1 = PlateAcquisitionI()
+    run1.setPlate(PlateI(plate_id, False))
+    run2 = PlateAcquisitionI()
+    run2.setPlate(PlateI(plate_id, False))
+
+    # Create PlateAcquisition/Run for plate 2
+    run3 = PlateAcquisitionI()
+    run3.setPlate(PlateI(plate2_id, False))
+
+    well1 = update_service.saveAndReturnObject(well1)
+    well2 = update_service.saveAndReturnObject(well2)
+    well3 = update_service.saveAndReturnObject(well3)
+    well1_id = well1.getId().getValue()
+    well2_id = well2.getId().getValue()
+    well3_id = well3.getId().getValue()
+
+    run1 = update_service.saveAndReturnObject(run1)
+    run2 = update_service.saveAndReturnObject(run2)
+    run3 = update_service.saveAndReturnObject(run3)
+    run1_id = run1.getId().getValue()
+    run2_id = run2.getId().getValue()
+    run3_id = run3.getId().getValue()
 
     # Create Well Sample with Image for both wells
     ws = WellSampleI()
     im_id1 = ezomero.post_image(conn, image_fixture, "well image")
     ws.setImage(ImageI(im_id1, False))
-    well.addWellSample(ws)
+    well1.addWellSample(ws)
+    run1.addWellSample(ws)
 
     ws2 = WellSampleI()
     im_id2 = ezomero.post_image(conn, image_fixture, "well image2")
     ws2.setImage(ImageI(im_id2, False))
     well2.addWellSample(ws2)
+    run1.addWellSample(ws2)
 
-    well_obj = update_service.saveAndReturnObject(well)
-    well2_obj = update_service.saveAndReturnObject(well2)
+    ws3 = WellSampleI()
+    im_id3 = ezomero.post_image(conn, image_fixture, "well image3")
+    ws3.setImage(ImageI(im_id3, False))
+    well1.addWellSample(ws3)
+    run2.addWellSample(ws3)
 
-    well_id = well_obj.getId().getValue()
-    well2_id = well2_obj.getId().getValue()
+    ws4 = WellSampleI()
+    im_id4 = ezomero.post_image(conn, image_fixture, "well image4")
+    ws4.setImage(ImageI(im_id4, False))
+    well2.addWellSample(ws4)
+    run2.addWellSample(ws4)
 
-    yield [plate_id, well_id, im_id1, screen_id, well2_id, im_id2]
+    ws5 = WellSampleI()
+    im_id5 = ezomero.post_image(conn, image_fixture, "well image5")
+    ws5.setImage(ImageI(im_id5, False))
+    well3.addWellSample(ws5)
+    run3.addWellSample(ws5)
+
+    # One call for each plate is enough to update
+    well1 = update_service.saveAndReturnObject(well1)
+    well3 = update_service.saveAndReturnObject(well3)
+
+    # Create OrphanPlate
+    plate3_name = "plate3_" + timestamp
+    plate3 = PlateWrapper(conn, PlateI())
+    plate3.setName(plate3_name)
+    plate3.save()
+    plate3_id = plate3.getId()
+
+    # Create Well fr orphan plate
+    well4 = WellI()
+    well4.setPlate(PlateI(plate3_id, False))
+    well4.setColumn(rint(1))
+    well4.setRow(rint(1))
+
+    # Create Well Sample with Image
+    ws6 = WellSampleI()
+    im_id6 = ezomero.post_image(conn, image_fixture, "well image6")
+    ws6.setImage(ImageI(im_id6, False))
+    well4.addWellSample(ws6)
+
+    well4 = update_service.saveAndReturnObject(well4)
+    well4_id = well4.getId().getValue()
+
+    yield [screen_id, plate_id, plate2_id, plate3_id,
+           run1_id, run2_id, run3_id,
+           well1_id, im_id1, im_id3,
+           well2_id, im_id2, im_id4,
+           well3_id, im_id5,
+           well4_id, im_id6]
     current_group = conn.getGroupFromContext().getId()
     conn.SERVICE_OPTS.setOmeroGroup(-1)
     conn.deleteObjects("Screen", [screen_id], deleteAnns=True,
+                       deleteChildren=True, wait=True)
+    conn.deleteObjects("Plate", [plate3_id], deleteAnns=True,
                        deleteChildren=True, wait=True)
     conn.SERVICE_OPTS.setOmeroGroup(current_group)
 
