@@ -332,6 +332,7 @@ def get_image_ids(conn: BlitzGateway, project: Optional[int] = None,
                   dataset: Optional[int] = None,
                   plate: Optional[int] = None,
                   well: Optional[int] = None,
+                  plate_acquisition: Optional[int] = None,
                   annotation: Optional[int] = None,
                   across_groups: Optional[bool] = True) -> List[int]:
     """Return a list of image ids based on image container
@@ -352,6 +353,8 @@ def get_image_ids(conn: BlitzGateway, project: Optional[int] = None,
         all images contained in all Wells belonging to the specified Plate.
     well : int, optional
         ID of Well from which to return image IDs.
+    plate_acquisition : int, optional
+        ID of Plate acquisition from which to return image IDs.
     annotation : int, optional
         ID of Annotation from which to return image IDs. This will return IDs
         of all images linked to the specified annotation.
@@ -370,8 +373,9 @@ def get_image_ids(conn: BlitzGateway, project: Optional[int] = None,
     ``ezomero.set_group`` to specify group prior to passing
     the `conn` object to this function.
 
-    Only one of Project, Dataset, Plate, Well or Annotation can be specified.
-    If none of those are specified, orphaned images are returned.
+    Only one of Project, Dataset, Plate, Well, Plate acquisition or Annotation
+    can be specified. If none of those are specified, orphaned images are
+    returned.
 
     Examples
     --------
@@ -388,12 +392,13 @@ def get_image_ids(conn: BlitzGateway, project: Optional[int] = None,
     >>> tag_ims = get_image_ids(conn, annotation=876)
     """
     arg_counter = 0
-    for arg in [project, dataset, plate, well, annotation]:
+
+    for arg in [project, dataset, plate, well, plate_acquisition, annotation]:
         if arg is not None:
             arg_counter += 1
     if arg_counter > 1:
-        raise ValueError('Only one of Project/Dataset/Plate/Well/Annotation'
-                         ' can be specified')
+        raise ValueError('Only one of Project/Dataset/Plate/Well'
+                         '/PlateAcquisition/Annotation can be specified')
 
     q = conn.getQueryService()
     params = Parameters()
@@ -446,6 +451,18 @@ def get_image_ids(conn: BlitzGateway, project: Optional[int] = None,
             " JOIN w.wellSamples ws"
             " JOIN ws.image i"
             " WHERE w.id=:well",
+            params,
+            conn.SERVICE_OPTS
+            )
+    elif plate_acquisition is not None:
+        if not isinstance(plate_acquisition, int):
+            raise TypeError('Plate acquisition ID must be integer')
+        params.map = {"plate_acquisition": rlong(plate_acquisition)}
+        results = q.projection(
+            "SELECT i.id FROM WellSample ws"
+            " JOIN ws.image i"
+            " JOIN ws.plateAcquisition pa"
+            " WHERE pa.id=:plate_acquisition",
             params,
             conn.SERVICE_OPTS
             )
@@ -609,6 +626,247 @@ def get_dataset_ids(conn: BlitzGateway, project: Optional[int] = None,
             " SELECT pdl FROM ProjectDatasetLink pdl"
             " WHERE pdl.child=d.id"
             " )",
+            params,
+            conn.SERVICE_OPTS
+            )
+    return [r[0].val for r in results]
+
+
+@do_across_groups
+def get_screen_ids(conn: BlitzGateway,
+                   across_groups: Optional[bool] = True) -> List[int]:
+    """Return a list with IDs for all available Screens.
+
+    Parameters
+    ----------
+    conn : ``omero.gateway.BlitzGateway`` object
+        OMERO connection.
+    across_groups : bool, optional
+        Defines cross-group behavior of function - set to
+        ``False`` to disable it.
+
+    Returns
+    -------
+    scrn_ids : list of ints
+        List of screen IDs accessible by current user.
+
+    Examples
+    --------
+    # Return IDs of all screens accessible by current user:
+
+    >>> scrn_ids = get_screen_ids(conn)
+    """
+
+    scrn_ids = []
+    for s in conn.listScreens():
+        scrn_ids.append(s.getId())
+    return scrn_ids
+
+
+@do_across_groups
+def get_plate_ids(conn: BlitzGateway, screen: Optional[int] = None,
+                  across_groups: Optional[bool] = True) -> List[int]:
+    """Return a list of plate ids based on screen ID.
+
+    If no screen is specified, function will return orphan plates.
+
+    Parameters
+    ----------
+    conn : ``omero.gateway.BlitzGateway`` object
+        OMERO connection.
+    screen : int, optional
+        ID of Screen from which to return plate IDs. This will return IDs of
+        all plates contained in the specified Screen.
+    across_groups : bool, optional
+        Defines cross-group behavior of function - set to
+        ``False`` to disable it.
+
+    Returns
+    -------
+    pl_ids : list of ints
+        List of plates IDs contained in the specified screen.
+
+    Examples
+    --------
+    # Return orphaned plates:
+
+    >>> orphans = get_plate_ids(conn)
+
+    # Return IDs of all plates from Screen with ID 224:
+
+    >>> pl_ids = get_plate_ids(conn, screen=224)
+    """
+
+    q = conn.getQueryService()
+    params = Parameters()
+
+    if screen is not None:
+        if not isinstance(screen, int):
+            raise TypeError('Screen ID must be integer')
+        params.map = {"screen": rlong(screen)}
+        results = q.projection(
+            "SELECT p.id FROM Screen s"
+            " JOIN s.plateLinks spl"
+            " JOIN spl.child p"
+            " WHERE s.id=:screen",
+            params,
+            conn.SERVICE_OPTS
+            )
+    else:
+        results = q.projection(
+            "SELECT p.id FROM Plate p"
+            " WHERE NOT EXISTS ("
+            " SELECT spl FROM ScreenPlateLink spl"
+            " WHERE spl.child=p.id"
+            " )",
+            params,
+            conn.SERVICE_OPTS
+            )
+    return [r[0].val for r in results]
+
+
+@do_across_groups
+def get_well_ids(conn: BlitzGateway, screen: Optional[int] = None,
+                 plate: Optional[int] = None,
+                 across_groups: Optional[bool] = True) -> List[int]:
+    """Return a list of well ids based on a container
+
+    Parameters
+    ----------
+    conn : ``omero.gateway.BlitzGateway`` object
+        OMERO connection.
+    screen : int, optional
+        ID of Screen from which to return well IDs. This will return IDs of
+        all wells contained in the specified Screen.
+    plate : int, optional
+        ID of Plate from which to return well IDs. This will return IDs of
+        all wells belonging to the specified Plate.
+    across_groups : bool, optional
+        Defines cross-group behavior of function - set to
+        ``False`` to disable it.
+
+    Returns
+    -------
+    wl_ids : list of ints
+        List of wells IDs contained in the specified container.
+
+    Examples
+    --------
+    # Return IDs of all wells from Screen with ID 224:
+
+    >>> wl_ids = get_well_ids(conn, screen=224)
+    """
+    arg_counter = 0
+    for arg in [screen, plate]:
+        if arg is not None:
+            arg_counter += 1
+    if arg_counter > 1:
+        raise ValueError('Only one of Screen/Plate'
+                         ' can be specified')
+    elif arg_counter == 0:
+        raise ValueError('One of Screen/Plate'
+                         ' must be specified')
+
+    q = conn.getQueryService()
+    params = Parameters()
+
+    if screen is not None:
+        if not isinstance(screen, int):
+            raise TypeError('Screen ID must be integer')
+        params.map = {"screen": rlong(screen)}
+        results = q.projection(
+            "SELECT w.id FROM Screen s"
+            " JOIN s.plateLinks spl"
+            " JOIN spl.child p"
+            " JOIN p.wells w"
+            " WHERE s.id=:screen",
+            params,
+            conn.SERVICE_OPTS
+            )
+    elif plate is not None:
+        if not isinstance(plate, int):
+            raise TypeError('Plate ID must be integer')
+        params.map = {"plate": rlong(plate)}
+        results = q.projection(
+            "SELECT w.id FROM Plate p"
+            " JOIN p.wells w"
+            " WHERE p.id=:plate",
+            params,
+            conn.SERVICE_OPTS
+            )
+    return [r[0].val for r in results]
+
+
+@do_across_groups
+def get_plate_acquisition_ids(
+    conn: BlitzGateway, screen: Optional[int] = None,
+    plate: Optional[int] = None,
+    across_groups: Optional[bool] = True
+) -> List[int]:
+    """Return a list of plate acquisition ids based on a container
+
+    Parameters
+    ----------
+    conn : ``omero.gateway.BlitzGateway`` object
+        OMERO connection.
+    screen : int, optional
+        ID of Screen from which to return plate acquisition IDs.
+        This will return IDs of all plate acquisitions contained
+        in the specified Screen.
+    plate : int, optional
+        ID of Plate from which to return plate acquisition IDs.
+        This will return IDs of all plate acquisitions belonging
+        to the specified Plate.
+    across_groups : bool, optional
+        Defines cross-group behavior of function - set to
+        ``False`` to disable it.
+
+    Returns
+    -------
+    plate_acquisition_ids : list of ints
+        List of plate acquisitions IDs contained in the specified container.
+
+    Examples
+    --------
+    # Return IDs of all plate acquisitions from Screen with ID 224:
+
+    >>> plate_acquisition_ids = get_plate_acquisition_ids(conn, screen=224)
+    """
+    arg_counter = 0
+    for arg in [screen, plate]:
+        if arg is not None:
+            arg_counter += 1
+    if arg_counter > 1:
+        raise ValueError('Only one of Screen/Plate'
+                         ' can be specified')
+    elif arg_counter == 0:
+        raise ValueError('One of Screen/Plate'
+                         ' must be specified')
+
+    q = conn.getQueryService()
+    params = Parameters()
+
+    if screen is not None:
+        if not isinstance(screen, int):
+            raise TypeError('Screen ID must be integer')
+        params.map = {"screen": rlong(screen)}
+        results = q.projection(
+            "SELECT r.id FROM Screen s"
+            " JOIN s.plateLinks spl"
+            " JOIN spl.child p"
+            " JOIN p.plateAcquisitions r"
+            " WHERE s.id=:screen",
+            params,
+            conn.SERVICE_OPTS
+            )
+    elif plate is not None:
+        if not isinstance(plate, int):
+            raise TypeError('Plate ID must be integer')
+        params.map = {"plate": rlong(plate)}
+        results = q.projection(
+            "SELECT r.id FROM Plate p"
+            " JOIN p.plateAcquisitions r"
+            " WHERE p.id=:plate",
             params,
             conn.SERVICE_OPTS
             )
