@@ -405,7 +405,7 @@ def test_get_dataset_ids(conn, project_structure, users_groups):
     current_conn.close()
 
 
-def test_get_screen_ids(conn, screen_structure, users_groups):
+def test_get_screen_ids(conn, screen_structure):
 
     screen_id = screen_structure[0]
 
@@ -428,7 +428,7 @@ def test_get_screen_ids(conn, screen_structure, users_groups):
                        wait=True)
 
 
-def test_get_plate_ids(conn, screen_structure, users_groups):
+def test_get_plate_ids(conn, screen_structure):
 
     screen_id = screen_structure[0]
     plate_id = screen_structure[1]
@@ -468,7 +468,7 @@ def test_get_plate_ids(conn, screen_structure, users_groups):
                        wait=True)
 
 
-def test_get_well_ids(conn, screen_structure, users_groups):
+def test_get_well_ids(conn, screen_structure):
 
     screen_id = screen_structure[0]
     plate_id = screen_structure[1]
@@ -518,7 +518,7 @@ def test_get_well_ids(conn, screen_structure, users_groups):
                        wait=True)
 
 
-def test_get_plate_acquisition_ids(conn, screen_structure, users_groups):
+def test_get_plate_acquisition_ids(conn, screen_structure):
 
     screen_id = screen_structure[0]
     plate_id = screen_structure[1]
