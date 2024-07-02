@@ -4,6 +4,8 @@ on:
     branches: [ main ]
 jobs:
   test:
+    permissions:
+      contents: write
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
