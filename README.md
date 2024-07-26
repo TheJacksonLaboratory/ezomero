@@ -6,7 +6,9 @@ A module with convenience functions for writing Python code that interacts with 
 
 # Installation
 
-Just `pip install ezomero` and you should be good to go! The repo contains the specific package versions we test `ezomero` with in `setup.py`, but any Python>=3.8 and latest `omero-py` and `numpy` _should_ work -  note that this package is in active development!
+ezomero's dependencies are easily pip-installable from PyPI, except for `zeroc-ice==3.6.5`. For those, we recommend pip-installing using one of the [wheels](https://github.com/glencoesoftware/zeroc-ice-py-linux-x86_64/releases) provided by Glencoe Software (use the one compatible  with your OS/Python version - link provided is for Linux wheels).
+
+In general, we **strongly** recommend starting from a clean virtual environment, `pip install`ing `zeroc-ice` from a Glencoe wheel, and only then doing `pip install ezomero`. 
 
 If you want to use `get_table` and `post_table` to/from Pandas dataframes, you need to install `ezomero[tables]` - that install an optional `pandas` dependency. Installing ezomero without this will default `get_table` and `post_table` to use lists of row lists as their default.
 
