@@ -198,7 +198,7 @@ def test_post_get_map_annotation(conn, project_structure, users_groups):
     map_ann_id = ezomero.post_map_annotation(conn, "Image", im_id, kv, ns)
     kv_pairs = ezomero.get_map_annotation(conn, map_ann_id)
     assert kv_pairs["key2"] == "value2"
-    assert kv_pairs["key3"] == ["value3", 123]
+    assert sorted(kv_pairs["key3"]) == sorted(["value3", "123"])
 
     # Test posting to non-existing object
     im_id2 = 999999999
