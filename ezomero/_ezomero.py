@@ -102,7 +102,7 @@ def put_map_annotation(conn: BlitzGateway, map_ann_id: int, kv_dict: dict,
     --------
     # Change only the values of an existing map annotation:
 
-    >>> new_values = {'testkey': 'testvalue', 'testkey2': 'testvalue2'}
+    >>> new_values = {'key1': 'value1', 'key2': ['value2', 'value3']}
     >>> put_map_annotation(conn, 15, new_values)
 
     # Change both the values and namespace of an existing map annotation:
@@ -124,8 +124,14 @@ def put_map_annotation(conn: BlitzGateway, map_ann_id: int, kv_dict: dict,
     kv_pairs = []
     for k, v in kv_dict.items():
         k = str(k)
-        v = str(v)
-        kv_pairs.append([k, v])
+        if type(v) != list:
+            v = str(v)
+            kv_pairs.append([k, v])
+        else:
+            for value in v:
+                value = str(value)
+                kv_pairs.append([k, value])
+                
     map_ann.setValue(kv_pairs)
     map_ann.save()
     return None

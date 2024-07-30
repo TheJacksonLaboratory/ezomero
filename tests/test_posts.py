@@ -183,7 +183,8 @@ def test_post_get_map_annotation(conn, project_structure, users_groups):
     im_id = image_info[0][1]
     # This test both ezomero.post_map_annotation and ezomero.get_map_annotation
     kv = {"key1": "value1",
-          "key2": "value2"}
+          "key2": "value2",
+          "key3": ["value3", 123]}
     ns = "jax.org/omeroutils/tests/v0"
 
     # test sanitized input on post
@@ -197,6 +198,7 @@ def test_post_get_map_annotation(conn, project_structure, users_groups):
     map_ann_id = ezomero.post_map_annotation(conn, "Image", im_id, kv, ns)
     kv_pairs = ezomero.get_map_annotation(conn, map_ann_id)
     assert kv_pairs["key2"] == "value2"
+    assert kv_pairs["key3"] == ["value3", 123]
 
     # Test posting to non-existing object
     im_id2 = 999999999
