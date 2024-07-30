@@ -6,7 +6,7 @@ A module with convenience functions for writing Python code that interacts with 
 
 # Installation
 
-ezomero's dependencies are easily pip-installable from PyPI, except for `zeroc-ice==3.6.5`. For those, we recommend pip-installing using one of the [wheels](https://github.com/glencoesoftware/zeroc-ice-py-linux-x86_64/releases) provided by Glencoe Software (use the one compatible  with your OS/Python version - link provided is for Linux wheels).
+ezomero's dependencies are easily pip-installable from PyPI, except for `zeroc-ice==3.6.5`. For those, we recommend pip-installing using one of the [wheels](https://github.com/glencoesoftware/zeroc-ice-py-linux-x86_64/releases) provided by Glencoe Software (use the one compatible  with your OS/Python version - link provided is for Linux wheels, for more information see [this Glencoe Software blog post](https://www.glencoesoftware.com/blog/2023/12/08/ice-binaries-for-omero.html)).
 
 In general, we **strongly** recommend starting from a clean virtual environment, `pip install`ing `zeroc-ice` from a Glencoe wheel, and only then doing `pip install ezomero`. 
 
