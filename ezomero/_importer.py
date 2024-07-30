@@ -166,8 +166,7 @@ def set_or_create_screen(conn: BlitzGateway, screen: Union[str, int],
 
 def multi_post_map_annotation(conn: BlitzGateway, object_type: str,
                               object_ids: Union[int, List[int]], kv_dict: dict,
-                              ns: str, across_groups: Optional[bool] = True
-                              ) -> int:
+                              ns: str) -> int:
     """Create a single new MapAnnotation and link to multiple images.
     Parameters
     ----------
