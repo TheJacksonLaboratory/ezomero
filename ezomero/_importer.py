@@ -166,8 +166,7 @@ def set_or_create_screen(conn: BlitzGateway, screen: Union[str, int],
 
 def multi_post_map_annotation(conn: BlitzGateway, object_type: str,
                               object_ids: Union[int, List[int]], kv_dict: dict,
-                              ns: str, across_groups: Optional[bool] = True
-                              ) -> int:
+                              ns: str) -> int:
     """Create a single new MapAnnotation and link to multiple images.
     Parameters
     ----------
@@ -192,7 +191,7 @@ def multi_post_map_annotation(conn: BlitzGateway, object_type: str,
     --------
     >>> ns = 'jax.org/jax/example/namespace'
     >>> d = {'species': 'human',
-             'occupation': 'time traveler'
+             'occupation': ['time traveler', 'soldier'],
              'first name': 'Kyle',
              'surname': 'Reese'}
     >>> multi_post_map_annotation(conn, "Image", [23,56,78], d, ns)
@@ -212,8 +211,13 @@ def multi_post_map_annotation(conn: BlitzGateway, object_type: str,
     kv_pairs = []
     for k, v in kv_dict.items():
         k = str(k)
-        v = str(v)
-        kv_pairs.append([k, v])
+        if type(v) != list:
+            v = str(v)
+            kv_pairs.append([k, v])
+        else:
+            for value in v:
+                value = str(value)
+                kv_pairs.append([k, value])
 
     map_ann = MapAnnotationWrapper(conn)
     map_ann.setNs(str(ns))

@@ -252,6 +252,8 @@ def post_map_annotation(conn: BlitzGateway, object_type: str, object_id: int,
     Notes
     -----
     All keys and values are converted to strings before saving in OMERO.
+    Passing a list of values will result in multiple instances of the key,
+    one for each value.
 
     Returns
     -------
@@ -262,7 +264,7 @@ def post_map_annotation(conn: BlitzGateway, object_type: str, object_id: int,
     --------
     >>> ns = 'jax.org/jax/example/namespace'
     >>> d = {'species': 'human',
-    ...      'occupation': 'time traveler'
+    ...      'occupation': ['time traveler', 'soldier'].
     ...      'first name': 'Kyle',
     ...      'surname': 'Reese'}
     >>> post_map_annotation(conn, "Image", 56, d, ns)
@@ -274,8 +276,13 @@ def post_map_annotation(conn: BlitzGateway, object_type: str, object_id: int,
     kv_pairs = []
     for k, v in kv_dict.items():
         k = str(k)
-        v = str(v)
-        kv_pairs.append([k, v])
+        if type(v) != list:
+            v = str(v)
+            kv_pairs.append([k, v])
+        else:
+            for value in v:
+                value = str(value)
+                kv_pairs.append([k, value])
     obj = None
     if object_id is not None:
         if type(object_id) is not int:
