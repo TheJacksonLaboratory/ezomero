@@ -292,10 +292,34 @@ def test_get_image_ids(conn, project_structure, screen_structure,
     with pytest.raises(TypeError):
         _ = ezomero.get_image_ids(conn, plate_acquisition='test')
 
+    # Test get from tag annotation
+    username = users_groups[1][1][0]  # test_user2
+    groupname = users_groups[0][1][0]  # test_group_2
+    current_conn = conn.suConn(username, groupname)
+    tag_ann = TagAnnotationWrapper(current_conn)
+    tag_ann.setValue('test_tag')
+    tag_ann.save()
+    tag_id = tag_ann.getId()
+    im_o = current_conn.getObject('Image', im6_id)
+    im_o.linkAnnotation(tag_ann)
+    im_o = current_conn.getObject('Image', im7_id)
+    im_o.linkAnnotation(tag_ann)
+    tag_im_ids = ezomero.get_image_ids(current_conn, annotation=tag_id)
+    assert set(tag_im_ids) == set([im6_id, im7_id])
+    current_conn.deleteObjects("Annotation",
+                               [tag_id],
+                               deleteAnns=True,
+                               deleteChildren=True,
+                               wait=True)
+    current_conn.close()
+
 
 def test_get_project_ids(conn, project_structure, users_groups):
 
     project_info = project_structure[0]
+
+    with pytest.raises(TypeError):
+        _ = ezomero.get_project_ids(conn, annotation="test")
 
     proj_ids = ezomero.get_project_ids(conn)
     assert len(proj_ids) == len(project_info)
@@ -308,6 +332,29 @@ def test_get_project_ids(conn, project_structure, users_groups):
     assert len(pj_ids) == len(project_info) - 1
     current_conn.close()
 
+    # Test get from tag annotation
+    username = users_groups[1][1][0]  # test_user2
+    groupname = users_groups[0][0][0]  # test_group_1
+    current_conn = conn.suConn(username, groupname)
+    proj4_id = project_info[4][1]
+    proj5_id = project_info[5][1]
+    tag_ann = TagAnnotationWrapper(current_conn)
+    tag_ann.setValue('test_tag')
+    tag_ann.save()
+    tag_id = tag_ann.getId()
+    pr_o = current_conn.getObject('Project', proj4_id)
+    pr_o.linkAnnotation(tag_ann)
+    pr_o = current_conn.getObject('Project', proj5_id)
+    pr_o.linkAnnotation(tag_ann)
+    tag_pr_ids = ezomero.get_project_ids(current_conn, annotation=tag_id)
+    assert set(tag_pr_ids) == set([proj4_id, proj5_id])
+    current_conn.deleteObjects("Annotation",
+                               [tag_id],
+                               deleteAnns=True,
+                               deleteChildren=True,
+                               wait=True)
+    current_conn.close()
+
 
 def test_get_dataset_ids(conn, project_structure, users_groups):
 
@@ -316,6 +363,8 @@ def test_get_dataset_ids(conn, project_structure, users_groups):
 
     with pytest.raises(TypeError):
         _ = ezomero.get_dataset_ids(conn, project='test')
+    with pytest.raises(TypeError):
+        _ = ezomero.get_dataset_ids(conn, annotation="test")
 
     # Test orphans
     orphan_ids = ezomero.get_dataset_ids(conn)
@@ -332,6 +381,29 @@ def test_get_dataset_ids(conn, project_structure, users_groups):
     bad_im_ids = ezomero.get_dataset_ids(conn, project=999999)
     assert not bad_im_ids
 
+    # Test get from tag annotation
+    username = users_groups[1][0][0]  # test_user1
+    groupname = users_groups[0][0][0]  # test_group_1
+    current_conn = conn.suConn(username, groupname)
+    ds4_id = dataset_info[4][1]
+    ds5_id = dataset_info[5][1]
+    tag_ann = TagAnnotationWrapper(current_conn)
+    tag_ann.setValue('test_tag')
+    tag_ann.save()
+    tag_id = tag_ann.getId()
+    ds_o = current_conn.getObject('Dataset', ds4_id)
+    ds_o.linkAnnotation(tag_ann)
+    ds_o = current_conn.getObject('Dataset', ds5_id)
+    ds_o.linkAnnotation(tag_ann)
+    tag_ds_ids = ezomero.get_dataset_ids(current_conn, annotation=tag_id)
+    assert set(tag_ds_ids) == set([ds4_id, ds5_id])
+    current_conn.deleteObjects("Annotation",
+                               [tag_id],
+                               deleteAnns=True,
+                               deleteChildren=True,
+                               wait=True)
+    current_conn.close()
+
 
 def test_get_screen_ids(conn, screen_structure):
 
@@ -339,6 +411,21 @@ def test_get_screen_ids(conn, screen_structure):
 
     screen_ids = ezomero.get_screen_ids(conn)
     assert set(screen_ids) == set([screen_id])
+
+    # Test get from tag annotation
+    tag_ann = TagAnnotationWrapper(conn)
+    tag_ann.setValue('test_tag')
+    tag_ann.save()
+    tag_id = tag_ann.getId()
+    scr_o = conn.getObject('Screen', screen_id)
+    scr_o.linkAnnotation(tag_ann)
+    tag_scr_ids = ezomero.get_screen_ids(conn, annotation=tag_id)
+    assert set(tag_scr_ids) == set([screen_id])
+    conn.deleteObjects("Annotation",
+                       [tag_id],
+                       deleteAnns=True,
+                       deleteChildren=True,
+                       wait=True)
 
 
 def test_get_plate_ids(conn, screen_structure):
@@ -362,6 +449,23 @@ def test_get_plate_ids(conn, screen_structure):
     # Return nothing on bad input
     bad_pl_ids = ezomero.get_plate_ids(conn, screen=999999)
     assert not bad_pl_ids
+
+    # Test get from tag annotation
+    tag_ann = TagAnnotationWrapper(conn)
+    tag_ann.setValue('test_tag')
+    tag_ann.save()
+    tag_id = tag_ann.getId()
+    pl_o = conn.getObject('Plate', plate_id)
+    pl_o.linkAnnotation(tag_ann)
+    pl_o = conn.getObject('Plate', orphan_plate_id)
+    pl_o.linkAnnotation(tag_ann)
+    tag_pl_ids = ezomero.get_plate_ids(conn, annotation=tag_id)
+    assert set(tag_pl_ids) == set([plate_id, orphan_plate_id])
+    conn.deleteObjects("Annotation",
+                       [tag_id],
+                       deleteAnns=True,
+                       deleteChildren=True,
+                       wait=True)
 
 
 def test_get_well_ids(conn, screen_structure):
@@ -396,6 +500,23 @@ def test_get_well_ids(conn, screen_structure):
     bad_ids = ezomero.get_well_ids(conn, screen=999999)
     assert not bad_ids
 
+    # Test get from tag annotation
+    tag_ann = TagAnnotationWrapper(conn)
+    tag_ann.setValue('test_tag')
+    tag_ann.save()
+    tag_id = tag_ann.getId()
+    wl_o = conn.getObject('Well', well_id1)
+    wl_o.linkAnnotation(tag_ann)
+    wl_o = conn.getObject('Well', well_id3)
+    wl_o.linkAnnotation(tag_ann)
+    tag_wl_ids = ezomero.get_well_ids(conn, annotation=tag_id)
+    assert set(tag_wl_ids) == set([well_id1, well_id3])
+    conn.deleteObjects("Annotation",
+                       [tag_id],
+                       deleteAnns=True,
+                       deleteChildren=True,
+                       wait=True)
+
 
 def test_get_plate_acquisition_ids(conn, screen_structure):
 
@@ -424,6 +545,24 @@ def test_get_plate_acquisition_ids(conn, screen_structure):
     # Return nothing on bad input
     bad_ids = ezomero.get_plate_acquisition_ids(conn, screen=999999)
     assert not bad_ids
+
+    # Test get from tag annotation
+    tag_ann = TagAnnotationWrapper(conn)
+    tag_ann.setValue('test_tag')
+    tag_ann.save()
+    tag_id = tag_ann.getId()
+    paq_o = conn.getObject('PlateAcquisition', pacq_id1)
+    paq_o.linkAnnotation(tag_ann)
+    paq_o = conn.getObject('PlateAcquisition', pacq_id3)
+    paq_o.linkAnnotation(tag_ann)
+    tag_paq_ids = ezomero.get_plate_acquisition_ids(conn,
+                                                    annotation=tag_id)
+    assert set(tag_paq_ids) == set([pacq_id1, pacq_id3])
+    conn.deleteObjects("Annotation",
+                       [tag_id],
+                       deleteAnns=True,
+                       deleteChildren=True,
+                       wait=True)
 
 
 def test_get_image_ids_params(conn):
