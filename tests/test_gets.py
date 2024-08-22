@@ -472,8 +472,8 @@ def test_get_map_annotation_and_ids(conn, project_structure):
     with pytest.raises(TypeError):
         _ = ezomero.get_map_annotation(conn, '10')
     mpann = ezomero.get_map_annotation(conn, map_ann_ids[0])
-    assert mpann["key1"] == kv["key1"]
-    assert mpann["key2"] == kv["key2"]
+    assert mpann["key1"][0] == kv["key1"]
+    assert mpann["key2"][0] == kv["key2"]
     assert sorted(mpann["key3"]) == sorted(kv["key3"])
     conn.deleteObjects("Annotation",
                        [map_ann_id, map_ann_id2, map_ann_id3, map_ann_id4],

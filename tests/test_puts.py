@@ -23,7 +23,7 @@ def test_put_map_annotation(conn, project_structure, users_groups):
           "key2": "value2"}
     ezomero.put_map_annotation(conn, map_ann_id, kv)
     kv_pairs = ezomero.get_map_annotation(conn, map_ann_id)
-    assert sorted(kv_pairs['key1']) == sorted(kv['key1'])
+    assert kv_pairs['key1'][0] == kv['key1']
 
     # test cross-group
     kv = {"key1": "value1",
@@ -39,7 +39,7 @@ def test_put_map_annotation(conn, project_structure, users_groups):
           "key2": "value2"}
     ezomero.put_map_annotation(current_conn, map_ann_id2, kv)
     kv_pairs = ezomero.get_map_annotation(current_conn, map_ann_id2)
-    assert kv_pairs['key1'] == kv['key1']
+    assert kv_pairs['key1'][0] == kv['key1']
     current_conn.close()
 
     # test cross-group, across_groups unset
@@ -58,7 +58,7 @@ def test_put_map_annotation(conn, project_structure, users_groups):
         ezomero.put_map_annotation(current_conn, map_ann_id3, kv_changed,
                                    across_groups=False)
     kv_pairs = ezomero.get_map_annotation(current_conn, map_ann_id3)
-    assert kv_pairs['key1'] == kv['key1']
+    assert kv_pairs['key1'][0] == kv['key1']
     current_conn.close()
 
     # test non-existent ID
