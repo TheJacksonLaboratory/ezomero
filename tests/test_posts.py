@@ -197,7 +197,7 @@ def test_post_get_map_annotation(conn, project_structure, users_groups):
 
     map_ann_id = ezomero.post_map_annotation(conn, "Image", im_id, kv, ns)
     kv_pairs = ezomero.get_map_annotation(conn, map_ann_id)
-    assert kv_pairs["key2"][0] == "value2"
+    assert kv_pairs["key2"] == "value2"
     assert sorted(kv_pairs["key3"]) == sorted(["value3", "123"])
 
     # Test posting to non-existing object
@@ -213,7 +213,7 @@ def test_post_get_map_annotation(conn, project_structure, users_groups):
     map_ann_id3 = ezomero.post_map_annotation(current_conn, "Image", im_id3,
                                               kv, ns)
     kv_pairs3 = ezomero.get_map_annotation(current_conn, map_ann_id3)
-    assert kv_pairs3["key2"][0] == "value2"
+    assert kv_pairs3["key2"] == "value2"
     current_conn.close()
 
     # Test posting to an invalid cross-group
