@@ -23,7 +23,7 @@ def test_put_map_annotation(conn, project_structure, users_groups):
           "key2": "value2"}
     ezomero.put_map_annotation(conn, map_ann_id, kv)
     kv_pairs = ezomero.get_map_annotation(conn, map_ann_id)
-    assert kv_pairs['key1'][0] == kv['key1']
+    assert kv_pairs['key1'] == kv['key1']
 
     # test cross-group
     kv = {"key1": "value1",
