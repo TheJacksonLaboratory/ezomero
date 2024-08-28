@@ -1283,17 +1283,31 @@ def get_map_annotation(conn: BlitzGateway, map_ann_id: int,
     -------
     kv_dict : dict
         The value of the specified map annotation object, as a Python dict.
+        If kv-pairs with the same key exist, the corresponding dict value
+        will be a list.
 
     Examples
     --------
     >>> ma_dict = get_map_annotation(conn, 62)
     >>> print(ma_dict)
-    {'testkey': 'testvalue', 'testkey2': 'testvalue2'}
+    {'testkey': 'testvalue', 'testkey2': ['testvalue2'. 'testvalue3']}
     """
     if type(map_ann_id) is not int:
         raise TypeError('Map annotation ID must be an integer')
+    
+    map_annotation_dict = {}
+    
+    map_annotation = conn.getObject('MapAnnotation', map_ann_id).getValue()
 
-    return dict(conn.getObject('MapAnnotation', map_ann_id).getValue())
+    for item in map_annotation:
+        if item[0] in map_annotation_dict:
+            if not isinstance(map_annotation_dict[item[0]], list):
+                map_annotation_dict[item[0]] = [map_annotation_dict[item[0]]]
+            map_annotation_dict[item[0]].append(item[1])
+        else:
+            map_annotation_dict[item[0]] = item[1]
+
+    return map_annotation_dict
 
 
 @do_across_groups

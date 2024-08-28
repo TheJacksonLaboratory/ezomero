@@ -582,7 +582,8 @@ def test_get_image_ids_params(conn):
 
 def test_get_map_annotation_and_ids(conn, project_structure):
     kv = {"key1": "value1",
-          "key2": "value2"}
+          "key2": "value2",
+          "key3": ["value3", "value4"]}
     ns = "jax.org/omeroutils/tests/v0"
     image_info = project_structure[2]
     im_id = image_info[0][1]
@@ -610,7 +611,9 @@ def test_get_map_annotation_and_ids(conn, project_structure):
     with pytest.raises(TypeError):
         _ = ezomero.get_map_annotation(conn, '10')
     mpann = ezomero.get_map_annotation(conn, map_ann_ids[0])
-    assert mpann == kv
+    assert mpann["key1"] == kv["key1"]
+    assert mpann["key2"] == kv["key2"]
+    assert sorted(mpann["key3"]) == sorted(kv["key3"])
     conn.deleteObjects("Annotation",
                        [map_ann_id, map_ann_id2, map_ann_id3, map_ann_id4],
                        deleteAnns=True,

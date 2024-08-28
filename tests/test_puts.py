@@ -19,11 +19,11 @@ def test_put_map_annotation(conn, project_structure, users_groups):
     image_info = project_structure[2]
     im_id = image_info[0][1]
     map_ann_id = ezomero.post_map_annotation(conn, "Image", im_id, kv, ns)
-    kv = {"key1": "changed1",
+    kv = {"key1": ["changed1", "changed2"],
           "key2": "value2"}
     ezomero.put_map_annotation(conn, map_ann_id, kv)
     kv_pairs = ezomero.get_map_annotation(conn, map_ann_id)
-    assert kv_pairs['key1'] == kv['key1']
+    assert sorted(kv_pairs['key1']) == sorted(kv['key1'])
 
     # test cross-group
     kv = {"key1": "value1",
