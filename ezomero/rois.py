@@ -8,7 +8,19 @@ __all__ = ["Point",
            "Polygon",
            "Polyline",
            "Label",
-           "ezShape"]
+           "ezShape",
+           "AffineTransform"]
+
+
+@dataclass(frozen=True)
+class AffineTransform():
+    """A dataclss for affine transformation matrix of shapes"""
+    a00: float = field(default=1.0)
+    a10: float = field(default=0.0)
+    a01: float = field(default=0.0)
+    a11: float = field(default=1.0)
+    a02: float = field(default=0.0)
+    a12: float = field(default=0.0)
 
 
 @dataclass(frozen=True)
@@ -20,6 +32,7 @@ class ezShape:
     This dataclass is frozen and should not be modified after instantiation
 
     """
+    transform: Union[AffineTransform, None] = field(default=None, kw_only=True)
 
 
 @dataclass(frozen=True)

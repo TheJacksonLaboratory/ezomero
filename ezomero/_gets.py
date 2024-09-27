@@ -14,6 +14,7 @@ from omero.sys import Parameters
 from omero.model import enums as omero_enums
 from .rois import Point, Line, Rectangle
 from .rois import Ellipse, Polygon, Polyline, Label, ezShape
+from .rois import AffineTransform
 import importlib.util
 
 if (importlib.util.find_spec('pandas')):
@@ -1761,33 +1762,46 @@ def _omero_shape_to_shape(omero_shape: Shape
         mk_end = omero_shape.markerEnd
     except AttributeError:
         mk_end = None
+    try:
+        transform = omero_shape.transform
+    except AttributeError:
+        transform = None
+    if transform is not None:
+        transform = AffineTransform(
+            transform.a00.val,
+            transform.a10.val,
+            transform.a01.val,
+            transform.a11.val,
+            transform.a02.val,
+            transform.a12.val,
+        )
     shape: Union[Point, Line, Rectangle, Ellipse, Polygon, Polyline, Label]
     if shape_type == "Point":
         x = omero_shape.x
         y = omero_shape.y
         shape = Point(x, y, z_val, c_val, t_val, text, fill_color,
-                      stroke_color, stroke_width)
+                      stroke_color, stroke_width, transform=transform)
     elif shape_type == "Line":
         x1 = omero_shape.x1
         x2 = omero_shape.x2
         y1 = omero_shape.y1
         y2 = omero_shape.y2
         shape = Line(x1, y1, x2, y2, z_val, c_val, t_val, mk_start, mk_end,
-                     text, fill_color, stroke_color, stroke_width)
+                     text, fill_color, stroke_color, stroke_width, transform=transform)
     elif shape_type == "Rectangle":
         x = omero_shape.x
         y = omero_shape.y
         width = omero_shape.width
         height = omero_shape.height
         shape = Rectangle(x, y, width, height, z_val, c_val, t_val, text,
-                          fill_color, stroke_color, stroke_width)
+                          fill_color, stroke_color, stroke_width, transform=transform)
     elif shape_type == "Ellipse":
         x = omero_shape.x
         y = omero_shape.y
         radiusX = omero_shape.radiusX
         radiusY = omero_shape.radiusY
         shape = Ellipse(x, y, radiusX, radiusY, z_val, c_val, t_val, text,
-                        fill_color, stroke_color, stroke_width)
+                        fill_color, stroke_color, stroke_width, transform=transform)
     elif shape_type == "Polygon":
         omero_points = omero_shape.points.split()
         points = []
@@ -1795,7 +1809,7 @@ def _omero_shape_to_shape(omero_shape: Shape
             coords = point.split(',')
             points.append((float(coords[0]), float(coords[1])))
         shape = Polygon(points, z_val, c_val, t_val, text, fill_color,
-                        stroke_color, stroke_width)
+                        stroke_color, stroke_width, transform=transform)
     elif shape_type == "Polyline":
         omero_points = omero_shape.points.split()
         points = []
@@ -1803,13 +1817,13 @@ def _omero_shape_to_shape(omero_shape: Shape
             coords = point.split(',')
             points.append((float(coords[0]), float(coords[1])))
         shape = Polyline(points, z_val, c_val, t_val, text, fill_color,
-                         stroke_color, stroke_width)
+                         stroke_color, stroke_width, transform=transform)
     elif shape_type == "Label":
         x = omero_shape.x
         y = omero_shape.y
         fsize = omero_shape.getFontSize().getValue()
         shape = Label(x, y, text, fsize, z_val, c_val, t_val, fill_color,
-                      stroke_color, stroke_width)
+                      stroke_color, stroke_width, transform=transform)
     else:
         err = 'The shape passed for the roi is not a valid shape type'
         raise TypeError(err)
