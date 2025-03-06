@@ -5,6 +5,8 @@ import filecmp
 import os
 import sys
 from unittest import mock
+from omero import SecurityViolation
+from Ice import UnknownException
 
 
 # Test posts
@@ -63,9 +65,9 @@ def test_post_dataset(conn, project_structure, users_groups, timestamp):
     ds_test_name5 = 'test_post_dataset5_' + timestamp
     project_info = project_structure[0]
     pid = project_info[1][1]  # proj1 (in test_group_1)
-    did5 = ezomero.post_dataset(current_conn, ds_test_name5, project_id=pid)
-    ds_ids = ezomero.get_dataset_ids(current_conn)
-    assert len(ds_ids) == 1
+    did5 = None
+    with pytest.raises(UnknownException):
+        did5 = ezomero.post_dataset(current_conn, ds_test_name5, project_id=pid)
     current_conn.close()
     assert did5 is None
 
@@ -147,16 +149,18 @@ def test_post_image(conn, project_structure, users_groups, timestamp,
     assert current_conn.getObject("Image", im_id4).getName() == image_name
     current_conn.close()
 
-    # Post image cross-group, ivvalid permissions
+    # Post image cross-group, invalid permissions
     username = users_groups[1][2][0]  # test_user3
     groupname = users_groups[0][1][0]  # test_group_2
     current_conn = conn.suConn(username, groupname)
     dataset_info = project_structure[1]
     did5 = dataset_info[1][1]  # ds1 (in test_group_1)
     image_name = 'test_post_image_' + timestamp
-    im_id5 = ezomero.post_image(current_conn, image_fixture, image_name,
-                                description='This is an image',
-                                dataset_id=did5)
+    im_id5 = None
+    with pytest.raises(UnknownException):
+        im_id5 = ezomero.post_image(current_conn, image_fixture, image_name,
+                                    description='This is an image',
+                                    dataset_id=did5)
     current_conn.close()
     assert im_id5 is None
 
@@ -221,8 +225,10 @@ def test_post_get_map_annotation(conn, project_structure, users_groups):
     groupname = users_groups[0][1][0]  # test_group_2
     current_conn = conn.suConn(username, groupname)
     im_id4 = image_info[1][1]  # im1(in test_group_1)
-    map_ann_id4 = ezomero.post_map_annotation(current_conn, "Image", im_id4,
-                                              kv, ns)
+    map_ann_id4 = None
+    with pytest.raises(SecurityViolation):
+        map_ann_id4 = ezomero.post_map_annotation(current_conn, "Image", 
+                                                  im_id4, kv, ns)
     assert map_ann_id4 is None
     current_conn.close()
 
@@ -283,8 +289,10 @@ def test_post_get_comment_annotation(conn, project_structure, users_groups):
     groupname = users_groups[0][1][0]  # test_group_2
     current_conn = conn.suConn(username, groupname)
     im_id4 = image_info[1][1]  # im1(in test_group_1)
-    comm_ann_id4 = ezomero.post_comment_annotation(current_conn, "Image",
-                                                   im_id4, comment, ns)
+    comm_ann_id4 = None
+    with pytest.raises(SecurityViolation):
+        comm_ann_id4 = ezomero.post_comment_annotation(current_conn, "Image",
+                                                       im_id4, comment, ns)
     assert comm_ann_id4 is None
     current_conn.close()
 
@@ -355,9 +363,11 @@ def test_post_get_file_annotation(conn, project_structure, users_groups,
     groupname = users_groups[0][1][0]  # test_group_2
     current_conn = conn.suConn(username, groupname)
     im_id4 = image_info[1][1]  # im1(in test_group_1)
-    file_ann_id4 = ezomero.post_file_annotation(current_conn,
-                                                file_ann, ns,
-                                                "Image", im_id4)
+    file_ann_id4 = None
+    with pytest.raises(SecurityViolation):
+        file_ann_id4 = ezomero.post_file_annotation(current_conn,
+                                                    file_ann, ns,
+                                                    "Image", im_id4)
     assert file_ann_id4 is None
     current_conn.close()
 
@@ -430,28 +440,23 @@ def test_post_roi(conn, project_structure, roi_fixture, users_groups):
 
     # Test posting to a non-existing image
     im_id2 = 999999999
-    with pytest.raises(Exception):  # TODO: verify which exception type
+    with pytest.raises(AttributeError):  # TODO: verify which exception type
         _ = ezomero.post_roi(conn, im_id2,
                              shapes=roi_fixture['shapes'],
                              name=roi_fixture['name'],
-                             description=roi_fixture['desc'],
-                             fill_color=roi_fixture['fill_color'],
-                             stroke_color=roi_fixture['stroke_color'],
-                             stroke_width=roi_fixture['stroke_width'])
+                             description=roi_fixture['desc'])
 
     # Test posting to an invalid cross-group
     username = users_groups[1][2][0]  # test_user3
     groupname = users_groups[0][1][0]  # test_group_2
     current_conn = conn.suConn(username, groupname)
     im_id4 = image_info[1][1]  # im1(in test_group_1)
-    with pytest.raises(Exception):  # TODO: verify which exception type
+    print(roi_fixture)
+    with pytest.raises(UnknownException): 
         _ = ezomero.post_roi(current_conn, im_id4,
                              shapes=roi_fixture['shapes'],
                              name=roi_fixture['name'],
-                             description=roi_fixture['desc'],
-                             fill_color=roi_fixture['fill_color'],
-                             stroke_color=roi_fixture['stroke_color'],
-                             stroke_width=roi_fixture['stroke_width'])
+                             description=roi_fixture['desc'])
     current_conn.close()
 
     conn.deleteObjects("Roi", [roi_id], deleteAnns=True,
