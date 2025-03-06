@@ -3,8 +3,6 @@ import tempfile
 import yaml
 from typing import Optional, Union, List
 from os.path import abspath
-from omero.rtypes import rstring
-from omero.sys import Parameters
 from omero.gateway import MapAnnotationWrapper, BlitzGateway
 from ._gets import get_image_ids
 from ._posts import post_dataset, post_project, post_screen
@@ -214,7 +212,7 @@ def multi_post_map_annotation(conn: BlitzGateway, object_type: str,
     kv_pairs = []
     for k, v in kv_dict.items():
         k = str(k)
-        if type(v) != list:
+        if type(v) is not list:
             v = str(v)
             kv_pairs.append([k, v])
         else:

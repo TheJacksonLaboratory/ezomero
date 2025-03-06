@@ -67,7 +67,8 @@ def test_post_dataset(conn, project_structure, users_groups, timestamp):
     pid = project_info[1][1]  # proj1 (in test_group_1)
     did5 = None
     with pytest.raises(UnknownException):
-        did5 = ezomero.post_dataset(current_conn, ds_test_name5, project_id=pid)
+        did5 = ezomero.post_dataset(current_conn, ds_test_name5,
+                                    project_id=pid)
     current_conn.close()
     assert did5 is None
 
@@ -227,7 +228,7 @@ def test_post_get_map_annotation(conn, project_structure, users_groups):
     im_id4 = image_info[1][1]  # im1(in test_group_1)
     map_ann_id4 = None
     with pytest.raises(SecurityViolation):
-        map_ann_id4 = ezomero.post_map_annotation(current_conn, "Image", 
+        map_ann_id4 = ezomero.post_map_annotation(current_conn, "Image",
                                                   im_id4, kv, ns)
     assert map_ann_id4 is None
     current_conn.close()
@@ -452,7 +453,7 @@ def test_post_roi(conn, project_structure, roi_fixture, users_groups):
     current_conn = conn.suConn(username, groupname)
     im_id4 = image_info[1][1]  # im1(in test_group_1)
     print(roi_fixture)
-    with pytest.raises(UnknownException): 
+    with pytest.raises(UnknownException):
         _ = ezomero.post_roi(current_conn, im_id4,
                              shapes=roi_fixture['shapes'],
                              name=roi_fixture['name'],

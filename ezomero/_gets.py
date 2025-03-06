@@ -1294,9 +1294,9 @@ def get_map_annotation(conn: BlitzGateway, map_ann_id: int,
     """
     if type(map_ann_id) is not int:
         raise TypeError('Map annotation ID must be an integer')
-    
+
     map_annotation_dict = {}
-    
+
     map_annotation = conn.getObject('MapAnnotation', map_ann_id).getValue()
 
     for item in map_annotation:

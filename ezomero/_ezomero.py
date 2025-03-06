@@ -124,14 +124,14 @@ def put_map_annotation(conn: BlitzGateway, map_ann_id: int, kv_dict: dict,
     kv_pairs = []
     for k, v in kv_dict.items():
         k = str(k)
-        if type(v) != list:
+        if type(v) is not list:
             v = str(v)
             kv_pairs.append([k, v])
         else:
             for value in v:
                 value = str(value)
                 kv_pairs.append([k, value])
-                
+
     map_ann.setValue(kv_pairs)
     map_ann.save()
     return None
