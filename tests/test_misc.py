@@ -3,7 +3,6 @@ import pytest
 from omero.gateway import PlateWrapper
 from omero.model import PlateI
 from omero.gateway import TagAnnotationWrapper
-from omero import SecurityViolation
 
 
 def test_omero_connection(conn, omero_params):
@@ -115,8 +114,8 @@ def test_set_group(conn, users_groups):
     with pytest.raises(TypeError):
         _ = ezomero.set_group(current_conn, '10')
     new_group = users_groups[0][0][1]  # test_group_1
-    with pytest.raises(SecurityViolation):
-        ret = ezomero.set_group(current_conn, int(new_group))
+    ret = ezomero.set_group(current_conn, int(new_group))
+    assert ret is False
     current_conn.close()
 
     username = users_groups[1][0][0]  # test_user1

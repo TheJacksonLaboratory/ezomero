@@ -74,9 +74,8 @@ def pytest_addoption(parser):
                                             DEFAULT_OMERO_WEB_HOST))
     parser.addoption("--omero-port",
                      action="store",
-                     type=int,
-                     default=int(os.environ.get("OMERO_PORT",
-                                                DEFAULT_OMERO_PORT)))
+                     default=os.environ.get("OMERO_PORT",
+                                            DEFAULT_OMERO_PORT))
     parser.addoption("--omero-secure",
                      action="store",
                      default=bool(os.environ.get("OMERO_SECURE",

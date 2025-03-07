@@ -2,7 +2,6 @@ import pytest
 import numpy as np
 import ezomero
 from omero.gateway import TagAnnotationWrapper
-from omero import SecurityViolation
 
 # Test gets
 ###########
@@ -68,10 +67,7 @@ def test_get_image(conn, project_structure, users_groups, pyramid_fixture):
     groupname = users_groups[0][1][0]  # test_group_2
     current_conn = conn.suConn(username, groupname)
     im_id4 = image_info[1][1]  # im1(in test_group_1)
-    im4 = None
-    im_arr4 = None
-    with pytest.raises(SecurityViolation):
-        im4, im_arr4 = ezomero.get_image(current_conn, im_id4)
+    im4, im_arr4 = ezomero.get_image(current_conn, im_id4)
     assert im4 is None
     assert im_arr4 is None
     current_conn.close()
@@ -215,9 +211,7 @@ def test_get_image_ids(conn, project_structure, screen_structure,
     groupname = users_groups[0][1][0]  # test_group_2 (test_user3 is mbr)
     current_conn = conn.suConn(username, groupname)
     ds1_id = dataset_info[1][1]  # ds1, in test_group1 (test_user3 not mbr)
-    ds1_im_ids = None
-    with pytest.raises(SecurityViolation):
-        ds1_im_ids = ezomero.get_image_ids(current_conn, dataset=ds1_id)
+    ds1_im_ids = ezomero.get_image_ids(current_conn, dataset=ds1_id)
     assert not ds1_im_ids
     current_conn.close()
 
@@ -808,9 +802,7 @@ def test_get_roi_ids(conn, project_structure, roi_fixture, users_groups):
     username = users_groups[1][2][0]  # test_user3
     groupname = users_groups[0][1][0]  # test_group_2
     current_conn = conn.suConn(username, groupname)
-    empty_ret = []
-    with pytest.raises(SecurityViolation):
-        empty_ret = ezomero.get_roi_ids(current_conn, im_id)
+    empty_ret = ezomero.get_roi_ids(current_conn, im_id)
     assert empty_ret == []
     current_conn.close()
 
@@ -861,9 +853,7 @@ def test_get_shape_and_get_shape_ids(conn, project_structure,
     username = users_groups[1][2][0]  # test_user3
     groupname = users_groups[0][1][0]  # test_group_2
     current_conn = conn.suConn(username, groupname)
-    empty_ret = None
-    with pytest.raises(SecurityViolation):
-        empty_ret = ezomero.get_shape_ids(current_conn, roi_id)
+    empty_ret = ezomero.get_shape_ids(current_conn, roi_id)
     assert empty_ret is None
     current_conn.close()
 
