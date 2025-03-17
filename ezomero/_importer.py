@@ -456,7 +456,6 @@ class Importer:
             arguments.extend(str_kwargs)
         arguments.extend(['--file', stdout_file.name, '--output', 'yaml'])
         arguments.append(str(self.file_path))
-        print(arguments)
         cli.invoke(arguments)
         self.import_result = yaml.safe_load(stdout_file)
         stdout_file.close()
