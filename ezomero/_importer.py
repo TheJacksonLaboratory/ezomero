@@ -264,11 +264,10 @@ class Importer:
     3) For automating purposes, the arguments ``host`` and ``port`` can be set,
     avoiding a user prompt for that info. Both need to be set to bypass that
     prompt.
-    4) The returned image IDs correspond to ALL image IDs accessible to this
-    user that have the same ``ClientPath``, i.e., that have the same file
-    name and have been imported from the same folder. In production, this
-    should be a rare occurrence, but please keep that in mind if you are
-    getting more image IDs than you were expecting!
+    4) Due to the method we use for detecting imported image IDs, passing
+    through the `--file` argument to redirect the stdout output of `omero
+    import`is not possible - `--err` to redirect the stderr output should
+    be possible.
     """
 
     def __init__(self, conn: BlitzGateway, file_path: str,
@@ -447,8 +446,7 @@ class Importer:
                      '-k', self.conn.getSession().getUuid().val,
                      '-s', self.conn.host,
                      '-p', str(self.conn.port),
-                     '--file', stdout_file.name,
-                     '--output', 'yaml']
+                     ]
         if self.common_args:
             str_args = ['--{}'.format(v) for v in self.common_args]
             arguments.extend(str_args)
@@ -456,6 +454,7 @@ class Importer:
             str_kwargs = ['--{}={}'.format(k, v) for k, v in
                           self.named_args.items()]
             arguments.extend(str_kwargs)
+        arguments.extend(['--file', stdout_file.name, '--output', 'yaml'])
         arguments.append(str(self.file_path))
         print(arguments)
         cli.invoke(arguments)
