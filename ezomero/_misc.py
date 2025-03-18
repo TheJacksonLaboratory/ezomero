@@ -17,7 +17,7 @@ def filter_by_filename(conn: BlitzGateway, im_ids: List[int],
 
     Sometimes we know the filename of an image that has been imported into
     OMERO but not necessarily the image ID. This is frequently the case when
-    we want to annotate a recently imported image. This funciton will help
+    we want to annotate a recently imported image. This function will help
     to filter a list of image IDs to only those associated with a particular
     filename.
 

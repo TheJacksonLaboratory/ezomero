@@ -28,7 +28,7 @@ DEFAULT_OMERO_USER = "root"
 DEFAULT_OMERO_PASS = "omero"
 DEFAULT_OMERO_HOST = "localhost"
 DEFAULT_OMERO_WEB_HOST = "http://localhost:5080"
-DEFAULT_OMERO_PORT = 6064
+DEFAULT_OMERO_PORT = "6064"
 DEFAULT_OMERO_SECURE = 1
 
 # [[group, permissions], ...]
@@ -74,9 +74,8 @@ def pytest_addoption(parser):
                                             DEFAULT_OMERO_WEB_HOST))
     parser.addoption("--omero-port",
                      action="store",
-                     type=int,
-                     default=int(os.environ.get("OMERO_PORT",
-                                                DEFAULT_OMERO_PORT)))
+                     default=os.environ.get("OMERO_PORT",
+                                            DEFAULT_OMERO_PORT))
     parser.addoption("--omero-secure",
                      action="store",
                      default=bool(os.environ.get("OMERO_SECURE",

@@ -1,8 +1,8 @@
 import logging
+import tempfile
+import yaml
 from typing import Optional, Union, List
 from os.path import abspath
-from omero.rtypes import rstring
-from omero.sys import Parameters
 from omero.gateway import MapAnnotationWrapper, BlitzGateway
 from ._gets import get_image_ids
 from ._posts import post_dataset, post_project, post_screen
@@ -61,18 +61,19 @@ def ezimport(conn: BlitzGateway, target: str,
 
     imp_ctl = Importer(conn, target, project, dataset, screen,
                        ann, ns, *args, **kwargs)
-    imp_ctl.ezimport()
-    if imp_ctl.screen:
-        imp_ctl.get_plate_ids()
-        imp_ctl.organize_plates()
-        imp_ctl.annotate_plates()
-        return imp_ctl.plate_ids
+    rv = imp_ctl.ezimport()
+    if rv:
+        if imp_ctl.screen:
+            imp_ctl.get_plate_ids()
+            imp_ctl.organize_plates()
+            imp_ctl.annotate_plates()
+            return imp_ctl.plate_ids
 
-    else:
-        imp_ctl.get_my_image_ids()
-        imp_ctl.organize_images()
-        imp_ctl.annotate_images()
-        return imp_ctl.image_ids
+        else:
+            imp_ctl.get_my_image_ids()
+            imp_ctl.organize_images()
+            imp_ctl.annotate_images()
+            return imp_ctl.image_ids
 
 
 def set_or_create_project(conn: BlitzGateway, project: Union[str, int],
@@ -211,7 +212,7 @@ def multi_post_map_annotation(conn: BlitzGateway, object_type: str,
     kv_pairs = []
     for k, v in kv_dict.items():
         k = str(k)
-        if type(v) != list:
+        if type(v) is not list:
             v = str(v)
             kv_pairs.append([k, v])
         else:
@@ -263,11 +264,10 @@ class Importer:
     3) For automating purposes, the arguments ``host`` and ``port`` can be set,
     avoiding a user prompt for that info. Both need to be set to bypass that
     prompt.
-    4) The returned image IDs correspond to ALL image IDs accessible to this
-    user that have the same ``ClientPath``, i.e., that have the same file
-    name and have been imported from the same folder. In production, this
-    should be a rare occurrence, but please keep that in mind if you are
-    getting more image IDs than you were expecting!
+    4) Due to the method we use for detecting imported image IDs, passing
+    through the `--file` argument to redirect the stdout output of `omero
+    import`is not possible - `--err` to redirect the stderr output should
+    be possible.
     """
 
     def __init__(self, conn: BlitzGateway, file_path: str,
@@ -283,6 +283,7 @@ class Importer:
         self.dataset = dataset
         self.common_args = args
         self.named_args = kwargs
+        self.import_result = ""
 
         if self.project and not self.dataset:
             raise ValueError("Cannot define project but no dataset!")
@@ -305,27 +306,8 @@ class Importer:
             Ids of images imported from the specified client path, which
             itself is derived from ``self.file_path`` and ``self.filename``.
         """
-        if self.imported is not True:
-            logging.error(f'File {self.file_path} has not been imported')
-            return None
-        else:
-            q = self.conn.getQueryService()
-            params = Parameters()
-            path_query = self.make_substitutions()
-            path_query = path_query.strip('/')
-            if path_query.endswith(".zarr"):
-                path_query = f"{path_query}/.zattrs"
-            params.map = {"cpath": rstring(path_query)}
-            results = q.projection(
-                "SELECT i.id FROM Image i"
-                " JOIN i.fileset fs"
-                " JOIN fs.usedFiles u"
-                " WHERE u.clientPath=:cpath",
-                params,
-                self.conn.SERVICE_OPTS
-                )
-            self.image_ids = [r[0].val for r in results]
-            return self.image_ids
+        self.image_ids = self.import_result[0]['Image']
+        return self.image_ids
 
     def make_substitutions(self) -> str:
         fpath = self.file_path
@@ -344,32 +326,8 @@ class Importer:
             Ids of plates imported from the specified client path, which
             itself is derived from ``self.file_path`` and ``self.filename``.
         """
-        if self.imported is not True:
-            logging.error(f'File {self.file_path} has not been imported')
-            return None
-        else:
-            print("time to get some IDs")
-            q = self.conn.getQueryService()
-            print(q)
-            params = Parameters()
-            path_query = str(self.file_path).strip('/')
-            print(f"path query: f{path_query}")
-            params.map = {"cpath": rstring(path_query)}
-            print(params)
-            results = q.projection(
-                "SELECT DISTINCT p.id FROM Plate p"
-                " JOIN p.plateAcquisitions pa"
-                " JOIN pa.wellSample ws"
-                " JOIN ws.image i"
-                " JOIN i.fileset fs"
-                " JOIN fs.usedFiles u"
-                " WHERE u.clientPath=:cpath",
-                params,
-                self.conn.SERVICE_OPTS
-                )
-            print(results)
-            self.plate_ids = [r[0].val for r in results]
-            return self.plate_ids
+        self.plate_ids = self.import_result[0]['Plate']
+        return self.plate_ids
 
     def annotate_images(self) -> Union[int, None]:
         """Post map annotation (``self.ann``) to images ``self.image_ids``.
@@ -483,10 +441,12 @@ class Importer:
         cli = CLI()
         cli.register('import', ImportControl, '_')
         cli.register('sessions', SessionsControl, '_')
+        stdout_file = tempfile.NamedTemporaryFile(mode="r")
         arguments = ['import',
                      '-k', self.conn.getSession().getUuid().val,
                      '-s', self.conn.host,
-                     '-p', str(self.conn.port)]
+                     '-p', str(self.conn.port),
+                     ]
         if self.common_args:
             str_args = ['--{}'.format(v) for v in self.common_args]
             arguments.extend(str_args)
@@ -494,10 +454,12 @@ class Importer:
             str_kwargs = ['--{}={}'.format(k, v) for k, v in
                           self.named_args.items()]
             arguments.extend(str_kwargs)
+        arguments.extend(['--file', stdout_file.name, '--output', 'yaml'])
         arguments.append(str(self.file_path))
-        print(arguments)
         cli.invoke(arguments)
-        if cli.rv == 0:
+        self.import_result = yaml.safe_load(stdout_file)
+        stdout_file.close()
+        if self.import_result:
             self.imported = True
             print(f'Imported {self.file_path}')
             return True

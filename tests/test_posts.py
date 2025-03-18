@@ -63,7 +63,8 @@ def test_post_dataset(conn, project_structure, users_groups, timestamp):
     ds_test_name5 = 'test_post_dataset5_' + timestamp
     project_info = project_structure[0]
     pid = project_info[1][1]  # proj1 (in test_group_1)
-    did5 = ezomero.post_dataset(current_conn, ds_test_name5, project_id=pid)
+    did5 = ezomero.post_dataset(current_conn, ds_test_name5,
+                                project_id=pid)
     ds_ids = ezomero.get_dataset_ids(current_conn)
     assert len(ds_ids) == 1
     current_conn.close()
@@ -147,7 +148,7 @@ def test_post_image(conn, project_structure, users_groups, timestamp,
     assert current_conn.getObject("Image", im_id4).getName() == image_name
     current_conn.close()
 
-    # Post image cross-group, ivvalid permissions
+    # Post image cross-group, invalid permissions
     username = users_groups[1][2][0]  # test_user3
     groupname = users_groups[0][1][0]  # test_group_2
     current_conn = conn.suConn(username, groupname)
@@ -221,8 +222,8 @@ def test_post_get_map_annotation(conn, project_structure, users_groups):
     groupname = users_groups[0][1][0]  # test_group_2
     current_conn = conn.suConn(username, groupname)
     im_id4 = image_info[1][1]  # im1(in test_group_1)
-    map_ann_id4 = ezomero.post_map_annotation(current_conn, "Image", im_id4,
-                                              kv, ns)
+    map_ann_id4 = ezomero.post_map_annotation(current_conn, "Image",
+                                              im_id4, kv, ns)
     assert map_ann_id4 is None
     current_conn.close()
 
@@ -430,28 +431,23 @@ def test_post_roi(conn, project_structure, roi_fixture, users_groups):
 
     # Test posting to a non-existing image
     im_id2 = 999999999
-    with pytest.raises(Exception):  # TODO: verify which exception type
+    with pytest.raises(AttributeError):  # TODO: verify which exception type
         _ = ezomero.post_roi(conn, im_id2,
                              shapes=roi_fixture['shapes'],
                              name=roi_fixture['name'],
-                             description=roi_fixture['desc'],
-                             fill_color=roi_fixture['fill_color'],
-                             stroke_color=roi_fixture['stroke_color'],
-                             stroke_width=roi_fixture['stroke_width'])
+                             description=roi_fixture['desc'])
 
     # Test posting to an invalid cross-group
     username = users_groups[1][2][0]  # test_user3
     groupname = users_groups[0][1][0]  # test_group_2
     current_conn = conn.suConn(username, groupname)
     im_id4 = image_info[1][1]  # im1(in test_group_1)
-    with pytest.raises(Exception):  # TODO: verify which exception type
+    a, b = ezomero.get_image(current_conn, im_id4)
+    with pytest.raises(AttributeError):
         _ = ezomero.post_roi(current_conn, im_id4,
                              shapes=roi_fixture['shapes'],
                              name=roi_fixture['name'],
-                             description=roi_fixture['desc'],
-                             fill_color=roi_fixture['fill_color'],
-                             stroke_color=roi_fixture['stroke_color'],
-                             stroke_width=roi_fixture['stroke_width'])
+                             description=roi_fixture['desc'])
     current_conn.close()
 
     conn.deleteObjects("Roi", [roi_id], deleteAnns=True,
