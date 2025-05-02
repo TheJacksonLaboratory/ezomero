@@ -916,6 +916,11 @@ def test_get_original_filepaths(conn, project_structure, monkeypatch):
 
     # simple import, multifile/multi-image
     fpath = "tests/data/vsi-ets-test-jpg2k.vsi"
+    str_input = ["omero", 'import',
+                 '-k', conn.getSession().getUuid().val,
+                 '-s', conn.host,
+                 '-p', str(conn.port),
+                 fpath, "\n"]
     io = StringIO(" ".join(str_input))
     monkeypatch.setattr('sys.stdin', io)
     id = ezomero.ezimport(conn, fpath)
