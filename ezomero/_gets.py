@@ -1575,11 +1575,15 @@ def get_original_filepaths(conn: BlitzGateway, image_id: int,
             params,
             conn.SERVICE_OPTS
             )
-        results = (
-            results[0][0].val, results[0][1].val
-        )
+        
+        if len(results) > 0:
+            results = (
+                 results[0][0].val, results[0][1].val
+            )
+        else:
+            results = ("", -1)
     else:
-        raise ValueError("Parameter fpath must be 'client' or 'repo'")
+        raise ValueError("Parameter fpath must be 'client', 'repo' or 'serie'")
 
     return results
 
