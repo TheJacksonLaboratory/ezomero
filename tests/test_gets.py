@@ -882,6 +882,8 @@ def test_get_original_filepaths(conn, project_structure):
     assert opath == []
     opath = ezomero.get_original_filepaths(conn, im_id, fpath='client')
     assert opath == []
+    opath, serie = ezomero.get_original_filepaths(conn, im_id, fpath='serie')
+    assert opath == "" and serie == -1
 
 
 def test_get_pyramid_levels(conn, pyramid_fixture):
