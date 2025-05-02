@@ -1484,9 +1484,11 @@ def get_user_id(conn: BlitzGateway, user_name: str) -> Union[int, None]:
 
 
 @do_across_groups
-def get_original_filepaths(conn: BlitzGateway, image_id: int,
-                           fpath: Optional[Literal["client", "repo", "serie"]] = 'repo',
-                           across_groups: Optional[bool] = True) -> List[str]:
+def get_original_filepaths(
+    conn: BlitzGateway, image_id: int,
+    fpath: Optional[Literal["client", "repo", "serie"]] = 'repo',
+    across_groups: Optional[bool] = True
+) -> List[str]:
     """Get paths to original files for specified image.
 
     Parameters
@@ -1575,7 +1577,7 @@ def get_original_filepaths(conn: BlitzGateway, image_id: int,
             params,
             conn.SERVICE_OPTS
             )
-        
+
         if len(results) > 0:
             results = (
                  results[0][0].val, results[0][1].val

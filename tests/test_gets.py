@@ -924,8 +924,10 @@ def test_get_original_filepaths(conn, project_structure, monkeypatch):
     assert len(opath) == 2
     opath = ezomero.get_original_filepaths(conn, int(id[0]), fpath='client')
     assert len(opath) == 2
-    opath, serie = ezomero.get_original_filepaths(conn, int(id[0]), fpath='serie')
+    opath, serie = ezomero.get_original_filepaths(conn, int(id[0]),
+                                                  fpath='serie')
     assert opath.endswith(fpath) and serie == 0
-    opath, serie = ezomero.get_original_filepaths(conn, int(id[1]), fpath='serie')
+    opath, serie = ezomero.get_original_filepaths(conn, int(id[1]),
+                                                  fpath='serie')
     assert opath.endswith(fpath) and serie == 1
     conn.deleteObjects("Image", id)
