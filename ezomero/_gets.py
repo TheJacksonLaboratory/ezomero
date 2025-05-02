@@ -1294,9 +1294,9 @@ def get_map_annotation(conn: BlitzGateway, map_ann_id: int,
     """
     if type(map_ann_id) is not int:
         raise TypeError('Map annotation ID must be an integer')
-    
+
     map_annotation_dict = {}
-    
+
     map_annotation = conn.getObject('MapAnnotation', map_ann_id).getValue()
 
     for item in map_annotation:
@@ -1485,7 +1485,7 @@ def get_user_id(conn: BlitzGateway, user_name: str) -> Union[int, None]:
 
 @do_across_groups
 def get_original_filepaths(conn: BlitzGateway, image_id: int,
-                           fpath: Optional[Literal["fpath", "repo"]] = 'repo',
+                           fpath: Optional[Literal["client", "repo", "serie"]] = 'repo',
                            across_groups: Optional[bool] = True) -> List[str]:
     """Get paths to original files for specified image.
 
@@ -1495,11 +1495,13 @@ def get_original_filepaths(conn: BlitzGateway, image_id: int,
         OMERO connection.
     image_id : int
         ID of image for which filepath info is to be returned.
-    fpath : {'repo', 'client'}, optional
+    fpath : {'repo', 'client', 'serie'}, optional
         Specify whether you want to return path to file in the managed
         repository ('repo') or the path from which the image was imported
         ('client'). The latter is useful for images that were imported by
-        the "in place" method. Defaults to 'repo'.
+        the "in place" method. Defaults to 'repo'. The third option ('serie')
+        returns the client file path and serie index to pass to Bio-Formats
+        and open the image directly.
     across_groups : bool, optional
         Defines cross-group behavior of function - set to
         ``False`` to disable it.
@@ -1527,6 +1529,11 @@ def get_original_filepaths(conn: BlitzGateway, image_id: int,
 
     >>> get_original_filepaths(conn, 2201, fpath='client')
     ['/client/omero/smith_lab/stack2/PJN17_083_07.ndpi']
+
+    # Return client path and serie index of the image.
+
+    >>> get_original_filepaths(conn, 2201, fpath='serie')
+    ('/client/omero/smith_lab/experiment.lif', 10)
     """
     if type(image_id) is not int:
         raise TypeError('Image ID must be an integer')
@@ -1558,6 +1565,19 @@ def get_original_filepaths(conn: BlitzGateway, image_id: int,
             conn.SERVICE_OPTS
             )
         results = [r[0].val for r in results]
+    elif fpath == 'serie':
+        results = q.projection(
+            "SELECT fe.clientPath, i.series"
+            " FROM Image i"
+            " JOIN i.fileset f"
+            " JOIN f.usedFiles fe"
+            " WHERE i.id=:imid AND index(fe)=0",
+            params,
+            conn.SERVICE_OPTS
+            )
+        results = (
+            results[0][0].val, results[0][1].val
+        )
     else:
         raise ValueError("Parameter fpath must be 'client' or 'repo'")
 
