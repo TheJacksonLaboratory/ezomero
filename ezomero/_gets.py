@@ -1486,7 +1486,7 @@ def get_user_id(conn: BlitzGateway, user_name: str) -> Union[int, None]:
 @do_across_groups
 def get_original_filepaths(
     conn: BlitzGateway, image_id: int,
-    fpath: Optional[Literal["client", "repo", "serie"]] = 'repo',
+    fpath: Optional[Literal["client", "repo", "series"]] = 'repo',
     across_groups: Optional[bool] = True
 ) -> List[str]:
     """Get paths to original files for specified image.
@@ -1497,11 +1497,11 @@ def get_original_filepaths(
         OMERO connection.
     image_id : int
         ID of image for which filepath info is to be returned.
-    fpath : {'repo', 'client', 'serie'}, optional
+    fpath : {'repo', 'client', 'series'}, optional
         Specify whether you want to return path to file in the managed
         repository ('repo') or the path from which the image was imported
         ('client'). The latter is useful for images that were imported by
-        the "in place" method. Defaults to 'repo'. The third option ('serie')
+        the "in place" method. Defaults to 'repo'. The third option ('series')
         returns the client file path and serie index to pass to Bio-Formats
         and open the image directly.
     across_groups : bool, optional
@@ -1534,7 +1534,7 @@ def get_original_filepaths(
 
     # Return client path and serie index of the image.
 
-    >>> get_original_filepaths(conn, 2201, fpath='serie')
+    >>> get_original_filepaths(conn, 2201, fpath='series')
     ('/client/omero/smith_lab/experiment.lif', 10)
     """
     if type(image_id) is not int:
@@ -1567,7 +1567,7 @@ def get_original_filepaths(
             conn.SERVICE_OPTS
             )
         results = [r[0].val for r in results]
-    elif fpath == 'serie':
+    elif fpath == 'series':
         results = q.projection(
             "SELECT fe.clientPath, i.series"
             " FROM Image i"
@@ -1585,7 +1585,7 @@ def get_original_filepaths(
         else:
             results = ("", -1)
     else:
-        raise ValueError("Parameter fpath must be 'client', 'repo' or 'serie'")
+        raise ValueError("Parameter fpath must be 'client', 'repo' or 'series'")
 
     return results
 
