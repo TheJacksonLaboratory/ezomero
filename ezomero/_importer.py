@@ -211,7 +211,7 @@ def multi_post_map_annotation(conn: BlitzGateway, object_type: str,
     kv_pairs = []
     for k, v in kv_dict.items():
         k = str(k)
-        if type(v) != list:
+        if type(v) is not list:
             v = str(v)
             kv_pairs.append([k, v])
         else:

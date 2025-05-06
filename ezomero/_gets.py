@@ -1570,7 +1570,7 @@ def get_original_filepaths(
 @do_across_groups
 def get_series_index(conn: BlitzGateway, image_id: int,
                      across_groups: Optional[bool] = True
-                    ) -> int:
+                     ) -> int:
     """Get series index for an Image inside a fileset.
 
     Parameters
@@ -1599,7 +1599,7 @@ def get_series_index(conn: BlitzGateway, image_id: int,
     multiseries file (in this example, the third image):
 
     >>> series_idx = get_series_index(conn, 42)
-    2 
+    2
     """
 
     if type(image_id) is not int:
