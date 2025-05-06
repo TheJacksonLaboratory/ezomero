@@ -875,7 +875,9 @@ def test_get_pyramid_levels(conn, pyramid_fixture):
     assert lvls[0] == (16, 16)
 
 
-def test_get_original_filepaths(conn, project_structure, monkeypatch):
+def test_get_original_filepaths_and_series_index(conn,
+                                                 project_structure,
+                                                 monkeypatch):
     # we should probably build a way to test this...
     image_info = project_structure[2]
     im_id = image_info[0][1]
@@ -910,8 +912,8 @@ def test_get_original_filepaths(conn, project_structure, monkeypatch):
     assert opath[0].endswith("test_pyramid.ome.tif")
     opath = ezomero.get_original_filepaths(conn, im_id, fpath='client')
     assert opath[0].endswith(fpath)
-    opath, serie = ezomero.get_original_filepaths(conn, im_id, fpath='serie')
-    assert opath.endswith(fpath) and serie == 0
+    series_idx = ezomero.get_series_index(conn, im_id)
+    assert series_idx == 0
     conn.deleteObjects("Image", id)
 
     # simple import, multifile/multi-image
@@ -929,10 +931,8 @@ def test_get_original_filepaths(conn, project_structure, monkeypatch):
     assert len(opath) == 2
     opath = ezomero.get_original_filepaths(conn, int(id[0]), fpath='client')
     assert len(opath) == 2
-    opath, serie = ezomero.get_original_filepaths(conn, int(id[0]),
-                                                  fpath='serie')
-    assert opath.endswith(fpath) and serie == 0
-    opath, serie = ezomero.get_original_filepaths(conn, int(id[1]),
-                                                  fpath='serie')
-    assert opath.endswith(fpath) and serie == 1
+    series_idx = ezomero.get_series_index(conn, int(id[0]))
+    assert series_idx == 0
+    series_idx = ezomero.get_series_index(conn, int(id[1]))
+    assert series_idx == 1
     conn.deleteObjects("Image", id)
