@@ -1486,7 +1486,7 @@ def get_user_id(conn: BlitzGateway, user_name: str) -> Union[int, None]:
 @do_across_groups
 def get_original_filepaths(
     conn: BlitzGateway, image_id: int,
-    fpath: Optional[Literal["client", "repo", "series"]] = 'repo',
+    fpath: Optional[Literal["client", "repo"]] = 'repo',
     across_groups: Optional[bool] = True
 ) -> List[str]:
     """Get paths to original files for specified image.
@@ -1497,13 +1497,11 @@ def get_original_filepaths(
         OMERO connection.
     image_id : int
         ID of image for which filepath info is to be returned.
-    fpath : {'repo', 'client', 'series'}, optional
+    fpath : {'repo', 'client'}, optional
         Specify whether you want to return path to file in the managed
         repository ('repo') or the path from which the image was imported
         ('client'). The latter is useful for images that were imported by
-        the "in place" method. Defaults to 'repo'. The third option ('series')
-        returns the client file path and serie index to pass to Bio-Formats
-        and open the image directly.
+        the "in place" method. Defaults to 'repo'.
     across_groups : bool, optional
         Defines cross-group behavior of function - set to
         ``False`` to disable it.
@@ -1532,10 +1530,6 @@ def get_original_filepaths(
     >>> get_original_filepaths(conn, 2201, fpath='client')
     ['/client/omero/smith_lab/stack2/PJN17_083_07.ndpi']
 
-    # Return client path and serie index of the image.
-
-    >>> get_original_filepaths(conn, 2201, fpath='series')
-    ('/client/omero/smith_lab/experiment.lif', 10)
     """
     if type(image_id) is not int:
         raise TypeError('Image ID must be an integer')
@@ -1567,27 +1561,63 @@ def get_original_filepaths(
             conn.SERVICE_OPTS
             )
         results = [r[0].val for r in results]
-    elif fpath == 'series':
-        results = q.projection(
-            "SELECT fe.clientPath, i.series"
-            " FROM Image i"
-            " JOIN i.fileset f"
-            " JOIN f.usedFiles fe"
-            " WHERE i.id=:imid AND index(fe)=0",
-            params,
-            conn.SERVICE_OPTS
-            )
-
-        if len(results) > 0:
-            results = (
-                 results[0][0].val, results[0][1].val
-            )
-        else:
-            results = ("", -1)
     else:
-        raise ValueError("Parameter fpath must be 'client', 'repo' or 'series'")
+        raise ValueError("Parameter fpath must be 'client' or 'repo'")
 
     return results
+
+
+@do_across_groups
+def get_series_index(conn: BlitzGateway, image_id: int,
+                     across_groups: Optional[bool] = True
+                    ) -> int:
+    """Get series index for an Image inside a fileset.
+
+    Parameters
+    ----------
+    conn : ``omero.gateway.BlitzGateway`` object
+        OMERO connection.
+    image_id : int
+        ID of ``Image``.
+    across_groups : bool, optional
+        Defines cross-group behavior of function - set to
+        ``False`` to disable it.
+
+    Returns
+    -------
+    series_idx : int
+        Index for specified image inside its Fileset as
+        provided by Bioformats. In addition to a target
+        file path, this allows for specific access to an
+        individual image using Bioformats.
+
+    Examples
+    --------
+    # Return series index for an Image generated from a
+    multiseries file (in this example, the third image):
+
+    >>> series_idx = get_series_index(conn, 42)
+    2 
+    """
+
+    if type(image_id) is not int:
+        raise TypeError('Image ID must be an integer')
+
+    q = conn.getQueryService()
+    params = Parameters()
+    params.map = {"imid": rlong(image_id)}
+
+    results = q.projection(
+        "SELECT i.series"
+        " FROM Image i"
+        " JOIN i.fileset f"
+        " JOIN f.usedFiles fe"
+        " WHERE i.id=:imid AND index(fe)=0",
+        params,
+        conn.SERVICE_OPTS
+        )
+    series_idx = results[0][0].val
+    return series_idx
 
 
 @do_across_groups
