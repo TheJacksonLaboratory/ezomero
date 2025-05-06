@@ -892,8 +892,8 @@ def test_get_original_filepaths_and_series_index(conn,
     assert opath == []
     opath = ezomero.get_original_filepaths(conn, im_id, fpath='client')
     assert opath == []
-    opath, serie = ezomero.get_original_filepaths(conn, im_id, fpath='serie')
-    assert opath == "" and serie == -1
+    series_idx = ezomero.get_series_index(conn, im_id)
+    assert series_idx == -1
 
     # import of single file
     fpath = "tests/data/test_pyramid.ome.tif"
@@ -914,7 +914,6 @@ def test_get_original_filepaths_and_series_index(conn,
     assert opath[0].endswith(fpath)
     series_idx = ezomero.get_series_index(conn, im_id)
     assert series_idx == 0
-    conn.deleteObjects("Image", id)
 
     # simple import, multifile/multi-image
     fpath = "tests/data/vsi-ets-test-jpg2k.vsi"

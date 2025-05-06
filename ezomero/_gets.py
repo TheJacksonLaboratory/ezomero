@@ -1589,7 +1589,9 @@ def get_series_index(conn: BlitzGateway, image_id: int,
         Index for specified image inside its Fileset as
         provided by Bioformats. In addition to a target
         file path, this allows for specific access to an
-        individual image using Bioformats.
+        individual image using Bioformats. If image was created
+        without an original file (i.e. directly from pixels),
+        returns -1.
 
     Examples
     --------
@@ -1616,7 +1618,10 @@ def get_series_index(conn: BlitzGateway, image_id: int,
         params,
         conn.SERVICE_OPTS
         )
-    series_idx = results[0][0].val
+    if results:
+        series_idx = results[0][0].val
+    else:
+        series_idx = -1
     return series_idx
 
 
