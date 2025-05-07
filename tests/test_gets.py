@@ -2,6 +2,7 @@ import pytest
 import numpy as np
 import ezomero
 from omero.gateway import TagAnnotationWrapper
+from io import StringIO
 
 # Test gets
 ###########
@@ -867,7 +868,16 @@ def test_get_shape_and_get_shape_ids(conn, project_structure,
                        deleteChildren=True, wait=True)
 
 
-def test_get_original_filepaths(conn, project_structure):
+def test_get_pyramid_levels(conn, pyramid_fixture):
+    im_id = ezomero.get_image_ids(conn)[-1]
+    lvls = ezomero.get_pyramid_levels(conn, im_id)
+    assert len(lvls) == 3
+    assert lvls[0] == (16, 16)
+
+
+def test_get_original_filepaths_and_series_index(conn,
+                                                 project_structure,
+                                                 monkeypatch):
     # we should probably build a way to test this...
     image_info = project_structure[2]
     im_id = image_info[0][1]
@@ -882,10 +892,46 @@ def test_get_original_filepaths(conn, project_structure):
     assert opath == []
     opath = ezomero.get_original_filepaths(conn, im_id, fpath='client')
     assert opath == []
+    series_idx = ezomero.get_series_index(conn, im_id)
+    assert series_idx == -1
 
+    # import of single file
+    fpath = "tests/data/test_pyramid.ome.tif"
+    str_input = ["omero", 'import',
+                 '-k', conn.getSession().getUuid().val,
+                 '-s', conn.host,
+                 '-p', str(conn.port),
+                 fpath, "\n"]
+    io = StringIO(" ".join(str_input))
+    monkeypatch.setattr('sys.stdin', io)
+    id = ezomero.ezimport(conn, fpath)
 
-def test_get_pyramid_levels(conn, pyramid_fixture):
-    im_id = ezomero.get_image_ids(conn)[-1]
-    lvls = ezomero.get_pyramid_levels(conn, im_id)
-    assert len(lvls) == 3
-    assert lvls[0] == (16, 16)
+    im_id = int(id[0])
+    opath = ezomero.get_original_filepaths(conn, im_id)
+    assert opath[0].startswith("root_0")
+    assert opath[0].endswith("test_pyramid.ome.tif")
+    opath = ezomero.get_original_filepaths(conn, im_id, fpath='client')
+    assert opath[0].endswith(fpath)
+    series_idx = ezomero.get_series_index(conn, im_id)
+    assert series_idx == 0
+
+    # simple import, multifile/multi-image
+    fpath = "tests/data/vsi-ets-test-jpg2k.vsi"
+    str_input = ["omero", 'import',
+                 '-k', conn.getSession().getUuid().val,
+                 '-s', conn.host,
+                 '-p', str(conn.port),
+                 fpath, "\n"]
+    io = StringIO(" ".join(str_input))
+    monkeypatch.setattr('sys.stdin', io)
+    id = ezomero.ezimport(conn, fpath)
+
+    opath = ezomero.get_original_filepaths(conn, int(id[0]))
+    assert len(opath) == 2
+    opath = ezomero.get_original_filepaths(conn, int(id[0]), fpath='client')
+    assert len(opath) == 2
+    series_idx = ezomero.get_series_index(conn, int(id[0]))
+    assert series_idx == 0
+    series_idx = ezomero.get_series_index(conn, int(id[1]))
+    assert series_idx == 1
+    conn.deleteObjects("Image", id)
