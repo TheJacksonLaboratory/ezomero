@@ -8,7 +8,7 @@ from ._misc import link_datasets_to_project
 from omero.gateway import BlitzGateway
 from omero.model import RoiI, PointI, LineI, RectangleI, EllipseI
 from omero.model import PolygonI, PolylineI, LabelI, LengthI, enums
-from omero.model import DatasetI, ProjectI, ScreenI, Shape
+from omero.model import DatasetI, ProjectI, ScreenI, Shape, AffineTransformI
 from omero.grid import BoolColumn, LongColumn
 from omero.grid import StringColumn, DoubleColumn, Column
 from omero.gateway import ProjectWrapper, DatasetWrapper
@@ -752,6 +752,17 @@ def create_columns(table: Any,
     return cols
 
 
+def _omero_affine(a00, a10, a01, a11, a02, a12):
+    affine = AffineTransformI()
+    affine.a00 = rdouble(a00)
+    affine.a10 = rdouble(a10)
+    affine.a01 = rdouble(a01)
+    affine.a11 = rdouble(a11)
+    affine.a02 = rdouble(a02)
+    affine.a12 = rdouble(a12)
+    return affine
+
+        
 def _shape_to_omero_shape(shape: Union[Point, Line, Rectangle, Ellipse,
                                        Polygon, Polyline, Label]) -> Shape:
     """ Helper function to convert ezomero shapes into omero shapes"""
@@ -822,6 +833,10 @@ def _shape_to_omero_shape(shape: Union[Point, Line, Rectangle, Ellipse,
                                            enums.UnitsLength.PIXEL))
     else:
         omero_shape.setStrokeWidth(LengthI(1.0, enums.UnitsLength.PIXEL))
+    if shape.transform is not None:
+        t_ = shape.transform
+        omero_shape.transform = _omero_affine(t_.a00, t_.a10, t_.a01,
+                                              t_.a11, t_.a02, t_.a12)
     return omero_shape
 
 
