@@ -459,9 +459,8 @@ class Importer:
         arguments.extend(['--file', stdout_file.name, '--output', 'yaml'])
         arguments.append(str(self.file_path))
         cli.invoke(arguments)
-        f = open(stdout_file.name, 'r')
-        self.import_result = yaml.safe_load(f)
-        f.close()
+        with open(stdout_file.name, 'r') as f:
+            self.import_result = yaml.safe_load(f)
         unlink(stdout_file.name)
         if self.import_result:
             self.imported = True
