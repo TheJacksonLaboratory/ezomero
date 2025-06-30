@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ezomero"
+dynamic = ["version"]
+maintainers = [
+    {name = "Dave Mellert", email = "dave.mellert@jax.org"}
+    ]
+description = "A suite of convenience functions for working with OMERO. Written and maintained by the Research IT team at The Jackson Laboratory."
+readme = "README.md"
+license = "GPL-2.0"
+dependencies = [
+    "omero-py >= 5.13.0, <= 5.21.0",
+    "numpy >= 1.22, < 2.0"
+    ]
+requires-python = ">=3.8"
+
+[project.optional-dependencies]
+tables = ["pandas"]
+
+[project.urls]
+Repository = "https://github.com/TheJacksonLaboratory/ezomero"
+
