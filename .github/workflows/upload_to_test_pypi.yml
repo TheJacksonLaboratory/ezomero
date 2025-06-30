@@ -16,6 +16,8 @@ jobs:
       with:
           python-version: '3.9'
     - name: Install Tools
+      env:
+        VERSION: ${{ github.event.release.tag_name }}
       run: |
         python -mpip install build
         python -m build
