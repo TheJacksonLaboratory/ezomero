@@ -222,16 +222,12 @@ def connect(user: Optional[str] = None, password: Optional[str] = None,
     ----------
     user : str, optional
         OMERO username.
-
     password : str, optional
         OMERO password.
-
     group : str, optional
         OMERO group.
-
     host : str, optional
         OMERO.server host.
-
     port : int, optional
         OMERO port.
 
