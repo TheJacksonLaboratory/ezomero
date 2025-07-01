@@ -19,6 +19,7 @@ requires-python = ">=3.8"
 
 [project.optional-dependencies]
 tables = ["pandas"]
+docs = ["sphinx"]
 
 [project.urls]
 Repository = "https://github.com/TheJacksonLaboratory/ezomero"

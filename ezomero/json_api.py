@@ -29,20 +29,15 @@ def create_json_session(user: Optional[str] = None,
     ----------
     user : str, optional
         OMERO username.
-
     password : str, optional
         OMERO password.
-
     web_host : str, optional
         OMERO.web host.
-
     verify : boolean, optional
         Whether to verify SSL certificates when making requests.
-
     server_name : str, optional
         OMERO server name as configured in your OMERO.web installation. For
         a "default" OMERO.web installation, it will normally be 'omero'.
-
     config_path : str, optional
         Path to directory containing '.ezomero' file that stores connection
         information. If left as ``None``, defaults to the home directory as
@@ -52,11 +47,9 @@ def create_json_session(user: Optional[str] = None,
     -------
     login_rsp : JSON object
         JSON containing the response to the ``POST`` request sent for log in.
-
     session : ``requests`` Session object or None
         The effective ``requests`` session that will be used for further
         requests to the JSON API.
-
     base_url : str or None
         Base URL for further requests, retrieved via JSON API request
 

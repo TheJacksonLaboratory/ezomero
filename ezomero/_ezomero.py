@@ -222,16 +222,12 @@ def connect(user: Optional[str] = None, password: Optional[str] = None,
     ----------
     user : str, optional
         OMERO username.
-
     password : str, optional
         OMERO password.
-
     group : str, optional
         OMERO group.
-
     host : str, optional
         OMERO.server host.
-
     port : int, optional
         OMERO port.
 
@@ -385,24 +381,18 @@ def store_connection_params(user: Optional[str] = None,
     ----------
     user : str, optional
         OMERO username.
-
     group : str, optional
         OMERO group.
-
     host : str, optional
         OMERO.server host.
-
     port : int, optional
         OMERO port.
-
     secure : boolean, optional
         Whether to create a secure session.
-
     web_host : boolean/str, optional
         Whether to save a web host address got JSON connections as well. If
         `False`, will skip it; it `True`, will prompt user for it; if it is
         a `str`, will save that value to `OMERO_WEB_HOST`.
-
     config_path : str, optional
         Path to directory that will contain the '.ezomero' file. If left as
         ``None``, defaults to the home directory as determined by Python's

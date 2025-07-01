@@ -134,3 +134,15 @@ dmypy.json
 
 # For my sanity, I have a local script to run tests
 run_tests.sh
+
+# Ignore docs build files
+docs/*.html
+docs/_sources
+docs/_static
+docs/.doctrees
+docs/.buildinfo
+docs/.nojekyll
+docs/objects.inv
+docs/searchindex.js
+docs/sphinx/source/ezomero.rst
+docs/sphinx/source/modules.rst
