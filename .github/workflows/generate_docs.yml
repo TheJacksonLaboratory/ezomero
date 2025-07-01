@@ -20,8 +20,7 @@ jobs:
         shell: bash -l {0}
         run: |
           pip install https://github.com/glencoesoftware/zeroc-ice-py-linux-x86_64/releases/download/20240202/zeroc_ice-3.6.5-cp39-cp39-manylinux_2_28_x86_64.whl
-          python setup.py install
-          pip install sphinx
+          pip install .[docs]
       - name: Running Sphinx
         shell: bash -l {0}
         run: |
