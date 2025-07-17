@@ -694,13 +694,13 @@ def post_table(conn: BlitzGateway, table: Any,
     table = resources.newTable(repository_id, table_name)
     table.initialize(columns)
     table.addData(columns)
-    table.close()
     orig_file = table.getOriginalFile()
     file_ann = FileAnnotationWrapper(conn)
     file_obj = OriginalFileWrapper(conn, orig_file)
     file_obj.save()
     file_ann.setFile(file_obj)
     file_ann = obj.linkAnnotation(file_ann)
+    table.close()
     return file_ann.id
 
 
