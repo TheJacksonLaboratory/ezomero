@@ -1704,6 +1704,7 @@ def get_table(conn: BlitzGateway, file_ann_id: int,
         try:
             table_obj = resources.openTable(orig_table_file._obj)
             table = _create_table(table_obj)
+            table_obj.close()
         except InternalException:
             logging.warning(f" FileAnnotation {file_ann_id} is not a table.")
     else:

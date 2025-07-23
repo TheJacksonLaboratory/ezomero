@@ -700,6 +700,7 @@ def post_table(conn: BlitzGateway, table: Any,
     file_obj.save()
     file_ann.setFile(file_obj)
     file_ann = obj.linkAnnotation(file_ann)
+    table.close()
     return file_ann.id
 
 
