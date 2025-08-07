@@ -1,5 +1,7 @@
 ![](https://raw.githubusercontent.com/TheJacksonLaboratory/ezomero/main/coverage.svg) [![badge-doi](https://img.shields.io/badge/doi-10.1101%2F2023.06.29.546930-purple)](https://doi.org/10.1101/2023.06.29.546930) 
 
+## WARNING: from 08/08/2025, this repository is unmaintained and read-only.
+
 # ezomero
 A module with convenience functions for writing Python code that interacts with OMERO.
 
